@@ -1,0 +1,14 @@
+<scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0" initial="s11" name="simple">
+	<state id="s1" initial="s11">
+		<transition event="e" target="s21"><log expr="'executing transition'"/></transition>
+		<state id="s11"><onexit><log expr="'leaving s11'"/></onexit></state>	  
+		<onexit><log expr="'leaving s1'"/></onexit>	
+	</state>
+	
+	<state id="s2">
+		<initial><transition target="s21"/></initial>
+		<onentry><log expr="'entering s2'"/></onentry>
+		<state id="s21"><onentry><log expr="'entering s21'"/></onentry></state>
+		<transition event="holla"><log expr="'Yo, sup?'"/></transition>
+	</state>
+</scxml>
