@@ -1,4 +1,4 @@
-LXSC = { STATE={}, TRANSITION={}, GENERIC={}, SCXML={} }
+LXSC = { SCXML={}, STATE={}, TRANSITION={}, GENERIC={} }
 for k,t in pairs(LXSC) do t.__meta={__index=t} end
 setmetatable(LXSC.SCXML,{__index=LXSC.STATE})
 setmetatable(LXSC,{__index=function(kind)
@@ -8,6 +8,8 @@ setmetatable(LXSC,{__index=function(kind)
 		return t
 	end
 end})
+LXSC.stateKinds = {state=1,parallel=1,final=1,history=1,initial=1}
+LXSC.realKinds  = {state=1,parallel=1,final=1}
 
 -- Horribly simple xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
 function LXSC.uuid4()
@@ -24,11 +26,13 @@ function LXSC:state(kind)
 	local t = {
 		kind=kind or 'state',
 		id=LXSC.uuid4(),
-		atomic=true,
-		compound=false,
-		parallel=false,
-		history=false,
-		final=false,
+		isAtomic   = true,
+		isCompound = false,
+		isParallel = kind=='parallel',
+		isHistory  = kind=='history',
+		isFinal    = kind=='final',
+		ancestors={},
+		selfAndAncestors={self},
 		states={},
 		reals={},
 		onentrys={},
@@ -45,11 +49,12 @@ function LXSC.STATE:attr(name,value)
 	if name=="name" or name=="id" or name=="initial" then
 		self[name] = value
 	else
-		if self[name] then print(string.format("Warning: updating transition %s=%s with %s=%s",name,tostring(self[name]),name,tostring(value))) end
+		if self[name] then print(string.format("Warning: updating state %s=%s with %s=%s",name,tostring(self[name]),name,tostring(value))) end
 		self[name] = value
 	end
 end
 
+local stateKinds = 
 function LXSC.STATE:addChild(item)
 	if item.kind=='transition' then
 		item.source = self
@@ -59,16 +64,40 @@ function LXSC.STATE:addChild(item)
 	elseif item.kind=='invoke' then
 		item.state = self
 		table.insert(self.invokes,item)
-	elseif item.kind=='state' or item.kind=='parallel' or item.kind=='final' then
+	elseif LXSC.stateKinds[item.kind] then
 		table.insert(self.states,item)
-		table.insert(self.reals,item)
-		self.compound = true
-		self.atomic   = false
-		item.parent   = self
-	elseif item.kind=='initial' or item.kind=='history' then
-		table.insert(self.states,item)
-		item.parent   = self
+		item.parent = self
+		item.ancestors[1] = self
+		item.selfAndAncestors[2] = self
+		for i,anc in ipairs(self.ancestors) do
+			item.ancestors[i+1] = anc
+			item.selfAndAncestors[i+2] = anc
+		end
+		if LXSC.realKinds[item.kind] then
+			table.insert(self.states,item)
+			self.isCompound = true
+			self.isAtomic   = false
+		end
+	else
+		print("Warning: unhandled child of state: "..item.kind )
 	end
+end
+
+function LXSC.STATE:convertInitials()
+	if self.initial then
+		local initial = LXSC:state('initial')
+		self:addChild(initial)
+	end
+end
+
+function LXSC.STATE:cacheReference(lookup)
+	lookup[self.id] = self
+	for _,s in ipairs(self.states) do s:resolveReferences(lookup) end
+end
+
+function LXSC.STATE:resolveReferences(lookup)
+	lookup[self.id] = self
+	for _,s in ipairs(self.states) do s:resolveReferences(lookup) end
 end
 
 -- *********************************
@@ -77,6 +106,12 @@ function LXSC:scxml()
 	local t = { kind='scxml', name="(lxsc)", binding="early", datamodel="lua" }
 	setmetatable(t,LXSC.SCXML.__meta)
 	return t
+end
+
+function LXSC.SCXML:cacheAndResolveReferences()
+	self.stateById = {}
+	for _,s in ipairs(self.states) do s:cacheReference(self.stateById) end
+	self:resolveReferences(self.stateById)
 end
 
 -- *********************************
@@ -108,6 +143,25 @@ end
 
 function LXSC.TRANSITION:addChild(item)
 	table.insert(self.exec,item)
+end
+
+function LXSC.TRANSITION:conditionMatched(datamodel)
+	return not self.cond or datamodel:run(self.cond)
+end
+
+function LXSC.TRANSITION:matchesEvent(event)
+	for _,tokens in ipairs(self.events) do
+		if #tokens <= #event.tokens then
+			local matched = true
+			for i,token in ipairs(tokens) do
+				if event.tokens[i]~=token then
+					matched = false
+					break
+				end
+			end
+			if matched then return true end
+		end
+	end
 end
 
 -- *********************************

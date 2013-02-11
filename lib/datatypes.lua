@@ -84,6 +84,11 @@ function List:every(f)
 	return true
 end
 
+function List:sort(f)
+	table.sort(self,f)
+	return self
+end
+
 -- *******************************************************************
 
 Queue = {}

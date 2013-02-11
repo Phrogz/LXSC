@@ -1,6 +1,5 @@
 require 'io'
-require 'AKLOMParser'
-require 'LXSC'
+require 'lxsc'
 
 xml = io.input('testcases/simple.scxml'):read("*all")
 lom = AKLOM.parse(xml)

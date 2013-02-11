@@ -2,6 +2,23 @@
 S.MAX_ITERATIONS = 1000
 
 local documentOrder = function(a,b) return a._order < b._order end
+local isAtomicState = function(s)   return s.isAtomic          end
+local LCPA          = function(first,rest) -- least common parallel ancestor
+	for _,anc in ipairs(first.ancestors) do
+		if anc.isParallel then
+			local allDescend = true
+			for _,s in ipairs(rest) do
+				if not s:descendantOf(anc) then
+					allDescend = false
+					break
+				end
+			end
+			if allDescend then
+				return anc
+			end
+		end
+	end
+end
 
 function S:interpret()
 	if not self:validate() then self:failWithError() end
@@ -88,16 +105,131 @@ function S:mainEventLoop()
 end
 
 function S:exitInterpreter()
-	local statesToExit = self.configuration:toList()
-	table.sort( statesToExit, documentOrder )
+	local statesToExit = self.configuration:toList():sort(documentOrder)
 	for _,s in ipairs(statesToExit) do
 		for _,content in ipairs(s.onexits) do self:executeContent(content) end
 		-- for _,inv     in ipairs(s.invokes) do self:cancelInvoke(inv)       end
 		-- self.configuration:delete(s)
-		if self:isFinalState(s) and isScxmlState(s.parent):   
-					returnDoneEvent(s.donedata)
+		-- if self:isFinalState(s) and s.parent.kind=='scxml' then   
+		-- 	self:returnDoneEvent(s:donedata())
+		-- end
 	end
 end
+
+function S:selectEventlessTransitions()
+	local enabledTransitions = OrderedSet()
+	local atomicStates = self.configuration:toList():filter(isAtomicState):sort(documentOrder)
+	for _,state in ipairs(atomicStates) do
+		self:addEventlessTransition(state,enabledTransitions)
+	end
+	return self:filterPreempted(enabledTransitions)
+end
+-- TODO: store sets of evented vs. eventless transitions
+function S:addEventlessTransition(state,enabledTransitions)
+	for _,s in ipairs(state.selfAndAncestors) do
+		for _,t in ipairs(s.transitions) do
+			if not t.events and t:conditionMatched(self.datamodel) then
+				enabledTransitions:add(t)
+				return
+			end
+		end
+	end
+end
+
+function S:selectTransitions(event)
+	local enabledTransitions = OrderedSet()
+	local atomicStates = self.configuration:toList():filter(isAtomicState):sort(documentOrder)
+	for _,state in ipairs(atomicStates) do
+		self:addTransitionForEvent(state,event,enabledTransitions)
+	end
+	return self:filterPreempted(enabledTransitions)
+end
+-- TODO: store sets of evented vs. eventless transitions
+function S:addTransitionForEvent(state,event,enabledTransitions)
+	for _,s in ipairs(state.selfAndAncestors) do
+		for _,t in ipairs(s.transitions) do
+			if t.events and t:matchesEvent(event) and t:conditionMatched(self.datamodel) then
+				enabledTransitions:add(t)
+				return
+			end
+		end
+	end
+end
+
+function S:filterPreempted(enabledTransitions)
+	local filteredTransitions = OrderedSet()
+	for _,t1 in ipairs(enabledTransitions) do
+		if not filteredTransitions:some(function(t2)
+			local t2Cat = self:preemptionCategory(t2)
+			return t2Cat==3 or (t2Cat==2 and self:preemptionCategory(t1)==3)
+		end) then
+			filteredTransitions:add(t)
+		end
+	end
+	return filteredTransitions
+end
+function S:preemptionCategory(t)
+	if not t.preemptionCategory then
+		if not t.targets then
+			t.preemptionCategory = 1
+		elseif LCPA( t.type=="internal" and t.parent or t.parent.parent, t.targets ) then
+			t.preemptionCategory = 2
+		else
+			t.preemptionCategory = 3
+		end
+	end
+	return t.preemptionCategory
+end
+
+function S:microstep(enabledTransitions)
+	self:exitStates(enabledTransitions)
+	self:executeTransitionContent(enabledTransitions)
+	self:enterStates(enabledTransitions)
+end
+
+function S:executeTransitionContent(transitions)
+	for _,t in ipairs(transitions) do
+		for _,executable in ipairs(t.exec) do
+			if executable.run then
+				executable:run()
+			else
+				print("Warning: unsupported executable "..executable.kind)
+			end
+		end
+	end
+end
+
+function S:exitStates(enabledTransitions)
+	local statesToExit = OrderedSet()
+	for _,t in ipairs(enabledTransitions) do
+		if t.targets then
+			tstates = getTargetStates(t.target)
+			if t.type == "internal" and isCompoundState(t.source) and tstates.every(lambda s: isDescendant(s,t.source))::
+				ancestor = t.source
+			else:
+				ancestor = findLCCA([t.source].append(getTargetStates(t.target)))
+			for s in configuration:
+				if isDescendant(s,ancestor):
+					statesToExit.add(s)
+		end
+	end
+	for s in statesToExit:
+		statesToInvoke.delete(s)
+	statesToExit = statesToExit.toList().sort(exitOrder)
+	for s in statesToExit:
+		for h in s.history:
+			if h.type == "deep":
+				f = lambda s0: isAtomicState(s0) and isDescendant(s0,s)
+			else:
+				f = lambda s0: s0.parent == s
+			historyValue[h.id] = configuration.toList().filter(f)
+	for s in statesToExit:
+		for content in s.onexit:
+			executeContent(content)
+		for inv in s.invoke:
+			cancelInvoke(inv)
+		configuration.delete(s)
+
 
 -- Sensible aliases
 S.start = S.interpret
