@@ -4,7 +4,7 @@ LXSC stands for "Lua XML StateCharts", and is pronounced _"Lexie"_. The LXSC lib
 
 The [Data Model](http://www.w3.org/TR/scxml/#data-module) for interpretation is all evaluated Lua, allowing you to write conditionals and data expressions in one of the best scripting languages in the world for embedded integration.
 
-LXSC is not yet released, but it is getting close.
+**LXSC is currently under development.** It is not yet nearly feature complete nor properly tested.
 
 ## SCXML Compliance
 
