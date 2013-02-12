@@ -9,7 +9,6 @@ for filename in io.popen(string.format('ls "%s"',DIR)):lines() do
 	print("Running",testName)
 	local xml = io.input(DIR..'/'..filename):read("*all")
 	local machine = LXSC:parse(xml)
-	print("Actives:",table.concat(machine:activeStateIds(),", "))
 
 	machine.onBeforeExit = function(id,kind) print("Exiting "..kind.." '"..tostring(id).."'") end
 	machine.onAfterEnter = function(id,kind) print("Entered "..kind.." '"..tostring(id).."'") end
