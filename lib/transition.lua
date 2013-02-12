@@ -16,9 +16,10 @@ function LXSC.TRANSITION:attr(name,value)
 
 	elseif name=='target' then
 		self.targets = nil
+		self._target = value
 		for target in string.gmatch(value,'[^%s]+') do self:addTarget(target) end
 
-	elseif name=='code' or name=='type' then
+	elseif name=='cond' or name=='type' then
 		self[name] = value
 
 	else
@@ -60,3 +61,12 @@ function LXSC.TRANSITION:matchesEvent(event)
 	-- print("Transition",self._event,"does not match",event.name)
 end
 
+function LXSC.TRANSITION:inspect()
+	return string.format(
+		"<Transition inside '%s'%s%s%s>",
+		self.source.id or self.source.name,
+		self._event and (" on '"..self._event.."'") or "",
+		self.cond and (" if '"..self.cond.."'") or "",
+		self._target and (" to '"..self._target.."'") or ""
+	)
+end

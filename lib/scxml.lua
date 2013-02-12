@@ -19,6 +19,10 @@ function LXSC.SCXML:expandScxmlSource()
 	self:resolveReferences(self.stateById)
 end
 
+function LXSC.SCXML:isActive(stateId)
+	return self.configuration[self.stateById[stateId]]
+end
+
 function LXSC.SCXML:activeStateIds()
 	local a = OrderedSet()
 	for _,s in ipairs(self.configuration) do

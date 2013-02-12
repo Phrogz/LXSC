@@ -1,7 +1,14 @@
 LXSC.EXECUTABLE = {}
 
 function LXSC.EXECUTABLE:log(scxml)
-	print(scxml.datamodel:run(self.expr))
+	local message = {self.label}
+	if self.expr then table.insert(message,scxml.datamodel:run(self.expr)) end
+	print(table.concat(message,": "))
+end
+
+function LXSC.EXECUTABLE:assign(scxml)
+	-- TODO: support child executable content in place of expr
+	scxml.datamodel:set( self.location, scxml.datamodel:run(self.expr) )
 end
 
 function LXSC.EXECUTABLE:raise(scxml)

@@ -1,0 +1,5 @@
+<scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0">
+	<transition cond="In('a')" target="pass"/>
+	<parallel id="p"><state id="a"/></parallel>
+	<final id="pass"/>
+</scxml>

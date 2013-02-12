@@ -15,8 +15,7 @@ local function findLCPA(first,rest) -- least common parallel ancestor
 		end
 	end
 end
-
-local function findLCCA(first,rest) -- least common compound ancestor
+function S:findLCCA(first,rest) -- least common compound ancestor
 	for _,anc in ipairs(first.ancestors) do
 		if anc.isCompound then
 			if rest:every(function(s) return s:descendantOf(anc) end) then
@@ -24,6 +23,7 @@ local function findLCCA(first,rest) -- least common compound ancestor
 			end
 		end
 	end
+	return self
 end
 
 -- ****************************************************************************
@@ -33,14 +33,14 @@ function S:interpret()
 	self:expandScxmlSource()
 	self.configuration:clear()
 	-- self.statesToInvoke = OrderedSet()
-	self.datamodel      = LXSC.Datamodel()
+	self.datamodel      = LXSC.Datamodel(self)
 	self.historyValue   = {}
 
 	-- self:executeGlobalScriptElements()
 	self.internalQueue = Queue()
 	self.externalQueue = Queue()
 	self.running = true
-	if self.binding == "early" then self.datamodel:initAll(self) end
+	if self.binding == "early" then self.datamodel:initAll() end
 	self:executeTransitionContent(self.initial.transitions)
 	self:enterStates(self.initial.transitions)
 	self:mainEventLoop()
@@ -180,7 +180,7 @@ function S:preemptionCategory(t)
 	if not t.preemptionCategory then
 		if not t.targets then
 			t.preemptionCategory = 1
-		elseif findLCPA( t.type=="internal" and t.parent or t.parent.parent, t.targets ) then
+		elseif findLCPA( t.type=="internal" and t.source or t.source.parent, t.targets ) then
 			t.preemptionCategory = 2
 		else
 			t.preemptionCategory = 3
@@ -191,7 +191,10 @@ end
 
 function S:microstep(enabledTransitions)
 	self:exitStates(enabledTransitions)
-	self:executeTransitionContent(enabledTransitions)
+	for _,t in ipairs(enabledTransitions) do
+		if self.onTransition then self.onTransition(t) end
+		for _,executable in ipairs(t.exec) do self:executeContent(executable) end
+	end
 	self:enterStates(enabledTransitions)
 end
 
@@ -211,7 +214,7 @@ function S:exitStates(enabledTransitions)
 			if t.type == "internal" and t.source.isCompound and t.targets:every(function(s) return s:descendantOf(t.source) end) then
 				ancestor = t.source
 			else
-				ancestor = findLCCA(t.source, t.targets)
+				ancestor = self:findLCCA(t.source, t.targets)
 			end
 			for _,s in ipairs(self.configuration) do
 				if s:descendantOf(ancestor) then statesToExit:add(s) end
@@ -244,6 +247,7 @@ function S:exitStates(enabledTransitions)
 	end
 
 	for _,s in ipairs(statesToExit) do
+		if self.onBeforeExit then self.onBeforeExit(s.id,s.kind) end
 		for _,content in ipairs(s.onexits) do self:executeContent(content) end
 		-- for _,inv in ipairs(s.invokes)     do self:cancelInvoke(inv) end
 		self.configuration:delete(s)
@@ -259,7 +263,9 @@ function S:enterStates(enabledTransitions)
 			if self.historyValue[state.id] then
 				for _,s in ipairs(self.historyValue[state.id]) do
 					addStatesToEnter(s)
-					for anc in s:ancestorsUntil(state) do statesToEnter:add(anc) end
+					for anc in s:ancestorsUntil(state) do
+						statesToEnter:add(anc)
+					end
 				end
 			else
 				for _,t in ipairs(state.transitions) do
@@ -283,7 +289,7 @@ function S:enterStates(enabledTransitions)
 			if t.type=="internal" and t.source.isCompound and t.targets:every(function(s) return s:descendantOf(t.source) end) then
 				ancestor = t.source
 			else
-				ancestor = findLCCA(t.source, t.targets)
+				ancestor = self:findLCCA(t.source, t.targets)
 			end
 			for _,s in ipairs(t.targets) do addStatesToEnter(s) end
 			for _,s in ipairs(t.targets) do
@@ -291,9 +297,14 @@ function S:enterStates(enabledTransitions)
 					statesToEnter:add(anc)
 					if anc.kind=='parallel' then
 						for _,child in ipairs(anc.reals) do
-							if not statesToEnter:some(function(s) return s:descendantOf(child) end) then
-								addStatesToEnter(child)
+							local descendsFlag = false
+							for _,s in ipairs(statesToEnter) do
+								if s:descendantOf(child) then
+									descendsFlag = true
+									break
+								end
 							end
+							if not descendsFlag then addStatesToEnter(child) end
 						end
 					end
 				end
@@ -303,10 +314,12 @@ function S:enterStates(enabledTransitions)
 
 	statesToEnter = statesToEnter:toList():sort(documentOrder)
 	for _,s in ipairs(statesToEnter) do
+		if s.kind=='scxml' then print("WARNING: adding scxml to the configuration!") end
 		self.configuration:add(s)
 		-- self.statesToInvoke:add(s)
 		if self.binding=="late" then self.datamodel:initState(s) end -- The datamodel ensures this happens only once per state
 		for _,content in ipairs(s.onentrys) do self:executeContent(content) end
+		if self.onAfterEnter then self.onAfterEnter(s.id,s.kind) end
 		if statesForDefaultEntry:member(s) then self:executeTransitionContent(s.initial.transitions) end
 		if s.kind=='final' then
 			local parent = s.parent

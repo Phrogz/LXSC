@@ -19,6 +19,7 @@ function OrderedSet:delete(e)
 	if index then
 		table.remove(self,index)
 		self[e] = nil
+		for i,o in ipairs(self) do self[o]=i end -- Store new indexes
 	end
 end
 

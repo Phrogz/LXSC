@@ -1,17 +1,17 @@
 LXSC.Datamodel = {}
 LXSC.Datamodel.__meta = {__index=LXSC.Datamodel}
-setmetatable(LXSC.Datamodel,{__call=function(o)
-	local dm = { data={}, statesInited={} }
+setmetatable(LXSC.Datamodel,{__call=function(o,scxml)
+	local dm = { data={ In=function(id) return scxml:isActive(id) end }, statesInited={}, scxml=scxml }
 	setmetatable(dm,o.__meta)
 	return dm
 end})
 
-function LXSC.Datamodel:initAll(scxml)
+function LXSC.Datamodel:initAll()
 	local function recurse(state)
 		self:initState(state)
 		for _,s in ipairs(state.reals) do recurse(s) end
 	end
-	recurse(scxml)
+	recurse(self.scxml)
 end
 
 function LXSC.Datamodel:initState(state)
