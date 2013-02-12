@@ -9,9 +9,6 @@ setmetatable(LXSC,{__index=function(kind)
 	end
 end})
 
-LXSC.stateKinds = {state=1,parallel=1,final=1,history=1,initial=1}
-LXSC.realKinds  = {state=1,parallel=1,final=1}
-
 -- Horribly simple xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
 function LXSC.uuid4()
 	return table.concat({
@@ -36,22 +33,13 @@ end
 
 -- *********************************
 
-function LXSC:datamodel()
-	local t = {	kind='datamodel' }
-	function t:addChild(item) table.insert(self.state.data,item) end
-	return t
-end
-
-function LXSC:onentry()
-	local t = {	kind='onentry' }
-	function t:addChild(item) table.insert(self.state.onentrys,item) end
-	return t
-end
-
-function LXSC:onexit()
-	local t = {	kind='onexit' }
-	function t:addChild(item) table.insert(self.state.onexits,item) end
-	return t
+-- These elements pass their children through to the appropriate collection on the state
+for kind,collection in pairs{ datamodel='datamodels', donedata='donedatas', onentry='onentrys', onexit='onexits' } do
+	LXSC[kind] = function()
+		local t = {kind=kind}
+		function t:addChild(item) table.insert(self.state[collection],item) end
+		return t
+	end
 end
 
 -- *********************************

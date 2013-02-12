@@ -5,6 +5,7 @@ require 'test/lunity'
 module( 'TEST_LXSC', lunity )
 
 DIR = 'test/testcases'
+NEED_NOT_FINISH = {final2=true}
 
 function test0_parsing()
 	local xml = io.input(DIR..'/internal_transition.scxml'):read("*all")
@@ -29,12 +30,11 @@ for filename in io.popen(string.format('ls "%s"',DIR)):lines() do
 		assertFalse(machine.running, testName.." should not be running before starting.")
 		assertTableEmpty(machine:activeStateIds(), testName.." should be empty before running.")
 		machine:start()
-		
-		-- print("Finished in:",table.concat(machine:activeStateIds(),", "))
-
 		assert(machine:activeStateIds().pass, testName.." should finish in the 'pass' state.")
 		assertEqual(#machine:activeAtomicIds(), 1, testName.." should only have a single atomic state active.")
-		assertFalse(machine.running, testName.." should run to completion.")
+		if not NEED_NOT_FINISH[testName] then
+			assertFalse(machine.running, testName.." should run to completion.")
+		end
 	end
 end
 

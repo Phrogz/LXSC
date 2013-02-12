@@ -116,7 +116,7 @@ function S:exitInterpreter()
 		for _,content in ipairs(s.onexits) do self:executeContent(content) end
 		-- for _,inv     in ipairs(s.invokes) do self:cancelInvoke(inv)       end
 		-- self.configuration:delete(s)
-		-- if self:isFinalState(s) and s.parent.kind=='scxml' then self:returnDoneEvent(s:donedata()) end
+		-- if self:isFinalState(s) and s.parent.kind=='scxml' then self:returnDoneEvent(self:donedata(s)) end
 	end
 end
 
@@ -326,11 +326,11 @@ function S:enterStates(enabledTransitions)
 				self.running = false
 			else
 				local grandparent = parent.parent
-				self:fireEvent( "done.state."..parent.id, s:donedata(), true )
+				self:fireEvent( "done.state."..parent.id, self:donedata(s), true )
 				if grandparent and grandparent.kind=='parallel' then
 					local allAreInFinal = true
 					for _,child in ipairs(grandparent.reals) do
-						if not isInFinalState(child) then
+						if not self:isInFinalState(child) then
 							allAreInFinal = false
 							break
 						end
@@ -343,6 +343,38 @@ function S:enterStates(enabledTransitions)
 
 	for _,s in ipairs(self.configuration) do
 		if s.kind=='final' and s.parent.kind=='scxml' then self.running = false end
+	end
+end
+
+function S:isInFinalState(s)
+	if s.isCompound then
+		for _,s in ipairs(s.reals) do
+			if s.kind=='final' and self.configuration:member(s) then
+				return true
+			end
+		end
+	elseif s.kind=='parallel' then
+		for _,s in ipairs(s.reals) do
+			if not self:isInFinalState(s) then
+				return false
+			end
+		end
+		return true
+	end
+end
+
+function S:donedata(state)
+	local c = state.donedatas[1]
+	if c then
+		if c.kinc=='content' then
+			return c.expr and self.datamodel:run(c.expr) or c._text
+		else
+			local map = {}
+			for _,p in ipairs(state.donedatas) do
+				map[p.name] = self.datamodel:run(p.expr)
+			end
+			return map
+		end
 	end
 end
 

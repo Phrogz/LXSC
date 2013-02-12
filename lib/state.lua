@@ -1,3 +1,6 @@
+LXSC.stateKinds = {state=1,parallel=1,final=1,history=1,initial=1}
+LXSC.realKinds  = {state=1,parallel=1,final=1}
+LXSC.aggregates = {onentry=1,onexit=1,datamodel=1,donedata=1}
 function LXSC:state(kind)
 	local t = {
 		kind=kind or 'state',
@@ -11,14 +14,13 @@ function LXSC:state(kind)
 
 		states     = {},
 		reals      = {},
+		transitions= {},
 
 		onentrys   = {},
 		onexits    = {},
-
-		transitions= {},
-
-		data={},
-		invokes={}
+		datamodels = {},
+		donedatas  = {},
+		invokes    = {}
 	}
 	t.selfAndAncestors={t}
 	setmetatable(t,self.STATE.__meta)
@@ -39,7 +41,7 @@ function LXSC.STATE:addChild(item)
 		item.source = self
 		table.insert( self.transitions, item )
 
-	elseif item.kind=='onentry' or item.kind=='onexit' or item.kind=='datamodel' then
+	elseif LXSC.aggregates[item.kind] then
 		item.state = self
 
 	elseif LXSC.stateKinds[item.kind] then
