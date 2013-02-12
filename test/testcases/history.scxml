@@ -1,0 +1,30 @@
+<scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0" name="HistoryTest">
+	<datamodel><data id="sawError" expr="false" /></datamodel>
+	<state id="universe">
+		<onentry>
+			<raise event="next" />
+			<raise event="modal.show" />
+			<raise event="bork" />
+			<raise event="modal.dismiss" />
+			<raise event="next" />
+		</onentry>
+		<initial><transition target="history-actions"/></initial>
+		<transition event="modal.show" target="modal-dialog"/>
+		<transition event="done.state.universe" target="pass"/>
+		<history type="deep" id="history-actions"><transition target="action-1"/></history>
+
+		<state id="action-1">
+			<transition event="next" target="action-2"/>
+			<transition event="bork" target="fail"/>
+		</state>
+		<state id="action-2">
+			<transition event="next" target="action-3"/>
+			<transition event="bork" target="fail"/>
+		</state>
+		<state id="action-3"><transition event="next" target="action-4"/></state>
+		<final id="action-4" />
+	</state>
+	<state id="modal-dialog"><transition event="modal.dismiss" target="history-actions"/></state>
+	<final id="pass"/>
+	<final id="fail"/>
+</scxml>
