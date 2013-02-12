@@ -15,7 +15,7 @@ local function findLCPA(first,rest) -- least common parallel ancestor
 		end
 	end
 end
-function S:findLCCA(first,rest) -- least common compound ancestor
+function findLCCA(first,rest) -- least common compound ancestor
 	for _,anc in ipairs(first.ancestors) do
 		if anc.isCompound then
 			if rest:every(function(s) return s:descendantOf(anc) end) then
@@ -23,7 +23,6 @@ function S:findLCCA(first,rest) -- least common compound ancestor
 			end
 		end
 	end
-	return self
 end
 
 -- ****************************************************************************
@@ -214,7 +213,7 @@ function S:exitStates(enabledTransitions)
 			if t.type == "internal" and t.source.isCompound and t.targets:every(function(s) return s:descendantOf(t.source) end) then
 				ancestor = t.source
 			else
-				ancestor = self:findLCCA(t.source, t.targets)
+				ancestor = findLCCA(t.source, t.targets)
 			end
 			for _,s in ipairs(self.configuration) do
 				if s:descendantOf(ancestor) then statesToExit:add(s) end
@@ -289,7 +288,7 @@ function S:enterStates(enabledTransitions)
 			if t.type=="internal" and t.source.isCompound and t.targets:every(function(s) return s:descendantOf(t.source) end) then
 				ancestor = t.source
 			else
-				ancestor = self:findLCCA(t.source, t.targets)
+				ancestor = findLCCA(t.source, t.targets)
 			end
 			for _,s in ipairs(t.targets) do addStatesToEnter(s) end
 			for _,s in ipairs(t.targets) do
