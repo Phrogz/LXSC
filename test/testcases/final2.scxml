@@ -1,0 +1,9 @@
+<scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0" name="HistoryTest">
+  <state id="s" initial="s1">
+    <state id="s1">
+      <onentry><raise event="go"/></onentry>
+      <transition event="go" target="pass"/>
+    </state>
+    <final id="pass"/>
+  </state>
+</scxml>

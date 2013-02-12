@@ -1,0 +1,16 @@
+<scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0" name="Final1">
+	<datamodel><data id="truthy" expr="1"/></datamodel>
+	<datamodel><data id="pass"   expr="false"/></datamodel>
+	<parallel id="wrap">
+		<state id="s1">
+			<onentry><raise event="e"/></onentry>
+			<transition event="e" target="olldone" type="internal" />
+			<state id="s1a"/>
+			<final id="olldone">
+				<donedata><param name="pass" expr="truthy and true"/></donedata>
+			</final>
+		</state>
+		<state id="test"><transition event="done.state.s1" cond="_event.data.pass" target="pass"/></state>
+	</parallel>
+	<final id="pass"/>
+</scxml>

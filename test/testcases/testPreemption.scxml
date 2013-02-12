@@ -63,7 +63,7 @@
     </state>
 
 
-    <final id="pass"><onentry><log label="Outcome" expr="'pass'"/></onentry></final>
-    <final id="fail"><onentry><log label="Outcome" expr="'fail'"/></onentry></final>
+    <final id="pass" />
+    <final id="fail" />
 
 </scxml>
