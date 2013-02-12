@@ -26,6 +26,10 @@ function OrderedSet:member(e)
 	return self[e]
 end
 
+function OrderedSet:isEmpty()
+	return not self[1]
+end
+
 function OrderedSet:clear()
 	for k,v in pairs(self) do self[k]=nil end
 end

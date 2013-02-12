@@ -5,7 +5,6 @@ function LXSC:parse(scxml)
 	local stateKinds = LXSC.stateKinds
 	local parser = SLAXML:parser{
 		startElement = function(name)
-			local klass = name
 			local item
 			if stateKinds[name] then
 				item = LXSC:state(name)
@@ -27,11 +26,9 @@ function LXSC:parse(scxml)
 			current = stack[#stack] or current
 		end,
 		text = function(text)
-			print(string.format("Text: %s",text))
+			current._text = text
 		end
 	}
 	parser:parse(scxml)
-	root:convertInitials()
-	root:cacheAndResolveReferences()
 	return root
 end

@@ -11,4 +11,7 @@
 		<state id="s21"><onentry><log expr="'entering s21'"/></onentry></state>
 		<transition event="holla"><log expr="'Yo, sup?'"/></transition>
 	</state>
+	<datamodel>
+		<data id="foo" expr="6*7" />
+	</datamodel>
 </scxml>

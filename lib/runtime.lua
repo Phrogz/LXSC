@@ -1,39 +1,46 @@
 (function(S)
 S.MAX_ITERATIONS = 1000
 
-local documentOrder = function(a,b) return a._order < b._order end
-local isAtomicState = function(s)   return s.isAtomic          end
-local LCPA          = function(first,rest) -- least common parallel ancestor
+-- ****************************************************************************
+
+local function documentOrder(a,b) return a._order < b._order end
+local function exitOrder(a,b)     return b._order < a._order end
+local function isAtomicState(s)   return s.isAtomic          end
+local function findLCPA(first,rest) -- least common parallel ancestor
 	for _,anc in ipairs(first.ancestors) do
-		if anc.isParallel then
-			local allDescend = true
-			for _,s in ipairs(rest) do
-				if not s:descendantOf(anc) then
-					allDescend = false
-					break
-				end
-			end
-			if allDescend then
+		if anc.kind=='parallel' then
+			if rest:every(function(s) return s:descendantOf(anc) end) then
 				return anc
 			end
 		end
 	end
 end
 
+local function findLCCA(first,rest) -- least common compound ancestor
+	for _,anc in ipairs(first.ancestors) do
+		if anc.isCompound then
+			if rest:every(function(s) return s:descendantOf(anc) end) then
+				return anc
+			end
+		end
+	end
+end
+
+-- ****************************************************************************
+
 function S:interpret()
-	if not self:validate() then self:failWithError() end
+	-- if not self:validate() then self:failWithError() end
 	self:expandScxmlSource()
 	self.configuration  = OrderedSet()
 	-- self.statesToInvoke = OrderedSet()
-	self.datamodel      = Datamodel()
+	self.datamodel      = LXSC.Datamodel()
+	self.historyValue   = {}
 
-	self:executeGlobalScriptElements()
+	-- self:executeGlobalScriptElements()
 	self.internalQueue = Queue()
 	self.externalQueue = Queue()
 	self.running = true
-	if self.binding == "early" then
-		self:initializeDatamodel()
-	end
+	if self.binding == "early" then self.datamodel:initAll(self) end
 	self:executeTransitionContent(self.initial.transitions)
 	self:enterStates(self.initial.transitions)
 	self:mainEventLoop()
@@ -48,7 +55,7 @@ function S:mainEventLoop()
 		while self.running and not stable and iterations<self.MAX_ITERATIONS do
 			enabledTransitions = self:selectEventlessTransitions()
 			if enabledTransitions:isEmpty() then
-				if internalQueue:isEmpty() then
+				if self.internalQueue:isEmpty() then
 					stable = true
 				else
 					local internalEvent = internalQueue:dequeue()
@@ -73,12 +80,12 @@ function S:mainEventLoop()
 		-- self.statesToInvoke:clear()
 
 		if self.internalQueue:isEmpty() then
-			local externalEvent = externalQueue:dequeue()
+			local externalEvent = self.externalQueue:dequeue()
 			if externalEvent then
-				if externalEvent:isCancelEvent() then
+				if externalEvent.name=='quit.lxsc' then
 					self.running = false
 				else
-					datamodel:set("_event",externalEvent)
+					self.datamodel:set("_event",externalEvent)
 					-- for _,state in ipairs(self.configuration) do
 					-- 	for _,inv in ipairs(state.invokes) do
 					-- 		if inv.invokeid == externalEvent.invokeid then
@@ -110,7 +117,7 @@ function S:exitInterpreter()
 		for _,content in ipairs(s.onexits) do self:executeContent(content) end
 		-- for _,inv     in ipairs(s.invokes) do self:cancelInvoke(inv)       end
 		-- self.configuration:delete(s)
-		-- if self:isFinalState(s) and s.parent.kind=='scxml' then   
+		-- if self:isFinalState(s) and s.parent.kind=='scxml' then
 		-- 	self:returnDoneEvent(s:donedata())
 		-- end
 	end
@@ -159,12 +166,15 @@ end
 function S:filterPreempted(enabledTransitions)
 	local filteredTransitions = OrderedSet()
 	for _,t1 in ipairs(enabledTransitions) do
-		if not filteredTransitions:some(function(t2)
+		local anyPreemption = false
+		for _,t2 in ipairs(filteredTransitions) do
 			local t2Cat = self:preemptionCategory(t2)
-			return t2Cat==3 or (t2Cat==2 and self:preemptionCategory(t1)==3)
-		end) then
-			filteredTransitions:add(t)
+			if t2Cat==3 or (t2Cat==2 and self:preemptionCategory(t1)==3) then
+				anyPreemption = true
+				break
+			end
 		end
+		if not anyPreemption then filteredTransitions:add(t1) end
 	end
 	return filteredTransitions
 end
@@ -172,7 +182,7 @@ function S:preemptionCategory(t)
 	if not t.preemptionCategory then
 		if not t.targets then
 			t.preemptionCategory = 1
-		elseif LCPA( t.type=="internal" and t.parent or t.parent.parent, t.targets ) then
+		elseif findLCPA( t.type=="internal" and t.parent or t.parent.parent, t.targets ) then
 			t.preemptionCategory = 2
 		else
 			t.preemptionCategory = 3
@@ -190,11 +200,7 @@ end
 function S:executeTransitionContent(transitions)
 	for _,t in ipairs(transitions) do
 		for _,executable in ipairs(t.exec) do
-			if executable.run then
-				executable:run()
-			else
-				print("Warning: unsupported executable "..executable.kind)
-			end
+			self:executeContent(executable)
 		end
 	end
 end
@@ -203,33 +209,132 @@ function S:exitStates(enabledTransitions)
 	local statesToExit = OrderedSet()
 	for _,t in ipairs(enabledTransitions) do
 		if t.targets then
-			tstates = getTargetStates(t.target)
-			if t.type == "internal" and isCompoundState(t.source) and tstates.every(lambda s: isDescendant(s,t.source))::
+			local ancestor
+			if t.type == "internal" and t.source.isCompound and t.targets:every(function(s) return s:descendantOf(t.source) end) then
 				ancestor = t.source
-			else:
-				ancestor = findLCCA([t.source].append(getTargetStates(t.target)))
-			for s in configuration:
-				if isDescendant(s,ancestor):
-					statesToExit.add(s)
+			else
+				ancestor = findLCCA(t.source, t.targets)
+			end
+			for _,s in ipairs(self.configuration) do
+				if s:descendantOf(ancestor) then statesToExit:add(s) end
+			end
 		end
 	end
-	for s in statesToExit:
-		statesToInvoke.delete(s)
-	statesToExit = statesToExit.toList().sort(exitOrder)
-	for s in statesToExit:
-		for h in s.history:
-			if h.type == "deep":
-				f = lambda s0: isAtomicState(s0) and isDescendant(s0,s)
-			else:
-				f = lambda s0: s0.parent == s
-			historyValue[h.id] = configuration.toList().filter(f)
-	for s in statesToExit:
-		for content in s.onexit:
-			executeContent(content)
-		for inv in s.invoke:
-			cancelInvoke(inv)
-		configuration.delete(s)
 
+	-- for _,s in ipairs(statesToExit) do self.statesToInvoke:delete(s) end
+
+	statesToExit = statesToExit:toList():sort(exitOrder)
+
+	for _,s in ipairs(statesToExit) do
+		-- TODO: create special history collection for speed
+		for _,h in ipairs(s.states) do
+			if h.kind=='history' then
+				if self.historyValue[h.id] then
+					self.historyValue[h.id]:clear()
+				else
+					self.historyValue[h.id] = OrderedSet()
+				end
+				for _,s0 in ipairs(self.configuration) do
+					if h.type=='deep' then
+						if s0.isAtomic and s0:descendantOf(s) then self.historyValue[h.id]:add(s0) end
+					else
+						if s0.parent==s then self.historyValue[h.id]:add(s0) end
+					end
+				end
+			end
+		end
+	end
+
+	for _,s in ipairs(statesToExit) do
+		for _,content in ipairs(s.onexits) do self:executeContent(content) end
+		-- for _,inv in ipairs(s.invokes)     do self:cancelInvoke(inv) end
+		self.configuration:delete(s)
+	end
+end
+
+function S:enterStates(enabledTransitions)
+	local statesToEnter = OrderedSet()
+	local statesForDefaultEntry = OrderedSet()
+
+	local function addStatesToEnter(state)		
+		if state.kind=='history' then
+			if self.historyValue[state.id] then
+				for _,s in ipairs(self.historyValue[state.id]) do
+					addStatesToEnter(s)
+					for anc in s:ancestorsUntil(state) do statesToEnter:add(anc) end
+				end
+			else
+				for _,t in ipairs(state.transitions) do
+					for _,s in ipairs(t.targets) do addStatesToEnter(s) end
+				end
+			end
+		else
+			statesToEnter:add(state)
+			if state.isCompound then
+				statesForDefaultEntry:add(state)
+				for _,s in ipairs(state.initial.transitions[1].targets) do addStatesToEnter(s) end
+			elseif state.kind=='parallel' then
+				for _,s in ipairs(state.reals) do addStatesToEnter(s) end
+			end
+		end
+	end
+
+	for _,t in ipairs(enabledTransitions) do		
+		if t.targets then
+			local ancestor
+			if t.type=="internal" and t.source.isCompound and t.targets:every(function(s) return s:descendantOf(t.source) end) then
+				ancestor = t.source
+			else
+				ancestor = findLCCA(t.source, t.targets)
+			end
+			for _,s in ipairs(t.targets) do addStatesToEnter(s) end
+			for _,s in ipairs(t.targets) do
+				for anc in s:ancestorsUntil(ancestor) do
+					statesToEnter:add(anc)
+					if anc.kind=='parallel' then
+						for _,child in ipairs(anc.reals) do
+							if not statesToEnter:some(function(s) return s:descendantOf(child) end) then
+								addStatesToEnter(child)
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+
+	statesToEnter = statesToEnter:toList():sort(documentOrder)
+	for _,s in ipairs(statesToEnter) do
+		self.configuration:add(s)
+		-- self.statesToInvoke:add(s)
+		if self.binding=="late" then self.datamodel:initState(s) end -- The datamodel ensures this happens only once per state
+		for _,content in ipairs(s.onentrys) do self:executeContent(content) end
+		if statesForDefaultEntry:member(s) then self:executeTransitionContent(s.initial.transitions) end
+		if s.kind=='final' then
+			local parent = s.parent
+			local grandparent = parent.parent
+			self:fireEvent( "done.state."..parent.id, s:donedata(), true )
+			if grandparent and grandparent.kind=='parallel' then
+				local allAreInFinal = true
+				for _,child in ipairs(grandparent.reals) do
+					if not isInFinalState(child) then
+						allAreInFinal = false
+						break
+					end
+				end
+				if allAreInFinal then self:fireEvent( "done.state."..grandparent.id ) end
+			end
+		end
+	end
+
+	for _,s in ipairs(self.configuration) do
+		if s.kind=='final' and s.parent.kind=='scxml' then self.running = false end
+	end
+end
+
+function S:fireEvent(name,data,internalFlag)
+	self[internalFlag and "internalQueue" or "externalQueue"]:enqueue(LXSC.Event(name,data))
+end
 
 -- Sensible aliases
 S.start = S.interpret

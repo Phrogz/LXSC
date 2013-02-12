@@ -2,8 +2,11 @@ require 'io'
 require 'lxsc'
 
 xml = io.input('testcases/simple.scxml'):read("*all")
-lom = AKLOM.parse(xml)
-doc = LXSC:scxml(lom)
-print(doc)
-
-
+machine = LXSC:parse(xml)
+machine:start()
+print("active: "..table.concat(machine:activeStateIds(),  ", ") ) 
+print("atomic: "..table.concat(machine:activeAtomicIds(), ", ") ) 
+machine:fireEvent("e")
+machine:step()
+print("active: "..table.concat(machine:activeStateIds(),  ", ") ) 
+print("atomic: "..table.concat(machine:activeAtomicIds(), ", ") ) 
