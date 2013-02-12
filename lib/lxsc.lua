@@ -1,4 +1,4 @@
-LXSC = { SCXML={}, STATE={}, TRANSITION={}, DATAMODEL={}, GENERIC={} }
+LXSC = { SCXML={}, STATE={}, TRANSITION={}, GENERIC={} }
 for k,t in pairs(LXSC) do t.__meta={__index=t} end
 setmetatable(LXSC.SCXML,{__index=LXSC.STATE})
 setmetatable(LXSC,{__index=function(kind)
@@ -37,14 +37,24 @@ end
 -- *********************************
 
 function LXSC:datamodel()
-	local t = { kind='datamodel' }
-	setmetatable(t,LXSC.DATAMODEL.__meta)
+	local t = {	kind='datamodel' }
+	function t:addChild(item) table.insert(self.state.data,item) end
 	return t
 end
 
-function LXSC.DATAMODEL:addChild(data)
-	table.insert(self.state.data,data)
+function LXSC:onentry()
+	local t = {	kind='onentry' }
+	function t:addChild(item) table.insert(self.state.onentrys,item) end
+	return t
 end
+
+function LXSC:onexit()
+	local t = {	kind='onexit' }
+	function t:addChild(item) table.insert(self.state.onexits,item) end
+	return t
+end
+
+-- *********************************
 
 function dump(o,seen)
 	if not seen then seen = {} end

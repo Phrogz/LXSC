@@ -31,7 +31,7 @@ end
 function S:interpret()
 	-- if not self:validate() then self:failWithError() end
 	self:expandScxmlSource()
-	self.configuration  = OrderedSet()
+	self.configuration:clear()
 	-- self.statesToInvoke = OrderedSet()
 	self.datamodel      = LXSC.Datamodel()
 	self.historyValue   = {}
@@ -46,6 +46,10 @@ function S:interpret()
 	self:mainEventLoop()
 end
 
+-- ******************************************************************************************************
+-- ******************************************************************************************************
+-- ******************************************************************************************************
+
 function S:mainEventLoop()
 	local anyChange, enabledTransitions, stable, iterations
 	while self.running do
@@ -58,7 +62,7 @@ function S:mainEventLoop()
 				if self.internalQueue:isEmpty() then
 					stable = true
 				else
-					local internalEvent = internalQueue:dequeue()
+					local internalEvent = self.internalQueue:dequeue()
 					self.datamodel:set("_event",internalEvent)
 					enabledTransitions = self:selectTransitions(internalEvent)
 				end
@@ -72,11 +76,7 @@ function S:mainEventLoop()
 
 		if iterations>=S.MAX_ITERATIONS then print(string.format("Warning: stopped unstable system after %d internal iterations",S.MAX_ITERATIONS)) end
 
-		-- for _,state in ipairs(self.statesToInvoke) do
-		-- 	for _,inv in ipairs(state.invokes) do
-		-- 		self:invoke(inv)
-		-- 	end
-		-- end
+		-- for _,state in ipairs(self.statesToInvoke) do for _,inv in ipairs(state.invokes) do self:invoke(inv) end end
 		-- self.statesToInvoke:clear()
 
 		if self.internalQueue:isEmpty() then
@@ -88,12 +88,8 @@ function S:mainEventLoop()
 					self.datamodel:set("_event",externalEvent)
 					-- for _,state in ipairs(self.configuration) do
 					-- 	for _,inv in ipairs(state.invokes) do
-					-- 		if inv.invokeid == externalEvent.invokeid then
-					-- 			self:applyFinalize(inv, externalEvent)
-					-- 		end
-					-- 		if inv.autoforward then
-					-- 			self:send(inv.id, externalEvent)
-					-- 		end
+					-- 		if inv.invokeid == externalEvent.invokeid then self:applyFinalize(inv, externalEvent) end
+					-- 		if inv.autoforward then self:send(inv.id, externalEvent) end
 					-- 	end
 					-- end
 					enabledTransitions = self:selectTransitions(externalEvent)
@@ -111,15 +107,17 @@ function S:mainEventLoop()
 	if not self.running then self:exitInterpreter() end
 end
 
+-- ******************************************************************************************************
+-- ******************************************************************************************************
+-- ******************************************************************************************************
+
 function S:exitInterpreter()
 	local statesToExit = self.configuration:toList():sort(documentOrder)
 	for _,s in ipairs(statesToExit) do
 		for _,content in ipairs(s.onexits) do self:executeContent(content) end
 		-- for _,inv     in ipairs(s.invokes) do self:cancelInvoke(inv)       end
 		-- self.configuration:delete(s)
-		-- if self:isFinalState(s) and s.parent.kind=='scxml' then
-		-- 	self:returnDoneEvent(s:donedata())
-		-- end
+		-- if self:isFinalState(s) and s.parent.kind=='scxml' then self:returnDoneEvent(s:donedata()) end
 	end
 end
 
@@ -256,7 +254,7 @@ function S:enterStates(enabledTransitions)
 	local statesToEnter = OrderedSet()
 	local statesForDefaultEntry = OrderedSet()
 
-	local function addStatesToEnter(state)		
+	local function addStatesToEnter(state)	
 		if state.kind=='history' then
 			if self.historyValue[state.id] then
 				for _,s in ipairs(self.historyValue[state.id]) do
@@ -312,17 +310,21 @@ function S:enterStates(enabledTransitions)
 		if statesForDefaultEntry:member(s) then self:executeTransitionContent(s.initial.transitions) end
 		if s.kind=='final' then
 			local parent = s.parent
-			local grandparent = parent.parent
-			self:fireEvent( "done.state."..parent.id, s:donedata(), true )
-			if grandparent and grandparent.kind=='parallel' then
-				local allAreInFinal = true
-				for _,child in ipairs(grandparent.reals) do
-					if not isInFinalState(child) then
-						allAreInFinal = false
-						break
+			if parent.kind=='scxml' then
+				self.running = false
+			else
+				local grandparent = parent.parent
+				self:fireEvent( "done.state."..parent.id, s:donedata(), true )
+				if grandparent and grandparent.kind=='parallel' then
+					local allAreInFinal = true
+					for _,child in ipairs(grandparent.reals) do
+						if not isInFinalState(child) then
+							allAreInFinal = false
+							break
+						end
 					end
+					if allAreInFinal then self:fireEvent( "done.state."..grandparent.id ) end
 				end
-				if allAreInFinal then self:fireEvent( "done.state."..grandparent.id ) end
 			end
 		end
 	end
@@ -333,6 +335,7 @@ function S:enterStates(enabledTransitions)
 end
 
 function S:fireEvent(name,data,internalFlag)
+	-- print("fireEvent(",name,data,internalFlag,")")
 	self[internalFlag and "internalQueue" or "externalQueue"]:enqueue(LXSC.Event(name,data))
 end
 

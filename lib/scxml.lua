@@ -4,6 +4,10 @@ function LXSC:scxml()
 	t.binding   = "early"
 	t.datamodel = "lua"
 	t.id        = nil
+
+	t.running   = false
+	t.configuration = OrderedSet()
+
 	setmetatable(t,LXSC.SCXML.__meta)
 	return t
 end

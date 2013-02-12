@@ -1,7 +1,7 @@
 function LXSC:state(kind)
 	local t = {
 		kind=kind or 'state',
-		id=LXSC.uuid4(),
+		id         = kind.."-"..LXSC.uuid4(),
 		isAtomic   = true,
 		isCompound = false,
 		isParallel = kind=='parallel',
@@ -38,11 +38,10 @@ function LXSC.STATE:addChild(item)
 	if item.kind=='transition' then
 		item.source = self
 		table.insert( self.transitions, item )
+
 	elseif item.kind=='onentry' or item.kind=='onexit' or item.kind=='datamodel' then
 		item.state = self
-	elseif item.kind=='invoke' then
-		item.state = self
-		table.insert(self.invokes,item)
+
 	elseif LXSC.stateKinds[item.kind] then
 		table.insert(self.states,item)
 		item.parent = self
@@ -55,10 +54,15 @@ function LXSC.STATE:addChild(item)
 			item.selfAndAncestors[i+2] = anc
 		end
 		if LXSC.realKinds[item.kind] then
-			table.insert(self.states,item)
-			self.isCompound = true
+			table.insert(self.reals,item)
+			self.isCompound = self.kind~='parallel'
 			self.isAtomic   = false
 		end
+
+	elseif item.kind=='invoke' then
+		item.state = self
+		table.insert(self.invokes,item)
+
 	else
 		print("Warning: unhandled child of state: "..item.kind )
 	end
@@ -74,16 +78,32 @@ function LXSC.STATE:ancestorsUntil(stopNode)
 	end
 end
 
+function LXSC.STATE:createInitialTo(stateOrId)
+	local initial = LXSC:state('initial')
+	self:addChild(initial)
+	local transition = LXSC:transition()
+	initial:addChild(transition)
+	transition:addTarget(stateOrId)
+	self.initial = initial
+end
+
 function LXSC.STATE:convertInitials()
 	if type(self.initial)=='string' then
-		local initial = LXSC:state('initial')
-		self:addChild(initial)
-		local transition = LXSC:transition()
-		initial:addChild(transition)
-		transition.targets = List( self.initial )
-		self.initial = initial
-		for _,s in ipairs(self.reals) do s:convertInitials() end
+		-- Convert initial="..." attribute to <initial> state
+		self:createInitialTo(self.initial)
+	elseif not self.initial then
+		local initialElement
+		for _,s in ipairs(self.states) do
+			if s.kind=='initial' then initialElement=s; break end
+		end
+
+		if initialElement then
+			self.initial = initialElement
+		elseif self.states[1] then
+			self:createInitialTo(self.states[1])
+		end
 	end
+	for _,s in ipairs(self.reals) do s:convertInitials() end
 end
 
 function LXSC.STATE:cacheReference(lookup)

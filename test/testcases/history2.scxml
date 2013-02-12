@@ -1,0 +1,13 @@
+<scxml name="History2" version="1.0" xmlns="http://www.w3.org/2005/07/scxml">
+  <initial><transition target="s1"><raise event="e" /></transition></initial>
+  <state id="s1"><transition event="e" target="s2-history"/></state>
+  <state id="s2">
+    <state id="s2a"/>
+    <state id="s2b">
+      <onentry><raise event="f"/></onentry>
+      <transition event="f" target="pass"/>
+    </state>
+    <history id="s2-history"><transition target="s2b"/></history>
+  </state>
+  <final id="pass"/>
+</scxml>

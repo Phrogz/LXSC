@@ -1,0 +1,16 @@
+<scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0">
+	<initial><transition target="p"><send event="e" /></transition></initial>
+	<parallel id="p">
+		<state id="s1" initial="a">
+			<state id="a" />
+			<state id="b" />
+			<transition event="e" target="b" type="internal" />
+		</state>
+		<state id="s2">
+			<onentry><log label="enter s2" /></onentry>
+			<onexit><log label="exit s2" /></onexit>
+		</state>
+		<transition cond="In('b') and In('s2')" target="pass" />
+	</parallel>
+	<final id="pass" />
+</scxml>

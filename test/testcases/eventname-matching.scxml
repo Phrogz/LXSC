@@ -1,0 +1,30 @@
+<scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0">
+	<state id="s0"><onentry><raise event="a"       /></onentry><transition event="a b.c c.d.e d.e.f.* f." target="s1"/></state>
+	<state id="s1"><onentry><raise event="a.b"     /></onentry><transition event="a b.c c.d.e d.e.f.* f." target="s2"/></state>
+	<state id="s2"><onentry><raise event="b.c"     /></onentry><transition event="a b.c c.d.e d.e.f.* f." target="s3"/></state>
+	<state id="s3"><onentry><raise event="b.c.d"   /></onentry><transition event="a b.c c.d.e d.e.f.* f." target="s4"/></state>
+	<state id="s4"><onentry><raise event="c.d.e"   /></onentry><transition event="a b.c c.d.e d.e.f.* f." target="s5"/></state>
+	<state id="s5"><onentry><raise event="c.d.e.f" /></onentry><transition event="a b.c c.d.e d.e.f.* f." target="s6"/></state>
+	<state id="s6"><onentry><raise event="d.e.f"   /></onentry><transition event="a b.c c.d.e d.e.f.* f." target="s7"/></state>
+	<state id="s7"><onentry><raise event="d.e.f.g" /></onentry><transition event="a b.c c.d.e d.e.f.* f." target="s8"/></state>
+	<state id="s8"><onentry><raise event="f"       /></onentry><transition event="a b.c c.d.e d.e.f.* f." target="s9"/></state>
+	<state id="s9"><onentry><raise event="f.g"     /></onentry><transition event="a b.c c.d.e d.e.f.* f." target="refutes"/></state>
+	<state id="refutes">
+		<onentry>
+			<raise event="alpha"/>
+			<raise event="b.charlie"/>
+			<raise event="d.e.frank"/>
+			<raise event="frank"/>
+			<raise event="b"/>
+			<raise event="z.a"/>
+			<raise event="next"/>
+		</onentry>
+		<transition event="a b.c c.d.e d.e.f.* f." target="fail"/>
+		<transition event="next" target="catchall1"/>
+	</state>
+	<state id="catchall1"><onentry><raise event="a"/></onentry><transition event="*" target="catchall2"/></state>
+	<state id="catchall2"><onentry><raise event="a.b"/></onentry><transition event="*" target="catchall3"/></state>
+	<state id="catchall3"><onentry><raise event="a.b.c"/></onentry><transition event="*" target="pass"/></state>
+	<final id="fail"/>
+	<final id="pass"/>
+</scxml>
