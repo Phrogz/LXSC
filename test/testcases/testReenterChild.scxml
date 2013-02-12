@@ -1,37 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml
-  xmlns="http://www.w3.org/2005/07/scxml"
-	xmlns:conf="http://www.w3.org/2005/scxml-conformance" initial="p01">
-<datamodel>
-	<data id="var1" expr="0" />  <!-- how many times p0 has been entered -->
-	<data id="var2" expr="0" />  <!-- how many times p01 has been entered -->
-</datamodel>
+<scxml xmlns="http://www.w3.org/2005/07/scxml" initial="p01">
+	<datamodel>
+		<data id="var1" expr="0" />  <!-- how many times p0 has been entered -->
+		<data id="var2" expr="0" />  <!-- how many times p01 has been entered -->
+	</datamodel>
 
 	<parallel id="p0">
-		<onentry>
-			<assign location="var1" expr="var1 + 1" />
-		</onentry>
-
+		<onentry><assign location="var1" expr="var1 + 1" /></onentry>
 		<state id="p01">
-			<onentry>
-				<assign location="var2" expr="var2 + 1" />
-			</onentry>
+			<onentry><assign location="var2" expr="var2 + 1" /></onentry>
 			<transition cond="var2==1" target="p01" />
 			<transition cond="var2==2" target="S1" />
 		</state>
-
-
 		<state id="p02" />
-
 	</parallel>
 
 	<state id="S1">
 		<transition cond="var1==2" target="pass" />
 		<transition target="fail" />
 	</state>
-   
-    
-    <final id="pass" />
-    <final id="fail" />
-     
+
+  <final id="pass" />
+  <final id="fail" />     
 </scxml>
