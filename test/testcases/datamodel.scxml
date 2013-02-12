@@ -1,0 +1,13 @@
+<scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0">
+	<datamodel>
+		<!-- <data id="employees" src="http://example.com/employees.json"/> -->
+		<data id="year" expr="2008"/>
+		<data id="ceo" expr="&quot;Mr Big&quot;"/>
+		<data id="profitable" expr="true"/>
+	</datamodel>
+	<state>
+		<datamodel><data id="kidlins">7 * 6</data></datamodel>
+		<transition cond="year==2008 and ceo=='Mr Big' and profitable and kidlins==42" target="pass" />
+	</state>
+	<final id="pass" />
+</scxml>
