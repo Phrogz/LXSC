@@ -262,7 +262,7 @@ function S:enterStates(enabledTransitions)
 			if self.historyValue[state.id] then
 				for _,s in ipairs(self.historyValue[state.id]) do
 					addStatesToEnter(s)
-					for anc in s:ancestorsUntil(state) do
+					for anc in s:ancestorsUntil(state.parent) do
 						statesToEnter:add(anc)
 					end
 				end
