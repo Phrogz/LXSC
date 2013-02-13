@@ -1,0 +1,53 @@
+<scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0" name="Microwave">
+  <initial><transition target="oven">
+    <raise event="tick" />
+    <raise event="power.on" />
+    <raise event="tick" />
+    <raise event="tick" />
+    <raise event="tick" />
+    <raise event="door.open" />
+    <raise event="tick" />
+    <raise event="tick" />
+    <raise event="door.close" />
+    <raise event="tick" />
+    <raise event="tick" />
+  </transition></initial>
+
+  <datamodel>
+    <data id="cookTime"     expr="5"/>
+    <data id="timer"        expr="0" />
+    <data id="ticksIgnored" expr="0"/>
+  </datamodel>
+
+  <parallel id="oven">
+    <state id="radiation" initial="radiation-off">
+      <state id="radiation-off">
+        <transition event="power.on" target="radiation-maybe"/>
+        <transition event="tick"><assign location="ticksIgnored" expr="ticksIgnored+1" /></transition>
+        <transition cond="ticksIgnored==3" target="pass"/>
+      </state>
+      
+      <state id="radiation-maybe" initial="paused">
+        <transition event="power.off"           target="radiation-off"/>
+        <transition cond="timer &gt;= cookTime" target="radiation-off"/>
+        
+        <state id="paused">
+          <transition cond="In('closed')" target="cooking"/>
+          <transition event="tick"><assign location="ticksIgnored" expr="ticksIgnored+1" /></transition>
+        </state>
+        
+        <state id="cooking">
+          <transition cond="In('open')" target="paused"/>
+          <transition event="tick"><assign location="timer" expr="timer + 1"/></transition>
+        </state>
+      </state>
+    </state>
+
+    <state id="door">
+      <state id="closed"><transition event="door.open" target="open"/></state>
+      <state id="open"><transition event="door.close" target="closed"/></state>
+    </state>
+  </parallel>
+
+  <final id="pass" />
+</scxml>
