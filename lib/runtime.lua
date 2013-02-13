@@ -313,29 +313,32 @@ function S:enterStates(enabledTransitions)
 
 	statesToEnter = statesToEnter:toList():sort(documentOrder)
 	for _,s in ipairs(statesToEnter) do
-		if s.kind=='scxml' then print("WARNING: adding scxml to the configuration!") end
-		self.configuration:add(s)
-		-- self.statesToInvoke:add(s)
-		if self.binding=="late" then self.datamodel:initState(s) end -- The datamodel ensures this happens only once per state
-		for _,content in ipairs(s.onentrys) do self:executeContent(content) end
-		if self.onAfterEnter then self.onAfterEnter(s.id,s.kind) end
-		if statesForDefaultEntry:member(s) then self:executeTransitionContent(s.initial.transitions) end
-		if s.kind=='final' then
-			local parent = s.parent
-			if parent.kind=='scxml' then
-				self.running = false
-			else
-				local grandparent = parent.parent
-				self:fireEvent( "done.state."..parent.id, self:donedata(s), true )
-				if grandparent and grandparent.kind=='parallel' then
-					local allAreInFinal = true
-					for _,child in ipairs(grandparent.reals) do
-						if not self:isInFinalState(child) then
-							allAreInFinal = false
-							break
+		if s.kind=='scxml' then
+			print("WARNING: tried to add scxml to the configuration!")
+		else
+			self.configuration:add(s)
+			-- self.statesToInvoke:add(s)
+			if self.binding=="late" then self.datamodel:initState(s) end -- The datamodel ensures this happens only once per state
+			for _,content in ipairs(s.onentrys) do self:executeContent(content) end
+			if self.onAfterEnter then self.onAfterEnter(s.id,s.kind) end
+			if statesForDefaultEntry:member(s) then self:executeTransitionContent(s.initial.transitions) end
+			if s.kind=='final' then
+				local parent = s.parent
+				if parent.kind=='scxml' then
+					self.running = false
+				else
+					local grandparent = parent.parent
+					self:fireEvent( "done.state."..parent.id, self:donedata(s), true )
+					if grandparent and grandparent.kind=='parallel' then
+						local allAreInFinal = true
+						for _,child in ipairs(grandparent.reals) do
+							if not self:isInFinalState(child) then
+								allAreInFinal = false
+								break
+							end
 						end
+						if allAreInFinal then self:fireEvent( "done.state."..grandparent.id ) end
 					end
-					if allAreInFinal then self:fireEvent( "done.state."..grandparent.id ) end
 				end
 			end
 		end
