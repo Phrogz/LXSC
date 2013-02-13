@@ -29,7 +29,7 @@
       
       <state id="radiation-maybe" initial="paused">
         <transition event="power.off"           target="radiation-off"/>
-        <transition cond="timer &gt;= cookTime" target="radiation-off"/>
+        <transition cond="timer >= cookTime" target="radiation-off"/>
         
         <state id="paused">
           <transition cond="In('closed')" target="cooking"/>

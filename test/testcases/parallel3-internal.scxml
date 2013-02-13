@@ -6,10 +6,7 @@
 			<state id="b" />
 			<transition event="e" target="b" type="internal" />
 		</state>
-		<state id="s2">
-			<onentry><log label="enter s2" /></onentry>
-			<onexit><log label="exit s2" /></onexit>
-		</state>
+		<state id="s2"/>
 		<transition cond="In('b') and In('s2')" target="pass" />
 	</parallel>
 	<final id="pass" />
