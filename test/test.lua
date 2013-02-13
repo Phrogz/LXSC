@@ -1,10 +1,11 @@
+package.path = "../?.lua;" .. package.path
 require 'io'
 require 'lxsc'
-require 'test/lunity'
+require 'lunity'
 
 module( 'TEST_LXSC', lunity )
 
-DIR = 'test/testcases'
+DIR = 'testcases'
 SHOULD_NOT_FINISH = {final2=true}
 
 function test0_parsing()

@@ -1,7 +1,9 @@
+package.path = "../?.lua;" .. package.path
+
 require 'io'
 require 'lxsc'
 
-DIR = 'test/testcases'
+DIR = 'testcases'
 
 for filename in io.popen(string.format('ls "%s"',DIR)):lines() do
 	local testName = filename:sub(1,-7)
