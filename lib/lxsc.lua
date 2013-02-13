@@ -1,5 +1,8 @@
 LXSC = { SCXML={}, STATE={}, TRANSITION={}, GENERIC={} }
 for k,t in pairs(LXSC) do t.__meta={__index=t} end
+
+LXSC.VERSION = "0.1"
+
 setmetatable(LXSC.SCXML,{__index=LXSC.STATE})
 setmetatable(LXSC,{__index=function(kind)
 	return function(self,kind)
