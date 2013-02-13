@@ -1,4 +1,4 @@
-LXSC = { SCXML={}, STATE={}, TRANSITION={}, GENERIC={}, VERSION="0.1" }
+LXSC = { SCXML={}, STATE={}, TRANSITION={}, GENERIC={} }
 for k,t in pairs(LXSC) do t.__meta={__index=t} end
 setmetatable(LXSC.SCXML,{__index=LXSC.STATE})
 setmetatable(LXSC,{__index=function(kind)

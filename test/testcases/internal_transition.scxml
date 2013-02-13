@@ -1,8 +1,9 @@
 <scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0">
+	<transition event="oops" target="fail" />
+
 	<state id="outer">
 		<onexit><raise event="oops"/></onexit>
 		<transition event="check" target="check" type="internal"/>
-		<transition event="oops"  target="fail" />
 		<state id="inner"><onentry><raise event="check"/></onentry></state>
 		<state id="check">
 			<onentry><send event="quit"/></onentry>
