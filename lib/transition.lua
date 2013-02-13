@@ -63,7 +63,7 @@ end
 
 function LXSC.TRANSITION:inspect()
 	return string.format(
-		"<Transition inside '%s'%s%s%s>",
+		"<transition in '%s'%s%s%s>",
 		self.source.id or self.source.name,
 		self._event and (" on '"..self._event.."'") or "",
 		self.cond and (" if '"..self.cond.."'") or "",
