@@ -1,13 +1,13 @@
 <scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0" name="HistoryTest">
-	<datamodel><data id="sawError" expr="false" /></datamodel>
+	<datamodel><data id="sawModal" expr="false" /></datamodel>
+	<initial><transition target="universe">
+		<raise event="next" />
+		<raise event="modal.show" />
+		<raise event="bork" />
+		<raise event="modal.dismiss" />
+		<raise event="next" />
+	</transition></initial>
 	<state id="universe">
-		<onentry>
-			<raise event="next" />
-			<raise event="modal.show" />
-			<raise event="bork" />
-			<raise event="modal.dismiss" />
-			<raise event="next" />
-		</onentry>
 		<initial><transition target="history-actions"/></initial>
 		<transition event="modal.show" target="modal-dialog"/>
 		<transition event="done.state.universe" target="pass"/>
@@ -21,10 +21,13 @@
 			<transition event="next" target="action-3"/>
 			<transition event="bork" target="fail"/>
 		</state>
-		<state id="action-3"><transition event="next" target="action-4"/></state>
+		<state id="action-3"><transition cond="sawModal" target="action-4"/></state>
 		<final id="action-4" />
 	</state>
-	<state id="modal-dialog"><transition event="modal.dismiss" target="history-actions"/></state>
+	<state id="modal-dialog">
+		<onentry><assign location="sawModal" expr="true" /></onentry>
+		<transition event="modal.dismiss" target="history-actions"/>
+	</state>
 	<final id="pass"/>
 	<final id="fail"/>
 </scxml>
