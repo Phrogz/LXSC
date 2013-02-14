@@ -1,0 +1,28 @@
+<scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0" xmlns:x="borked">
+	<x:foo unrecognized="true" />
+	<state id="s1">
+		<transition cond="neverSet > 10" target="fail" />
+		<transition event="error.execution" target="s2" />
+	</state><state id="s2">
+		<transition cond="bad!syntax@!?" target="fail" />
+		<transition event="error.execution" target="s3" />
+	</state><state id="s3">
+		<transition cond="true" target="s3b">
+			<script>bad!syntax@!?</script>
+		</transition>
+		<transition event="error.execution" target="s4">
+			<log label="Error in s3 itsel" />
+		</transition>
+	</state><state id="s3b">
+		<transition event="error.execution" target="s4" />
+	</state><state id="s4">
+		<transition cond="true" target="s4b">
+			<x:bar>unhandled executable</x:bar>
+		</transition>
+	</state><state id="s4b">
+		<onentry><raise event="noerror" /></onentry>
+		<!-- the interpreter may either raise an error or ignore the x:bar element -->
+		<transition event="error.execution noerror" target="pass" />
+	</state>
+	<final id="pass"/><final id="fail"/>
+</scxml>

@@ -25,10 +25,7 @@ end
 
 function test1_dataAccess()
 	s = LXSC:parse([[<scxml xmlns='http://www.w3.org/2005/07/scxml' version='1.0'>
-		<state id='s'>
-			<transition cond="n==7" target="seven"/>
-			<transition cond="n==8" target="eight"/>
-		</state>
+		<state id='s'><transition cond="n==7" target="seven"/><transition cond="n==8" target="eight"/></state>
 		<final id="seven"/><final id="eight"/>
 	</scxml>]])
 	s:set("foo","bar")
