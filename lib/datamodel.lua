@@ -1,10 +1,15 @@
 LXSC.Datamodel = {}
 LXSC.Datamodel.__meta = {__index=LXSC.Datamodel}
 setmetatable(LXSC.Datamodel,{__call=function(o,scxml)
-	local dm = { data={ In=function(id) return scxml:isActive(id) end }, statesInited={}, scxml=scxml }
+	local dm = { statesInited={}, scxml=scxml }
 	setmetatable(dm,o.__meta)
+	dm:clear()
 	return dm
 end})
+
+function LXSC.Datamodel:clear()
+	self.data = { In=function(id) return self.scxml:isActive(id) end }
+end
 
 function LXSC.Datamodel:initAll()
 	local function recurse(state)

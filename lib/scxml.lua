@@ -2,7 +2,7 @@ function LXSC:scxml()
 	local t = LXSC:state('scxml')
 	t.name      = "(lxsc)"
 	t.binding   = "early"
-	t.datamodel = "lua"
+	t.datamodel = LXSC.Datamodel(t) -- FIXME: this will be clobbered by a datamodel attribute; move to _datamodel
 	t.id        = nil
 
 	t.running   = false
@@ -11,6 +11,8 @@ function LXSC:scxml()
 	setmetatable(t,LXSC.SCXML.__meta)
 	return t
 end
+
+-- TODO: add datamodel manipulating methods directly to the machine
 
 function LXSC.SCXML:expandScxmlSource()
 	self:convertInitials()

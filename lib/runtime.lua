@@ -30,9 +30,9 @@ end
 function S:interpret()
 	-- if not self:validate() then self:failWithError() end
 	self:expandScxmlSource()
-	self.configuration:clear()
+	-- self.configuration:clear()
 	-- self.statesToInvoke = OrderedSet()
-	self.datamodel      = LXSC.Datamodel(self)
+	self.datamodel:clear()
 	self.historyValue   = {}
 
 	-- self:executeGlobalScriptElements()
