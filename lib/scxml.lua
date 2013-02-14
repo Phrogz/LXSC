@@ -8,34 +8,29 @@ function LXSC:scxml()
 	t.id        = nil
 
 	t.running   = false
-	t._data     = LXSC.Datamodel(t)
 	t._config   = OrderedSet()
 
-	setmetatable(t,LXSC.SCXML.__meta)
-	return t
+	return setmetatable(t,LXSC.SCXML.__meta)
 end
 
-function LXSC.SCXML:get(key)
-	return self._data:get(key)
+-- Fetch a single named value from the data model
+function LXSC.SCXML:get(location)
+	return self._data:get(location)
 end
 
-function LXSC.SCXML:set(key,value)
-	self._data:set(key,value)
+-- Set a single named value in the data model
+function LXSC.SCXML:set(location,value)
+	self._data:set(location,value)
 end
 
-function LXSC.SCXML:clear()
-	self._data:clear()
+-- Evaluate a single Lua expression and return the value
+function LXSC.SCXML:eval(expression)
+	return self._data:eval(expression)
 end
 
-function LXSC.SCXML:eval(code)
-	return self._data:run(code)
-end
-
-function LXSC.SCXML:expandScxmlSource()
-	self:convertInitials()
-	self._stateById = {}
-	for _,s in ipairs(self.states) do s:cacheReference(self._stateById) end
-	self:resolveReferences(self._stateById)
+-- Run arbitrary script code (multiple lines) with no return value
+function LXSC.SCXML:run(code)
+	self._data:run(code)
 end
 
 function LXSC.SCXML:isActive(stateId)
@@ -44,9 +39,7 @@ end
 
 function LXSC.SCXML:activeStateIds()
 	local a = OrderedSet()
-	for _,s in ipairs(self._config) do
-		a:add(s.id)
-	end
+	for _,s in ipairs(self._config) do a:add(s.id) end
 	return a
 end
 
@@ -56,4 +49,12 @@ function LXSC.SCXML:activeAtomicIds()
 		if s.isAtomic then a:add(s.id) end
 	end
 	return a
+end
+
+function LXSC.SCXML:addChild(item)
+	if item._kind=='script' then
+		self._script = item
+	else
+		LXSC.State.addChild(self,item)
+	end
 end

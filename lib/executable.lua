@@ -15,6 +15,10 @@ function LXSC.Exec:raise(scxml)
 	scxml:fireEvent(self.event,nil,true)
 end
 
+function LXSC.Exec:script(scxml)
+	scxml:run(self._text)
+end
+
 function LXSC.Exec:send(scxml)
 	-- TODO: warn about delay/delayexpr no support
 	-- TODO: support type/typeexpr/target/targetexpr
@@ -33,7 +37,6 @@ function LXSC.SCXML:executeContent(item)
 	if handler then
 		handler(item,self)
 	else
-		self:fireEvent('error.execution.unhandled',{message="unhandled executable type "..item._kind},true)
-		-- print('error.execution.unhandled',item._kind)
+		self:fireEvent('error.execution.unhandled',"unhandled executable type "..item._kind,true)
 	end
 end

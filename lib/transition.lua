@@ -39,7 +39,7 @@ function LXSC.Transition:addTarget(stateOrId)
 end
 
 function LXSC.Transition:conditionMatched(datamodel)
-	return not self.cond or datamodel:run(self.cond)
+	return not self.cond or datamodel:eval(self.cond)
 end
 
 function LXSC.Transition:matchesEvent(event)

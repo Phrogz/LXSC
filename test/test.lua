@@ -25,27 +25,47 @@ end
 
 function test1_dataAccess()
 	s = LXSC:parse([[<scxml xmlns='http://www.w3.org/2005/07/scxml' version='1.0'>
-		<state id='s'><transition cond="n==7" target="seven"/><transition cond="n==8" target="eight"/></state>
-		<final id="seven"/><final id="eight"/>
+		<script>boot(); boot()</script>
+		<datamodel><data id="n" expr="0"/></datamodel>
+		<state id='s'>
+			<transition event="error.execution" target="errord"/>
+			<transition cond="n==7" target="pass"/>
+		</state>
+		<final id="pass"/><final id="errord"/>
 	</scxml>]])
+
+	s:start()
+	assert(s:isActive('errord'),"There should be an error when boot() can't be found")
+
+	s:start{ data={ boot=function() end } }
+	assert(s:isActive('s'),"There should be no error when boot() is supplied")
+
+	-- s:start{ data={ boot=function() n=7 end } }
+	-- assert(s:isActive('pass'),"Setting 'global' variables populates data model")
+
+	s:start{ data={ boot=function() end, m=42 } }
+	assertEqual(s:get("m"),42,"The data model should accept initial values")
+
 	s:set("foo","bar")
 	s:set("jim",false)
 	s:set("n",6)
 	assertEqual(s:get("foo"),"bar")
 	assertEqual(s:get("jim"),false)
 	assertEqual(s:get("n")*7,42)
+
 	s:start()
+	assertNil(s:get("boot"),"Starting the machine resets the datamodel")
+	assertNil(s:get("foo"),"Starting the machine resets the datamodel")
+
+	s:start{ data={ boot=function() end, n=6 } }
 	assert(s:isActive('s'))
-	assertEqual(s:get("foo"),"bar")
-	s:clear()
-	assertNil(s:get("foo"))
-	assertNil(s:get("jim"))
 	s:set("n",7)
+	assert(s:isActive('s'))
+	s:step()
+	assert(s:isActive('pass'))
+
 	s:restart()
-	assert(s:isActive('seven'))
-	s:set("n",8)
-	s:restart()
-	assert(s:isActive('eight'))
+	assert(s:isActive('errord'))
 end
 
 for filename in io.popen(string.format('ls "%s"',DIR)):lines() do

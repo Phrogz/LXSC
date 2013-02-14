@@ -1,14 +1,10 @@
 LXSC.Datamodel = {}
 LXSC.Datamodel.__meta = {__index=LXSC.Datamodel}
-setmetatable(LXSC.Datamodel,{__call=function(o,scxml)
-	local dm = setmetatable({ statesInited={}, scxml=scxml },o.__meta)
-	dm:clear()
-	return dm
+setmetatable(LXSC.Datamodel,{__call=function(dm,scxml,scope)
+	if not scope then scope = {} end
+	function scope.In(id) return scxml:isActive(id) end
+	return setmetatable({ statesInited={}, scxml=scxml, scope=scope, cache={} },dm.__meta)
 end})
-
-function LXSC.Datamodel:clear()
-	self.data = { In=function(id) return self.scxml:isActive(id) end }
-end
 
 function LXSC.Datamodel:initAll()
 	local function recurse(state)
@@ -22,24 +18,31 @@ function LXSC.Datamodel:initState(state)
 	if not self.statesInited[state] then
 		for _,data in ipairs(state._datamodels) do
 			-- TODO: support data.src
-			self:set( data.id, self:run(data.expr or tostring(data._text)) )
+			self:set( data.id, self:eval(data.expr or tostring(data._text)) )
 		end
 		self.statesInited[state] = true
 	end
 end
 
-function LXSC.Datamodel:run(expression)
-	-- TODO: cache string->function
-	local f,message = loadstring('return '..expression)
-	if not f then
-		self.scxml:fireEvent("error.execution.syntax",{message=message},true)
-		-- print("error.execution.syntax",message)
-	else
-		setfenv(f,self.data)
-		local ok,result = pcall(f)
+function LXSC.Datamodel:eval(expression)
+	return self:run('return '..expression)
+end
+
+function LXSC.Datamodel:run(code)
+	local func,message = self.cache[code]
+	if not func then
+		func,message = loadstring(code)
+		if func then
+			self.cache[code] = func
+			setfenv(func,self.scope)
+		else
+			self.scxml:fireEvent("error.execution.syntax",message,true)
+		end
+	end
+	if func then
+		local ok,result = pcall(func)
 		if not ok then
-			self.scxml:fireEvent("error.execution.evaluation",{message=result},true)
-			-- print("error.execution.evaluation",result)
+			self.scxml:fireEvent("error.execution.evaluation",result,true)
 		else
 			return result
 		end
@@ -47,9 +50,9 @@ function LXSC.Datamodel:run(expression)
 end
 
 function LXSC.Datamodel:set(id,value)
-	self.data[id] = value
+	self.scope[id] = value
 end
 
 function LXSC.Datamodel:get(id)
-	return self.data[id]
+	return self.scope[id]
 end

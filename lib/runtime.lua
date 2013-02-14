@@ -27,19 +27,19 @@ end
 
 -- ****************************************************************************
 
-function S:interpret()
+function S:interpret(options)
 	-- if not self:validate() then self:failWithError() end
 	self:expandScxmlSource()
 	self._config:clear()
 	-- self.statesToInvoke = OrderedSet()
-	-- self._data:clear()
+	self._data = LXSC.Datamodel(self,options and options.data)
 	self.historyValue   = {}
 
-	-- self:executeGlobalScriptElements()
 	self._internalQueue = Queue()
 	self._externalQueue = Queue()
 	self.running = true
 	if self.binding == "early" then self._data:initAll() end
+	if self._script then self:executeContent(self._script) end
 	self:executeTransitionContent(self.initial.transitions)
 	self:enterStates(self.initial.transitions)
 	self:mainEventLoop()
@@ -366,15 +366,23 @@ function S:isInFinalState(s)
 	end
 end
 
+function S:expandScxmlSource()
+	self:convertInitials()
+	self._stateById = {}
+	for _,s in ipairs(self.states) do s:cacheReference(self._stateById) end
+	self:resolveReferences(self._stateById)
+end
+
+
 function S:donedata(state)
 	local c = state._donedatas[1]
 	if c then
 		if c.kinc=='content' then
-			return c.expr and self._data:run(c.expr) or c._text
+			return c.expr and self._data:eval(c.expr) or c._text
 		else
 			local map = {}
 			for _,p in ipairs(state._donedatas) do
-				map[p.name] = self._data:run(p.expr)
+				map[p.name] = self._data:eval(p.expr)
 			end
 			return map
 		end
@@ -383,6 +391,7 @@ end
 
 function S:fireEvent(name,data,internalFlag)
 	-- print("fireEvent(",name,data,internalFlag,")")
+	-- if string.sub(name,1,15) == 'error.execution' then print("!!!",name,data) end
 	self[internalFlag and "_internalQueue" or "_externalQueue"]:enqueue(LXSC.Event(name,data))
 end
 

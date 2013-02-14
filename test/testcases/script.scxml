@@ -1,0 +1,9 @@
+<scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0">
+	<script>foo = 42</script>
+	<state id="s1">
+		<transition event="error.execution" target="fail" />
+		<transition cond="foo~=42"          target="fail" />
+		<transition cond="foo==42"          target="pass" />
+	</state>
+	<final id="pass"/><final id="fail"/>
+</scxml>
