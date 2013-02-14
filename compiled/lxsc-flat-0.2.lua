@@ -1,14 +1,11 @@
-LXSC = { SCXML={}, STATE={}, TRANSITION={}, GENERIC={} }
+LXSC = { SCXML={}, State={}, Transition={}, Generic={} }
 for k,t in pairs(LXSC) do t.__meta={__index=t} end
 
-LXSC.VERSION = "0.1"
+LXSC.VERSION = "0.2"
 
-setmetatable(LXSC.SCXML,{__index=LXSC.STATE})
 setmetatable(LXSC,{__index=function(kind)
 	return function(self,kind)
-		local t = {_kind=kind,_kids={}}
-		setmetatable(t,self.GENERIC.__meta)
-		return t
+		return setmetatable({_kind=kind,_kids={}},self.Generic.__meta)
 	end
 end})
 
@@ -26,11 +23,11 @@ end
 
 -- *********************************
 
-function LXSC.GENERIC:addChild(item)
+function LXSC.Generic:addChild(item)
 	table.insert(self._kids,item)
 end
 
-function LXSC.GENERIC:attr(name,value)
+function LXSC.Generic:attr(name,value)
 	self[name] = value
 end
 
@@ -88,11 +85,10 @@ function LXSC:state(kind)
 		_invokes    = {}
 	}
 	t.selfAndAncestors={t}
-	setmetatable(t,self.STATE.__meta)
-	return t
+	return setmetatable(t,self.State.__meta)
 end
 
-function LXSC.STATE:attr(name,value)
+function LXSC.State:attr(name,value)
 	if name=="name" or name=="id" or name=="initial" then
 		self[name] = value
 	else
@@ -101,7 +97,7 @@ function LXSC.STATE:attr(name,value)
 	end
 end
 
-function LXSC.STATE:addChild(item)
+function LXSC.State:addChild(item)
 	if item._kind=='transition' then
 		item.source = self
 		table.insert( self.transitions, item )
@@ -131,11 +127,11 @@ function LXSC.STATE:addChild(item)
 		table.insert(self._invokes,item)
 
 	else
-		print("Warning: unhandled child of state: "..item._kind )
+		-- print("Warning: unhandled child of state: "..item._kind )
 	end
 end
 
-function LXSC.STATE:ancestorsUntil(stopNode)
+function LXSC.State:ancestorsUntil(stopNode)
 	local i=0
 	return function()
 		i=i+1
@@ -145,7 +141,7 @@ function LXSC.STATE:ancestorsUntil(stopNode)
 	end
 end
 
-function LXSC.STATE:createInitialTo(stateOrId)
+function LXSC.State:createInitialTo(stateOrId)
 	local initial = LXSC:state('initial')
 	self:addChild(initial)
 	local transition = LXSC:transition()
@@ -154,7 +150,7 @@ function LXSC.STATE:createInitialTo(stateOrId)
 	self.initial = initial
 end
 
-function LXSC.STATE:convertInitials()
+function LXSC.State:convertInitials()
 	if type(self.initial)=='string' then
 		-- Convert initial="..." attribute to <initial> state
 		self:createInitialTo(self.initial)
@@ -173,12 +169,12 @@ function LXSC.STATE:convertInitials()
 	for _,s in ipairs(self.reals) do s:convertInitials() end
 end
 
-function LXSC.STATE:cacheReference(lookup)
+function LXSC.State:cacheReference(lookup)
 	lookup[self.id] = self
 	for _,s in ipairs(self.states) do s:cacheReference(lookup) end
 end
 
-function LXSC.STATE:resolveReferences(lookup)
+function LXSC.State:resolveReferences(lookup)
 	for _,t in ipairs(self.transitions) do
 		if t.targets then
 			for i,target in ipairs(t.targets) do
@@ -195,9 +191,11 @@ function LXSC.STATE:resolveReferences(lookup)
 	for _,s in ipairs(self.states) do s:resolveReferences(lookup) end
 end
 
-function LXSC.STATE:descendantOf(possibleAncestor)
+function LXSC.State:descendantOf(possibleAncestor)
 	return self.ancestors[possibleAncestor]
 end
+
+setmetatable(LXSC.SCXML,{__index=LXSC.State})
 
 function LXSC:scxml()
 	local t = LXSC:state('scxml')
@@ -224,6 +222,10 @@ end
 
 function LXSC.SCXML:clear()
 	self._data:clear()
+end
+
+function LXSC.SCXML:eval(code)
+	return self._data:run(code)
 end
 
 function LXSC.SCXML:expandScxmlSource()
@@ -254,11 +256,11 @@ function LXSC.SCXML:activeAtomicIds()
 end
 function LXSC:transition()
 	local t = { _kind='transition', _exec={}, type="external" }
-	setmetatable(t,self.TRANSITION.__meta)
+	setmetatable(t,self.Transition.__meta)
 	return t
 end
 
-function LXSC.TRANSITION:attr(name,value)
+function LXSC.Transition:attr(name,value)
 	if name=='event' then
 		self.events = {}
 		self._event = value
@@ -283,20 +285,20 @@ function LXSC.TRANSITION:attr(name,value)
 	end
 end
 
-function LXSC.TRANSITION:addChild(item)
+function LXSC.Transition:addChild(item)
 	table.insert(self._exec,item)
 end
 
-function LXSC.TRANSITION:addTarget(stateOrId)
+function LXSC.Transition:addTarget(stateOrId)
 	if not self.targets then self.targets = List() end
 	table.insert(self.targets,stateOrId)
 end
 
-function LXSC.TRANSITION:conditionMatched(datamodel)
+function LXSC.Transition:conditionMatched(datamodel)
 	return not self.cond or datamodel:run(self.cond)
 end
 
-function LXSC.TRANSITION:matchesEvent(event)
+function LXSC.Transition:matchesEvent(event)
 	for _,tokens in ipairs(self.events) do
 		if #tokens <= #event.tokens then
 			local matched = true
@@ -315,7 +317,7 @@ function LXSC.TRANSITION:matchesEvent(event)
 	-- print("Transition",self._event,"does not match",event.name)
 end
 
-function LXSC.TRANSITION:inspect()
+function LXSC.Transition:inspect()
 	return string.format(
 		"<transition in '%s'%s%s%s>",
 		self.source.id or self.source.name,
@@ -328,8 +330,7 @@ end
 LXSC.Datamodel = {}
 LXSC.Datamodel.__meta = {__index=LXSC.Datamodel}
 setmetatable(LXSC.Datamodel,{__call=function(o,scxml)
-	local dm = { statesInited={}, scxml=scxml }
-	setmetatable(dm,o.__meta)
+	local dm = setmetatable({ statesInited={}, scxml=scxml },o.__meta)
 	dm:clear()
 	return dm
 end})
@@ -357,9 +358,21 @@ function LXSC.Datamodel:initState(state)
 end
 
 function LXSC.Datamodel:run(expression)
-	local f = assert(loadstring('return '..expression))
-	setfenv(f,self.data)
-	return f()
+	-- TODO: cache string->function
+	local f,message = loadstring('return '..expression)
+	if not f then
+		self.scxml:fireEvent("error.execution.syntax",{message=message},true)
+		-- print("error.execution.syntax",message)
+	else
+		setfenv(f,self.data)
+		local ok,result = pcall(f)
+		if not ok then
+			self.scxml:fireEvent("error.execution.evaluation",{message=result},true)
+			-- print("error.execution.evaluation",result)
+		else
+			return result
+		end
+	end
 end
 
 function LXSC.Datamodel:set(id,value)
@@ -375,52 +388,50 @@ LXSC.Event = function(name,data)
 	return e
 end
 
-LXSC.EXECUTABLE = {}
+LXSC.Exec = {}
 
-function LXSC.EXECUTABLE:log(scxml)
+function LXSC.Exec:log(scxml)
 	local message = {self.label}
-	if self.expr then table.insert(message,scxml._data:run(self.expr)) end
+	if self.expr then table.insert(message,scxml:eval(self.expr)) end
 	print(table.concat(message,": "))
 end
 
-function LXSC.EXECUTABLE:assign(scxml)
+function LXSC.Exec:assign(scxml)
 	-- TODO: support child executable content in place of expr
-	scxml._data:set( self.location, scxml._data:run(self.expr) )
+	scxml:set( self.location, scxml:eval(self.expr) )
 end
 
-function LXSC.EXECUTABLE:raise(scxml)
+function LXSC.Exec:raise(scxml)
 	scxml:fireEvent(self.event,nil,true)
 end
 
-function LXSC.EXECUTABLE:send(scxml)
+function LXSC.Exec:send(scxml)
 	-- TODO: warn about delay/delayexpr no support
-	-- TODO: support type/typeexpr/target/targetexpr 
-	local dm = scxml._data
-	local name = self.event or dm:run(self.eventexpr)
+	-- TODO: support type/typeexpr/target/targetexpr
+	local name = self.event or scxml:eval(self.eventexpr)
 	local data
 	if self.namelist then
 		data = {}
-		for name in string.gmatch(self.namelist,'[^%s]+') do data[name] = dm:get(name) end
+		for name in string.gmatch(self.namelist,'[^%s]+') do data[name] = scxml:get(name) end
 	end
-	if self.idlocation and not self.id then dm:set( dm:run(self.idlocation), LXSC.uuid4() ) end
+	if self.idlocation and not self.id then scxml:set( scxml:eval(self.idlocation), LXSC.uuid4() ) end
 	scxml:fireEvent(name,data,false)
 end
 
 function LXSC.SCXML:executeContent(item)
-	local handler = LXSC.EXECUTABLE[item._kind] 
+	local handler = LXSC.Exec[item._kind]
 	if handler then
-		handler(item,self) -- TODO: pcall this and inject error event on failure
+		handler(item,self)
 	else
-		print(string.format("Warning: skipping unhandled executable type %s | %s",item._kind,dump(item)))
+		self:fireEvent('error.execution.unhandled',{message="unhandled executable type "..item._kind},true)
+		-- print('error.execution.unhandled',item._kind)
 	end
 end
 
 OrderedSet = {}
 OrderedSet.__meta = {__index=OrderedSet}
 setmetatable(OrderedSet,{__call=function(o)
-	local s = {}
-	setmetatable(s,o.__meta)
-	return s
+	return setmetatable({},o.__meta)
 end})
 
 function OrderedSet:add(e)
@@ -570,8 +581,8 @@ function S:interpret()
 	self.historyValue   = {}
 
 	-- self:executeGlobalScriptElements()
-	self.internalQueue = Queue()
-	self.externalQueue = Queue()
+	self._internalQueue = Queue()
+	self._externalQueue = Queue()
 	self.running = true
 	if self.binding == "early" then self._data:initAll() end
 	self:executeTransitionContent(self.initial.transitions)
@@ -592,10 +603,10 @@ function S:mainEventLoop()
 		while self.running and not stable and iterations<self.MAX_ITERATIONS do
 			enabledTransitions = self:selectEventlessTransitions()
 			if enabledTransitions:isEmpty() then
-				if self.internalQueue:isEmpty() then
+				if self._internalQueue:isEmpty() then
 					stable = true
 				else
-					local internalEvent = self.internalQueue:dequeue()
+					local internalEvent = self._internalQueue:dequeue()
 					self._data:set("_event",internalEvent)
 					enabledTransitions = self:selectTransitions(internalEvent)
 				end
@@ -612,8 +623,8 @@ function S:mainEventLoop()
 		-- for _,state in ipairs(self.statesToInvoke) do for _,inv in ipairs(state._invokes) do self:invoke(inv) end end
 		-- self.statesToInvoke:clear()
 
-		if self.internalQueue:isEmpty() then
-			local externalEvent = self.externalQueue:dequeue()
+		if self._internalQueue:isEmpty() then
+			local externalEvent = self._externalQueue:dequeue()
 			if externalEvent then
 				if externalEvent.name=='quit.lxsc' then
 					self.running = false
@@ -917,7 +928,7 @@ end
 
 function S:fireEvent(name,data,internalFlag)
 	-- print("fireEvent(",name,data,internalFlag,")")
-	self[internalFlag and "internalQueue" or "externalQueue"]:enqueue(LXSC.Event(name,data))
+	self[internalFlag and "_internalQueue" or "_externalQueue"]:enqueue(LXSC.Event(name,data))
 end
 
 -- Sensible aliases
