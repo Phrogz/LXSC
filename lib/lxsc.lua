@@ -1,14 +1,11 @@
-LXSC = { SCXML={}, STATE={}, TRANSITION={}, GENERIC={} }
+LXSC = { SCXML={}, State={}, Transition={}, Generic={} }
 for k,t in pairs(LXSC) do t.__meta={__index=t} end
 
 LXSC.VERSION = "0.2"
 
-setmetatable(LXSC.SCXML,{__index=LXSC.STATE})
 setmetatable(LXSC,{__index=function(kind)
 	return function(self,kind)
-		local t = {_kind=kind,_kids={}}
-		setmetatable(t,self.GENERIC.__meta)
-		return t
+		return setmetatable({_kind=kind,_kids={}},self.Generic.__meta)
 	end
 end})
 
@@ -26,11 +23,11 @@ end
 
 -- *********************************
 
-function LXSC.GENERIC:addChild(item)
+function LXSC.Generic:addChild(item)
 	table.insert(self._kids,item)
 end
 
-function LXSC.GENERIC:attr(name,value)
+function LXSC.Generic:attr(name,value)
 	self[name] = value
 end
 

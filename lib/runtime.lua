@@ -36,8 +36,8 @@ function S:interpret()
 	self.historyValue   = {}
 
 	-- self:executeGlobalScriptElements()
-	self.internalQueue = Queue()
-	self.externalQueue = Queue()
+	self._internalQueue = Queue()
+	self._externalQueue = Queue()
 	self.running = true
 	if self.binding == "early" then self._data:initAll() end
 	self:executeTransitionContent(self.initial.transitions)
@@ -58,10 +58,10 @@ function S:mainEventLoop()
 		while self.running and not stable and iterations<self.MAX_ITERATIONS do
 			enabledTransitions = self:selectEventlessTransitions()
 			if enabledTransitions:isEmpty() then
-				if self.internalQueue:isEmpty() then
+				if self._internalQueue:isEmpty() then
 					stable = true
 				else
-					local internalEvent = self.internalQueue:dequeue()
+					local internalEvent = self._internalQueue:dequeue()
 					self._data:set("_event",internalEvent)
 					enabledTransitions = self:selectTransitions(internalEvent)
 				end
@@ -78,8 +78,8 @@ function S:mainEventLoop()
 		-- for _,state in ipairs(self.statesToInvoke) do for _,inv in ipairs(state._invokes) do self:invoke(inv) end end
 		-- self.statesToInvoke:clear()
 
-		if self.internalQueue:isEmpty() then
-			local externalEvent = self.externalQueue:dequeue()
+		if self._internalQueue:isEmpty() then
+			local externalEvent = self._externalQueue:dequeue()
 			if externalEvent then
 				if externalEvent.name=='quit.lxsc' then
 					self.running = false
@@ -383,7 +383,7 @@ end
 
 function S:fireEvent(name,data,internalFlag)
 	-- print("fireEvent(",name,data,internalFlag,")")
-	self[internalFlag and "internalQueue" or "externalQueue"]:enqueue(LXSC.Event(name,data))
+	self[internalFlag and "_internalQueue" or "_externalQueue"]:enqueue(LXSC.Event(name,data))
 end
 
 -- Sensible aliases

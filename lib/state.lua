@@ -23,11 +23,10 @@ function LXSC:state(kind)
 		_invokes    = {}
 	}
 	t.selfAndAncestors={t}
-	setmetatable(t,self.STATE.__meta)
-	return t
+	return setmetatable(t,self.State.__meta)
 end
 
-function LXSC.STATE:attr(name,value)
+function LXSC.State:attr(name,value)
 	if name=="name" or name=="id" or name=="initial" then
 		self[name] = value
 	else
@@ -36,7 +35,7 @@ function LXSC.STATE:attr(name,value)
 	end
 end
 
-function LXSC.STATE:addChild(item)
+function LXSC.State:addChild(item)
 	if item._kind=='transition' then
 		item.source = self
 		table.insert( self.transitions, item )
@@ -66,11 +65,11 @@ function LXSC.STATE:addChild(item)
 		table.insert(self._invokes,item)
 
 	else
-		print("Warning: unhandled child of state: "..item._kind )
+		-- print("Warning: unhandled child of state: "..item._kind )
 	end
 end
 
-function LXSC.STATE:ancestorsUntil(stopNode)
+function LXSC.State:ancestorsUntil(stopNode)
 	local i=0
 	return function()
 		i=i+1
@@ -80,7 +79,7 @@ function LXSC.STATE:ancestorsUntil(stopNode)
 	end
 end
 
-function LXSC.STATE:createInitialTo(stateOrId)
+function LXSC.State:createInitialTo(stateOrId)
 	local initial = LXSC:state('initial')
 	self:addChild(initial)
 	local transition = LXSC:transition()
@@ -89,7 +88,7 @@ function LXSC.STATE:createInitialTo(stateOrId)
 	self.initial = initial
 end
 
-function LXSC.STATE:convertInitials()
+function LXSC.State:convertInitials()
 	if type(self.initial)=='string' then
 		-- Convert initial="..." attribute to <initial> state
 		self:createInitialTo(self.initial)
@@ -108,12 +107,12 @@ function LXSC.STATE:convertInitials()
 	for _,s in ipairs(self.reals) do s:convertInitials() end
 end
 
-function LXSC.STATE:cacheReference(lookup)
+function LXSC.State:cacheReference(lookup)
 	lookup[self.id] = self
 	for _,s in ipairs(self.states) do s:cacheReference(lookup) end
 end
 
-function LXSC.STATE:resolveReferences(lookup)
+function LXSC.State:resolveReferences(lookup)
 	for _,t in ipairs(self.transitions) do
 		if t.targets then
 			for i,target in ipairs(t.targets) do
@@ -130,6 +129,6 @@ function LXSC.STATE:resolveReferences(lookup)
 	for _,s in ipairs(self.states) do s:resolveReferences(lookup) end
 end
 
-function LXSC.STATE:descendantOf(possibleAncestor)
+function LXSC.State:descendantOf(possibleAncestor)
 	return self.ancestors[possibleAncestor]
 end

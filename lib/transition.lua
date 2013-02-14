@@ -1,10 +1,10 @@
 function LXSC:transition()
 	local t = { _kind='transition', _exec={}, type="external" }
-	setmetatable(t,self.TRANSITION.__meta)
+	setmetatable(t,self.Transition.__meta)
 	return t
 end
 
-function LXSC.TRANSITION:attr(name,value)
+function LXSC.Transition:attr(name,value)
 	if name=='event' then
 		self.events = {}
 		self._event = value
@@ -29,20 +29,20 @@ function LXSC.TRANSITION:attr(name,value)
 	end
 end
 
-function LXSC.TRANSITION:addChild(item)
+function LXSC.Transition:addChild(item)
 	table.insert(self._exec,item)
 end
 
-function LXSC.TRANSITION:addTarget(stateOrId)
+function LXSC.Transition:addTarget(stateOrId)
 	if not self.targets then self.targets = List() end
 	table.insert(self.targets,stateOrId)
 end
 
-function LXSC.TRANSITION:conditionMatched(datamodel)
+function LXSC.Transition:conditionMatched(datamodel)
 	return not self.cond or datamodel:run(self.cond)
 end
 
-function LXSC.TRANSITION:matchesEvent(event)
+function LXSC.Transition:matchesEvent(event)
 	for _,tokens in ipairs(self.events) do
 		if #tokens <= #event.tokens then
 			local matched = true
@@ -61,7 +61,7 @@ function LXSC.TRANSITION:matchesEvent(event)
 	-- print("Transition",self._event,"does not match",event.name)
 end
 
-function LXSC.TRANSITION:inspect()
+function LXSC.Transition:inspect()
 	return string.format(
 		"<transition in '%s'%s%s%s>",
 		self.source.id or self.source.name,

@@ -1,9 +1,7 @@
 OrderedSet = {}
 OrderedSet.__meta = {__index=OrderedSet}
 setmetatable(OrderedSet,{__call=function(o)
-	local s = {}
-	setmetatable(s,o.__meta)
-	return s
+	return setmetatable({},o.__meta)
 end})
 
 function OrderedSet:add(e)

@@ -1,8 +1,7 @@
 LXSC.Datamodel = {}
 LXSC.Datamodel.__meta = {__index=LXSC.Datamodel}
 setmetatable(LXSC.Datamodel,{__call=function(o,scxml)
-	local dm = { statesInited={}, scxml=scxml }
-	setmetatable(dm,o.__meta)
+	local dm = setmetatable({ statesInited={}, scxml=scxml },o.__meta)
 	dm:clear()
 	return dm
 end})
@@ -30,9 +29,21 @@ function LXSC.Datamodel:initState(state)
 end
 
 function LXSC.Datamodel:run(expression)
-	local f = assert(loadstring('return '..expression))
-	setfenv(f,self.data)
-	return f()
+	-- TODO: cache string->function
+	local f,message = loadstring('return '..expression)
+	if not f then
+		self.scxml:fireEvent("error.execution.syntax",{message=message},true)
+		-- print("error.execution.syntax",message)
+	else
+		setfenv(f,self.data)
+		local ok,result = pcall(f)
+		if not ok then
+			self.scxml:fireEvent("error.execution.evaluation",{message=result},true)
+			-- print("error.execution.evaluation",result)
+		else
+			return result
+		end
+	end
 end
 
 function LXSC.Datamodel:set(id,value)

@@ -1,3 +1,5 @@
+setmetatable(LXSC.SCXML,{__index=LXSC.State})
+
 function LXSC:scxml()
 	local t = LXSC:state('scxml')
 	t.name      = "(lxsc)"
@@ -23,6 +25,10 @@ end
 
 function LXSC.SCXML:clear()
 	self._data:clear()
+end
+
+function LXSC.SCXML:eval(code)
+	return self._data:run(code)
 end
 
 function LXSC.SCXML:expandScxmlSource()
