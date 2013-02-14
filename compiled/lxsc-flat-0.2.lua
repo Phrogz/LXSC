@@ -6,7 +6,7 @@ LXSC.VERSION = "0.1"
 setmetatable(LXSC.SCXML,{__index=LXSC.STATE})
 setmetatable(LXSC,{__index=function(kind)
 	return function(self,kind)
-		local t = {kind=kind,_kids={}}
+		local t = {_kind=kind,_kids={}}
 		setmetatable(t,self.GENERIC.__meta)
 		return t
 	end
@@ -37,9 +37,9 @@ end
 -- *********************************
 
 -- These elements pass their children through to the appropriate collection on the state
-for kind,collection in pairs{ datamodel='datamodels', donedata='donedatas', onentry='onentrys', onexit='onexits' } do
+for kind,collection in pairs{ datamodel='_datamodels', donedata='_donedatas', onentry='_onentrys', onexit='_onexits' } do
 	LXSC[kind] = function()
-		local t = {kind=kind}
+		local t = {_kind=kind}
 		function t:addChild(item) table.insert(self.state[collection],item) end
 		return t
 	end
@@ -68,24 +68,24 @@ LXSC.realKinds  = {state=1,parallel=1,final=1}
 LXSC.aggregates = {onentry=1,onexit=1,datamodel=1,donedata=1}
 function LXSC:state(kind)
 	local t = {
-		kind=kind or 'state',
-		id         = kind.."-"..LXSC.uuid4(),
-		isAtomic   = true,
-		isCompound = false,
-		isParallel = kind=='parallel',
-		isHistory  = kind=='history',
-		isFinal    = kind=='final',
-		ancestors  = {},
+		_kind       = kind or 'state',
+		id          = kind.."-"..LXSC.uuid4(),
+		isAtomic    = true,
+		isCompound  = false,
+		isParallel  = kind=='parallel',
+		isHistory   = kind=='history',
+		isFinal     = kind=='final',
+		ancestors   = {},
 
-		states     = {},
-		reals      = {},
-		transitions= {},
+		states      = {},
+		reals       = {},
+		transitions = {},
 
-		onentrys   = {},
-		onexits    = {},
-		datamodels = {},
-		donedatas  = {},
-		invokes    = {}
+		_onentrys   = {},
+		_onexits    = {},
+		_datamodels = {},
+		_donedatas  = {},
+		_invokes    = {}
 	}
 	t.selfAndAncestors={t}
 	setmetatable(t,self.STATE.__meta)
@@ -102,14 +102,14 @@ function LXSC.STATE:attr(name,value)
 end
 
 function LXSC.STATE:addChild(item)
-	if item.kind=='transition' then
+	if item._kind=='transition' then
 		item.source = self
 		table.insert( self.transitions, item )
 
-	elseif LXSC.aggregates[item.kind] then
+	elseif LXSC.aggregates[item._kind] then
 		item.state = self
 
-	elseif LXSC.stateKinds[item.kind] then
+	elseif LXSC.stateKinds[item._kind] then
 		table.insert(self.states,item)
 		item.parent = self
 		item.ancestors[1] = self
@@ -120,18 +120,18 @@ function LXSC.STATE:addChild(item)
 			item.ancestors[anc]        = true
 			item.selfAndAncestors[i+2] = anc
 		end
-		if LXSC.realKinds[item.kind] then
+		if LXSC.realKinds[item._kind] then
 			table.insert(self.reals,item)
-			self.isCompound = self.kind~='parallel'
+			self.isCompound = self._kind~='parallel'
 			self.isAtomic   = false
 		end
 
-	elseif item.kind=='invoke' then
+	elseif item._kind=='invoke' then
 		item.state = self
-		table.insert(self.invokes,item)
+		table.insert(self._invokes,item)
 
 	else
-		print("Warning: unhandled child of state: "..item.kind )
+		print("Warning: unhandled child of state: "..item._kind )
 	end
 end
 
@@ -161,7 +161,7 @@ function LXSC.STATE:convertInitials()
 	elseif not self.initial then
 		local initialElement
 		for _,s in ipairs(self.states) do
-			if s.kind=='initial' then initialElement=s; break end
+			if s._kind=='initial' then initialElement=s; break end
 		end
 
 		if initialElement then
@@ -207,26 +207,39 @@ function LXSC:scxml()
 	t.id        = nil
 
 	t.running   = false
-	t.configuration = OrderedSet()
+	t._data     = LXSC.Datamodel(t)
+	t._config   = OrderedSet()
 
 	setmetatable(t,LXSC.SCXML.__meta)
 	return t
 end
 
+function LXSC.SCXML:get(key)
+	return self._data:get(key)
+end
+
+function LXSC.SCXML:set(key,value)
+	self._data:set(key,value)
+end
+
+function LXSC.SCXML:clear()
+	self._data:clear()
+end
+
 function LXSC.SCXML:expandScxmlSource()
 	self:convertInitials()
-	self.stateById = {}
-	for _,s in ipairs(self.states) do s:cacheReference(self.stateById) end
-	self:resolveReferences(self.stateById)
+	self._stateById = {}
+	for _,s in ipairs(self.states) do s:cacheReference(self._stateById) end
+	self:resolveReferences(self._stateById)
 end
 
 function LXSC.SCXML:isActive(stateId)
-	return self.configuration[self.stateById[stateId]]
+	return self._config[self._stateById[stateId]]
 end
 
 function LXSC.SCXML:activeStateIds()
 	local a = OrderedSet()
-	for _,s in ipairs(self.configuration) do
+	for _,s in ipairs(self._config) do
 		a:add(s.id)
 	end
 	return a
@@ -234,13 +247,13 @@ end
 
 function LXSC.SCXML:activeAtomicIds()
 	local a = OrderedSet()
-	for _,s in ipairs(self.configuration) do
+	for _,s in ipairs(self._config) do
 		if s.isAtomic then a:add(s.id) end
 	end
 	return a
 end
 function LXSC:transition()
-	local t = { kind='transition', exec={}, type="external" }
+	local t = { _kind='transition', _exec={}, type="external" }
 	setmetatable(t,self.TRANSITION.__meta)
 	return t
 end
@@ -271,7 +284,7 @@ function LXSC.TRANSITION:attr(name,value)
 end
 
 function LXSC.TRANSITION:addChild(item)
-	table.insert(self.exec,item)
+	table.insert(self._exec,item)
 end
 
 function LXSC.TRANSITION:addTarget(stateOrId)
@@ -315,10 +328,15 @@ end
 LXSC.Datamodel = {}
 LXSC.Datamodel.__meta = {__index=LXSC.Datamodel}
 setmetatable(LXSC.Datamodel,{__call=function(o,scxml)
-	local dm = { data={ In=function(id) return scxml:isActive(id) end }, statesInited={}, scxml=scxml }
+	local dm = { statesInited={}, scxml=scxml }
 	setmetatable(dm,o.__meta)
+	dm:clear()
 	return dm
 end})
+
+function LXSC.Datamodel:clear()
+	self.data = { In=function(id) return self.scxml:isActive(id) end }
+end
 
 function LXSC.Datamodel:initAll()
 	local function recurse(state)
@@ -330,7 +348,7 @@ end
 
 function LXSC.Datamodel:initState(state)
 	if not self.statesInited[state] then
-		for _,data in ipairs(state.datamodels) do
+		for _,data in ipairs(state._datamodels) do
 			-- TODO: support data.src
 			self:set( data.id, self:run(data.expr or tostring(data._text)) )
 		end
@@ -347,6 +365,10 @@ end
 function LXSC.Datamodel:set(id,value)
 	self.data[id] = value
 end
+
+function LXSC.Datamodel:get(id)
+	return self.data[id]
+end
 LXSC.Event = function(name,data)
 	local e = {name=name,data=data,tokens={}}
 	for token in string.gmatch(name,'[^.*]+') do table.insert(e.tokens,token) end
@@ -357,13 +379,13 @@ LXSC.EXECUTABLE = {}
 
 function LXSC.EXECUTABLE:log(scxml)
 	local message = {self.label}
-	if self.expr then table.insert(message,scxml.datamodel:run(self.expr)) end
+	if self.expr then table.insert(message,scxml._data:run(self.expr)) end
 	print(table.concat(message,": "))
 end
 
 function LXSC.EXECUTABLE:assign(scxml)
 	-- TODO: support child executable content in place of expr
-	scxml.datamodel:set( self.location, scxml.datamodel:run(self.expr) )
+	scxml._data:set( self.location, scxml._data:run(self.expr) )
 end
 
 function LXSC.EXECUTABLE:raise(scxml)
@@ -373,7 +395,7 @@ end
 function LXSC.EXECUTABLE:send(scxml)
 	-- TODO: warn about delay/delayexpr no support
 	-- TODO: support type/typeexpr/target/targetexpr 
-	local dm = scxml.datamodel
+	local dm = scxml._data
 	local name = self.event or dm:run(self.eventexpr)
 	local data
 	if self.namelist then
@@ -385,11 +407,11 @@ function LXSC.EXECUTABLE:send(scxml)
 end
 
 function LXSC.SCXML:executeContent(item)
-	local handler = LXSC.EXECUTABLE[item.kind] 
+	local handler = LXSC.EXECUTABLE[item._kind] 
 	if handler then
 		handler(item,self) -- TODO: pcall this and inject error event on failure
 	else
-		print(string.format("Warning: skipping unhandled executable type %s | %s",item.kind,dump(item)))
+		print(string.format("Warning: skipping unhandled executable type %s | %s",item._kind,dump(item)))
 	end
 end
 
@@ -520,7 +542,7 @@ local function exitOrder(a,b)     return b._order < a._order end
 local function isAtomicState(s)   return s.isAtomic          end
 local function findLCPA(first,rest) -- least common parallel ancestor
 	for _,anc in ipairs(first.ancestors) do
-		if anc.kind=='parallel' then
+		if anc._kind=='parallel' then
 			if rest:every(function(s) return s:descendantOf(anc) end) then
 				return anc
 			end
@@ -542,16 +564,16 @@ end
 function S:interpret()
 	-- if not self:validate() then self:failWithError() end
 	self:expandScxmlSource()
-	self.configuration:clear()
+	self._config:clear()
 	-- self.statesToInvoke = OrderedSet()
-	self.datamodel      = LXSC.Datamodel(self)
+	-- self._data:clear()
 	self.historyValue   = {}
 
 	-- self:executeGlobalScriptElements()
 	self.internalQueue = Queue()
 	self.externalQueue = Queue()
 	self.running = true
-	if self.binding == "early" then self.datamodel:initAll() end
+	if self.binding == "early" then self._data:initAll() end
 	self:executeTransitionContent(self.initial.transitions)
 	self:enterStates(self.initial.transitions)
 	self:mainEventLoop()
@@ -574,7 +596,7 @@ function S:mainEventLoop()
 					stable = true
 				else
 					local internalEvent = self.internalQueue:dequeue()
-					self.datamodel:set("_event",internalEvent)
+					self._data:set("_event",internalEvent)
 					enabledTransitions = self:selectTransitions(internalEvent)
 				end
 			end
@@ -587,7 +609,7 @@ function S:mainEventLoop()
 
 		if iterations>=S.MAX_ITERATIONS then print(string.format("Warning: stopped unstable system after %d internal iterations",S.MAX_ITERATIONS)) end
 
-		-- for _,state in ipairs(self.statesToInvoke) do for _,inv in ipairs(state.invokes) do self:invoke(inv) end end
+		-- for _,state in ipairs(self.statesToInvoke) do for _,inv in ipairs(state._invokes) do self:invoke(inv) end end
 		-- self.statesToInvoke:clear()
 
 		if self.internalQueue:isEmpty() then
@@ -596,9 +618,9 @@ function S:mainEventLoop()
 				if externalEvent.name=='quit.lxsc' then
 					self.running = false
 				else
-					self.datamodel:set("_event",externalEvent)
-					-- for _,state in ipairs(self.configuration) do
-					-- 	for _,inv in ipairs(state.invokes) do
+					self._data:set("_event",externalEvent)
+					-- for _,state in ipairs(self._config) do
+					-- 	for _,inv in ipairs(state._invokes) do
 					-- 		if inv.invokeid == externalEvent.invokeid then self:applyFinalize(inv, externalEvent) end
 					-- 		if inv.autoforward then self:send(inv.id, externalEvent) end
 					-- 	end
@@ -623,18 +645,18 @@ end
 -- ******************************************************************************************************
 
 function S:exitInterpreter()
-	local statesToExit = self.configuration:toList():sort(documentOrder)
+	local statesToExit = self._config:toList():sort(documentOrder)
 	for _,s in ipairs(statesToExit) do
-		for _,content in ipairs(s.onexits) do self:executeContent(content) end
-		-- for _,inv     in ipairs(s.invokes) do self:cancelInvoke(inv)       end
-		-- self.configuration:delete(s)
-		-- if self:isFinalState(s) and s.parent.kind=='scxml' then self:returnDoneEvent(self:donedata(s)) end
+		for _,content in ipairs(s._onexits) do self:executeContent(content) end
+		-- for _,inv     in ipairs(s._invokes) do self:cancelInvoke(inv)       end
+		-- self._config:delete(s)
+		-- if self:isFinalState(s) and s.parent._kind=='scxml' then self:returnDoneEvent(self:donedata(s)) end
 	end
 end
 
 function S:selectEventlessTransitions()
 	local enabledTransitions = OrderedSet()
-	local atomicStates = self.configuration:toList():filter(isAtomicState):sort(documentOrder)
+	local atomicStates = self._config:toList():filter(isAtomicState):sort(documentOrder)
 	for _,state in ipairs(atomicStates) do
 		self:addEventlessTransition(state,enabledTransitions)
 	end
@@ -644,7 +666,7 @@ end
 function S:addEventlessTransition(state,enabledTransitions)
 	for _,s in ipairs(state.selfAndAncestors) do
 		for _,t in ipairs(s.transitions) do
-			if not t.events and t:conditionMatched(self.datamodel) then
+			if not t.events and t:conditionMatched(self._data) then
 				enabledTransitions:add(t)
 				return
 			end
@@ -654,7 +676,7 @@ end
 
 function S:selectTransitions(event)
 	local enabledTransitions = OrderedSet()
-	local atomicStates = self.configuration:toList():filter(isAtomicState):sort(documentOrder)
+	local atomicStates = self._config:toList():filter(isAtomicState):sort(documentOrder)
 	for _,state in ipairs(atomicStates) do
 		self:addTransitionForEvent(state,event,enabledTransitions)
 	end
@@ -664,7 +686,7 @@ end
 function S:addTransitionForEvent(state,event,enabledTransitions)
 	for _,s in ipairs(state.selfAndAncestors) do
 		for _,t in ipairs(s.transitions) do
-			if t.events and t:matchesEvent(event) and t:conditionMatched(self.datamodel) then
+			if t.events and t:matchesEvent(event) and t:conditionMatched(self._data) then
 				enabledTransitions:add(t)
 				return
 			end
@@ -704,14 +726,14 @@ function S:microstep(enabledTransitions)
 	self:exitStates(enabledTransitions)
 	for _,t in ipairs(enabledTransitions) do
 		if self.onTransition then self.onTransition(t) end
-		for _,executable in ipairs(t.exec) do self:executeContent(executable) end
+		for _,executable in ipairs(t._exec) do self:executeContent(executable) end
 	end
 	self:enterStates(enabledTransitions)
 end
 
 function S:executeTransitionContent(transitions)
 	for _,t in ipairs(transitions) do
-		for _,executable in ipairs(t.exec) do
+		for _,executable in ipairs(t._exec) do
 			self:executeContent(executable)
 		end
 	end
@@ -727,7 +749,7 @@ function S:exitStates(enabledTransitions)
 			else
 				ancestor = findLCCA(t.source, t.targets)
 			end
-			for _,s in ipairs(self.configuration) do
+			for _,s in ipairs(self._config) do
 				if s:descendantOf(ancestor) then statesToExit:add(s) end
 			end
 		end
@@ -740,13 +762,13 @@ function S:exitStates(enabledTransitions)
 	for _,s in ipairs(statesToExit) do
 		-- TODO: create special history collection for speed
 		for _,h in ipairs(s.states) do
-			if h.kind=='history' then
+			if h._kind=='history' then
 				if self.historyValue[h.id] then
 					self.historyValue[h.id]:clear()
 				else
 					self.historyValue[h.id] = OrderedSet()
 				end
-				for _,s0 in ipairs(self.configuration) do
+				for _,s0 in ipairs(self._config) do
 					if h.type=='deep' then
 						if s0.isAtomic and s0:descendantOf(s) then self.historyValue[h.id]:add(s0) end
 					else
@@ -758,10 +780,10 @@ function S:exitStates(enabledTransitions)
 	end
 
 	for _,s in ipairs(statesToExit) do
-		if self.onBeforeExit then self.onBeforeExit(s.id,s.kind) end
-		for _,content in ipairs(s.onexits) do self:executeContent(content) end
-		-- for _,inv in ipairs(s.invokes)     do self:cancelInvoke(inv) end
-		self.configuration:delete(s)
+		if self.onBeforeExit then self.onBeforeExit(s.id,s._kind) end
+		for _,content in ipairs(s._onexits) do self:executeContent(content) end
+		-- for _,inv in ipairs(s._invokes)     do self:cancelInvoke(inv) end
+		self._config:delete(s)
 	end
 end
 
@@ -770,7 +792,7 @@ function S:enterStates(enabledTransitions)
 	local statesForDefaultEntry = OrderedSet()
 
 	local function addStatesToEnter(state)	
-		if state.kind=='history' then
+		if state._kind=='history' then
 			if self.historyValue[state.id] then
 				for _,s in ipairs(self.historyValue[state.id]) do
 					addStatesToEnter(s)
@@ -788,7 +810,7 @@ function S:enterStates(enabledTransitions)
 			if state.isCompound then
 				statesForDefaultEntry:add(state)
 				for _,s in ipairs(state.initial.transitions[1].targets) do addStatesToEnter(s) end
-			elseif state.kind=='parallel' then
+			elseif state._kind=='parallel' then
 				for _,s in ipairs(state.reals) do addStatesToEnter(s) end
 			end
 		end
@@ -806,7 +828,7 @@ function S:enterStates(enabledTransitions)
 			for _,s in ipairs(t.targets) do
 				for anc in s:ancestorsUntil(ancestor) do
 					statesToEnter:add(anc)
-					if anc.kind=='parallel' then
+					if anc._kind=='parallel' then
 						for _,child in ipairs(anc.reals) do
 							local descendsFlag = false
 							for _,s in ipairs(statesToEnter) do
@@ -825,23 +847,23 @@ function S:enterStates(enabledTransitions)
 
 	statesToEnter = statesToEnter:toList():sort(documentOrder)
 	for _,s in ipairs(statesToEnter) do
-		if s.kind=='scxml' then
+		if s._kind=='scxml' then
 			print("WARNING: tried to add scxml to the configuration!")
 		else
-			self.configuration:add(s)
+			self._config:add(s)
 			-- self.statesToInvoke:add(s)
-			if self.binding=="late" then self.datamodel:initState(s) end -- The datamodel ensures this happens only once per state
-			for _,content in ipairs(s.onentrys) do self:executeContent(content) end
-			if self.onAfterEnter then self.onAfterEnter(s.id,s.kind) end
+			if self.binding=="late" then self._data:initState(s) end -- The datamodel ensures this happens only once per state
+			for _,content in ipairs(s._onentrys) do self:executeContent(content) end
+			if self.onAfterEnter then self.onAfterEnter(s.id,s._kind) end
 			if statesForDefaultEntry:member(s) then self:executeTransitionContent(s.initial.transitions) end
-			if s.kind=='final' then
+			if s._kind=='final' then
 				local parent = s.parent
-				if parent.kind=='scxml' then
+				if parent._kind=='scxml' then
 					self.running = false
 				else
 					local grandparent = parent.parent
 					self:fireEvent( "done.state."..parent.id, self:donedata(s), true )
-					if grandparent and grandparent.kind=='parallel' then
+					if grandparent and grandparent._kind=='parallel' then
 						local allAreInFinal = true
 						for _,child in ipairs(grandparent.reals) do
 							if not self:isInFinalState(child) then
@@ -856,19 +878,19 @@ function S:enterStates(enabledTransitions)
 		end
 	end
 
-	for _,s in ipairs(self.configuration) do
-		if s.kind=='final' and s.parent.kind=='scxml' then self.running = false end
+	for _,s in ipairs(self._config) do
+		if s._kind=='final' and s.parent._kind=='scxml' then self.running = false end
 	end
 end
 
 function S:isInFinalState(s)
 	if s.isCompound then
 		for _,s in ipairs(s.reals) do
-			if s.kind=='final' and self.configuration:member(s) then
+			if s._kind=='final' and self._config:member(s) then
 				return true
 			end
 		end
-	elseif s.kind=='parallel' then
+	elseif s._kind=='parallel' then
 		for _,s in ipairs(s.reals) do
 			if not self:isInFinalState(s) then
 				return false
@@ -879,14 +901,14 @@ function S:isInFinalState(s)
 end
 
 function S:donedata(state)
-	local c = state.donedatas[1]
+	local c = state._donedatas[1]
 	if c then
 		if c.kinc=='content' then
-			return c.expr and self.datamodel:run(c.expr) or c._text
+			return c.expr and self._data:run(c.expr) or c._text
 		else
 			local map = {}
-			for _,p in ipairs(state.donedatas) do
-				map[p.name] = self.datamodel:run(p.expr)
+			for _,p in ipairs(state._donedatas) do
+				map[p.name] = self._data:run(p.expr)
 			end
 			return map
 		end
@@ -899,17 +921,18 @@ function S:fireEvent(name,data,internalFlag)
 end
 
 -- Sensible aliases
-S.start = S.interpret
-S.step  = S.mainEventLoop	
+S.start   = S.interpret
+S.restart = S.interpret
+S.step    = S.mainEventLoop	
 
 end)(LXSC.SCXML)
 
 --[=====================================================================[
-v0.1 Copyright © 2013 Gavin Kistner <!@phrogz.net>; MIT Licensed
+v0.1.1 Copyright © 2013 Gavin Kistner <!@phrogz.net>; MIT Licensed
 See http://github.com/Phrogz/SLAXML for details.
 --]=====================================================================]
 SLAXML = {
-	VERSION = "0.1",
+	VERSION = "0.1.1",
 	ignoreWhitespace = true,
 	_call = {
 		pi = function(target,content)
@@ -1094,8 +1117,8 @@ function LXSC:parse(scxml)
 		end,
 		attribute = function(name,value) current:attr(name,value) end,
 		closeElement = function(name)
-			if current.kind ~= name then
-				error(string.format("I was working with a '%s' element but got a close notification for '%s'",current.kind,name))
+			if current._kind ~= name then
+				error(string.format("I was working with a '%s' element but got a close notification for '%s'",current._kind,name))
 			end
 			pop(stack)
 			current = stack[#stack] or current

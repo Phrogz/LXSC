@@ -21,7 +21,7 @@ end
 
 function LXSC.Datamodel:initState(state)
 	if not self.statesInited[state] then
-		for _,data in ipairs(state.datamodels) do
+		for _,data in ipairs(state._datamodels) do
 			-- TODO: support data.src
 			self:set( data.id, self:run(data.expr or tostring(data._text)) )
 		end
@@ -37,4 +37,8 @@ end
 
 function LXSC.Datamodel:set(id,value)
 	self.data[id] = value
+end
+
+function LXSC.Datamodel:get(id)
+	return self.data[id]
 end

@@ -1,5 +1,5 @@
 function LXSC:transition()
-	local t = { kind='transition', exec={}, type="external" }
+	local t = { _kind='transition', _exec={}, type="external" }
 	setmetatable(t,self.TRANSITION.__meta)
 	return t
 end
@@ -30,7 +30,7 @@ function LXSC.TRANSITION:attr(name,value)
 end
 
 function LXSC.TRANSITION:addChild(item)
-	table.insert(self.exec,item)
+	table.insert(self._exec,item)
 end
 
 function LXSC.TRANSITION:addTarget(stateOrId)

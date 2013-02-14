@@ -19,8 +19,8 @@ function LXSC:parse(scxml)
 		end,
 		attribute = function(name,value) current:attr(name,value) end,
 		closeElement = function(name)
-			if current.kind ~= name then
-				error(string.format("I was working with a '%s' element but got a close notification for '%s'",current.kind,name))
+			if current._kind ~= name then
+				error(string.format("I was working with a '%s' element but got a close notification for '%s'",current._kind,name))
 			end
 			pop(stack)
 			current = stack[#stack] or current

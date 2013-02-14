@@ -2,13 +2,13 @@ LXSC.EXECUTABLE = {}
 
 function LXSC.EXECUTABLE:log(scxml)
 	local message = {self.label}
-	if self.expr then table.insert(message,scxml.datamodel:run(self.expr)) end
+	if self.expr then table.insert(message,scxml._data:run(self.expr)) end
 	print(table.concat(message,": "))
 end
 
 function LXSC.EXECUTABLE:assign(scxml)
 	-- TODO: support child executable content in place of expr
-	scxml.datamodel:set( self.location, scxml.datamodel:run(self.expr) )
+	scxml._data:set( self.location, scxml._data:run(self.expr) )
 end
 
 function LXSC.EXECUTABLE:raise(scxml)
@@ -17,8 +17,8 @@ end
 
 function LXSC.EXECUTABLE:send(scxml)
 	-- TODO: warn about delay/delayexpr no support
-	-- TODO: support type/typeexpr/target/targetexpr 
-	local dm = scxml.datamodel
+	-- TODO: support type/typeexpr/target/targetexpr
+	local dm = scxml._data
 	local name = self.event or dm:run(self.eventexpr)
 	local data
 	if self.namelist then
@@ -30,10 +30,10 @@ function LXSC.EXECUTABLE:send(scxml)
 end
 
 function LXSC.SCXML:executeContent(item)
-	local handler = LXSC.EXECUTABLE[item.kind] 
+	local handler = LXSC.EXECUTABLE[item._kind]
 	if handler then
 		handler(item,self) -- TODO: pcall this and inject error event on failure
 	else
-		print(string.format("Warning: skipping unhandled executable type %s | %s",item.kind,dump(item)))
+		print(string.format("Warning: skipping unhandled executable type %s | %s",item._kind,dump(item)))
 	end
 end

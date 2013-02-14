@@ -1,12 +1,12 @@
 LXSC = { SCXML={}, STATE={}, TRANSITION={}, GENERIC={} }
 for k,t in pairs(LXSC) do t.__meta={__index=t} end
 
-LXSC.VERSION = "0.1"
+LXSC.VERSION = "0.2"
 
 setmetatable(LXSC.SCXML,{__index=LXSC.STATE})
 setmetatable(LXSC,{__index=function(kind)
 	return function(self,kind)
-		local t = {kind=kind,_kids={}}
+		local t = {_kind=kind,_kids={}}
 		setmetatable(t,self.GENERIC.__meta)
 		return t
 	end
@@ -37,9 +37,9 @@ end
 -- *********************************
 
 -- These elements pass their children through to the appropriate collection on the state
-for kind,collection in pairs{ datamodel='datamodels', donedata='donedatas', onentry='onentrys', onexit='onexits' } do
+for kind,collection in pairs{ datamodel='_datamodels', donedata='_donedatas', onentry='_onentrys', onexit='_onexits' } do
 	LXSC[kind] = function()
-		local t = {kind=kind}
+		local t = {_kind=kind}
 		function t:addChild(item) table.insert(self.state[collection],item) end
 		return t
 	end
