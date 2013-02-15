@@ -1,0 +1,32 @@
+<scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0" xmlns:x="borked">
+	<state>
+		<onentry>
+			<raise event="no" />
+			<raise event="no" />
+			<send  event="no" />
+			<raise event="no" />
+			<raise event="no" />
+			<send  event="no" />
+			<send  event="no" />
+			<raise event="no" />
+			<send  event="no" />
+			<send  event="no" />
+			<raise event="GO" />
+
+			<send  event="no" />
+			<send  event="no" />
+			<raise event="no" />
+			<send  event="no" />
+			<send  event="no" />
+			<raise event="no" />
+			<raise event="no" />
+			<send  event="no" />
+			<raise event="no" />
+			<raise event="no" />
+			<send  event="GO" />
+		</onentry>
+		<state id="s1"><transition event="GO" target="s2" /></state>
+		<state id="s2"><transition event="GO" target="pass" /></state>
+	</state>
+	<final id="pass"/>
+</scxml>
