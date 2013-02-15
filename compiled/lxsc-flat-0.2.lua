@@ -77,6 +77,8 @@ function LXSC:state(kind)
 		states      = {},
 		reals       = {},
 		transitions = {},
+		_eventlessTransitions = {},
+		_eventedTransitions   = {},
 
 		_onentrys   = {},
 		_onexits    = {},
@@ -681,8 +683,8 @@ end
 -- TODO: store sets of evented vs. eventless transitions
 function S:addEventlessTransition(state,enabledTransitions)
 	for _,s in ipairs(state.selfAndAncestors) do
-		for _,t in ipairs(s.transitions) do
-			if not t.events and t:conditionMatched(self._data) then
+		for _,t in ipairs(s._eventlessTransitions) do
+			if t:conditionMatched(self._data) then
 				enabledTransitions:add(t)
 				return
 			end
@@ -701,8 +703,8 @@ end
 -- TODO: store sets of evented vs. eventless transitions
 function S:addTransitionForEvent(state,event,enabledTransitions)
 	for _,s in ipairs(state.selfAndAncestors) do
-		for _,t in ipairs(s.transitions) do
-			if t.events and t:matchesEvent(event) and t:conditionMatched(self._data) then
+		for _,t in ipairs(s._eventedTransitions) do
+			if t:matchesEvent(event) and t:conditionMatched(self._data) then
 				enabledTransitions:add(t)
 				return
 			end
@@ -1142,6 +1144,9 @@ function LXSC:parse(scxml)
 		closeElement = function(name)
 			if current._kind ~= name then
 				error(string.format("I was working with a '%s' element but got a close notification for '%s'",current._kind,name))
+			end
+			if name=="transition" then
+				table.insert( current.source[current.events and '_eventedTransitions' or '_eventlessTransitions'], current )
 			end
 			pop(stack)
 			current = stack[#stack] or current
