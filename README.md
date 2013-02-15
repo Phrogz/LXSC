@@ -16,8 +16,6 @@ LXSC aims to be _almost_ 100% compliant with the [SCXML Interpretation Algorithm
 
 * **No Delayed `<send>`**: Given the non-threaded nature of LXSC, there are no immediate plans to support the `delay` or `delayexpr` attributes for `<send>` actions. (Please file an issue if this is important to you.)
 
-* **Global `<script>` after `<datamodel>`**: The W3C implementation calls for a global `<script>` element to be executed at startup _before_ the `<datamodel>` elements have been initialized. LXSC, on the other hand, initializes the data model before running the script content. This is so that the script can use any values set by the datamodel, and possibly modify the initial values.
-
 ## License & Contact
 
 LXSC is copyright ©2013 by Gavin Kistner and is licensed under the [MIT License][6]. See the LICENSE.txt file for more details.
