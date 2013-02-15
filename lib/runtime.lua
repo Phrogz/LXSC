@@ -40,7 +40,6 @@ function S:interpret(options)
 	self.running = true
 	if self.binding == "early" then self._data:initAll() end
 	if self._script then self:executeContent(self._script) end
-	self:executeTransitionContent(self.initial.transitions)
 	self:enterStates(self.initial.transitions)
 	self:mainEventLoop()
 end
@@ -68,7 +67,7 @@ function S:mainEventLoop()
 			end
 			if not enabledTransitions:isEmpty() then
 				anyChange = true
-				self:microstep(enabledTransitions:toList()) -- TODO: (optimization) can remove toList() call
+				self:microstep(enabledTransitions)
 			end
 			iterations = iterations + 1
 		end
@@ -81,6 +80,7 @@ function S:mainEventLoop()
 		if self._internalQueue:isEmpty() then
 			local externalEvent = self._externalQueue:dequeue()
 			if externalEvent then
+				anyChange = true
 				if externalEvent.name=='quit.lxsc' then
 					self.running = false
 				else
@@ -93,8 +93,7 @@ function S:mainEventLoop()
 					-- end
 					enabledTransitions = self:selectTransitions(externalEvent)
 					if not enabledTransitions:isEmpty() then
-						anyChange = true
-						self:microstep(enabledTransitions:toList()) -- TODO: (optimization) can remove toList() call
+						self:microstep(enabledTransitions)
 					end
 				end
 			end
@@ -131,8 +130,8 @@ end
 -- TODO: store sets of evented vs. eventless transitions
 function S:addEventlessTransition(state,enabledTransitions)
 	for _,s in ipairs(state.selfAndAncestors) do
-		for _,t in ipairs(s.transitions) do
-			if not t.events and t:conditionMatched(self._data) then
+		for _,t in ipairs(s._eventlessTransitions) do
+			if t:conditionMatched(self._data) then
 				enabledTransitions:add(t)
 				return
 			end
@@ -151,8 +150,8 @@ end
 -- TODO: store sets of evented vs. eventless transitions
 function S:addTransitionForEvent(state,event,enabledTransitions)
 	for _,s in ipairs(state.selfAndAncestors) do
-		for _,t in ipairs(s.transitions) do
-			if t.events and t:matchesEvent(event) and t:conditionMatched(self._data) then
+		for _,t in ipairs(s._eventedTransitions) do
+			if t:matchesEvent(event) and t:conditionMatched(self._data) then
 				enabledTransitions:add(t)
 				return
 			end
@@ -195,14 +194,6 @@ function S:microstep(enabledTransitions)
 		for _,executable in ipairs(t._exec) do self:executeContent(executable) end
 	end
 	self:enterStates(enabledTransitions)
-end
-
-function S:executeTransitionContent(transitions)
-	for _,t in ipairs(transitions) do
-		for _,executable in ipairs(t._exec) do
-			self:executeContent(executable)
-		end
-	end
 end
 
 function S:exitStates(enabledTransitions)
@@ -321,7 +312,13 @@ function S:enterStates(enabledTransitions)
 			if self.binding=="late" then self._data:initState(s) end -- The datamodel ensures this happens only once per state
 			for _,content in ipairs(s._onentrys) do self:executeContent(content) end
 			if self.onAfterEnter then self.onAfterEnter(s.id,s._kind) end
-			if statesForDefaultEntry:member(s) then self:executeTransitionContent(s.initial.transitions) end
+			if statesForDefaultEntry:member(s) then
+				for _,t in ipairs(s.initial.transitions) do
+					for _,executable in ipairs(t._exec) do
+						self:executeContent(executable)
+					end
+				end
+			end
 			if s._kind=='final' then
 				local parent = s.parent
 				if parent._kind=='scxml' then

@@ -1,0 +1,232 @@
+<scxml initial="MainContent" name="Dashboard" version="0.9" xmlns="http://www.w3.org/2005/07/scxml"><!--   node-size-and-position x=0.0 y=0.0 w=1320.0 h=1010.0  -->
+ <datamodel>
+  <data id="hasGamesFlag" expr="true"/>
+  <data id="restoreAppFlag" expr="false"/>
+  <data id="hasRecentServersFlag" expr="false"/>
+  <data id="hasAvailableServersFlag" expr="true"/>
+ </datamodel>
+ <parallel id="MainContent"><!--   node-size-and-position x=130.0 y=30.0 w=940.0 h=700.0  -->
+  <state id="FlashBottom" initial="FlashBottomOff"><!--   node-size-and-position x=700.0 y=23.000000000000004 w=240.0 h=110.0  -->
+   <state id="FlashBottomOff"><!--   node-size-and-position x=9.999999999999925 y=40.0 w=80.0 h=50.0  -->
+    <transition event="flash.bottom" target="FlashBottomOn"><!--   edge-path [FlashBottomOn]  x=130.0 y=40.0 pointx=0.0 pointy=3.0 offsetx=0.0 offsety=0.0  --></transition>
+   </state>
+   <state id="FlashBottomOn"><!--   node-size-and-position x=149.99999999999994 y=40.0 w=80.0 h=50.0  -->
+    <transition event="animdone.flashBottom" target="FlashBottomOff"><!--   edge-path [FlashBottomOff]  x=120.0 y=90.0 pointx=0.0 pointy=13.0 offsetx=3.0 offsety=0.0  --></transition>
+   </state>
+  </state>
+  <state id="FlashTop" initial="FlashTopOff"><!--   node-size-and-position x=0.0 y=23.000000000000004 w=230.0 h=110.0  -->
+   <state id="FlashTopOff"><!--   node-size-and-position x=10.000000000000005 y=40.0 w=80.0 h=50.0  -->
+    <transition event="flash.top" target="FlashTopOn"><!--   edge-path [FlashTopOn]  x=120.0 y=40.0 pointx=0.0 pointy=3.0 offsetx=-4.0 offsety=1.0  --></transition>
+   </state>
+   <state id="FlashTopOn"><!--   node-size-and-position x=140.00000000000003 y=40.0 w=80.0 h=50.0  -->
+    <transition event="animdone.flashTop" target="FlashTopOff"><!--   edge-path [FlashTopOff]  x=120.0 y=90.0 pointx=0.0 pointy=10.0 offsetx=-8.0 offsety=2.0  --></transition>
+   </state>
+  </state>
+  <state id="FlashRight" initial="FlashRightOff"><!--   node-size-and-position x=460.0 y=23.000000000000004 w=240.0 h=110.0  -->
+   <state id="FlashRightOff"><!--   node-size-and-position x=10.000000000000034 y=40.0 w=80.0 h=50.0  -->
+    <transition event="flash.right" target="FlashRightOn"><!--   edge-path [FlashRightOn]  x=130.0 y=40.0 pointx=0.0 pointy=3.0 offsetx=1.0 offsety=0.0  --></transition>
+   </state>
+   <state id="FlashRightOn"><!--   node-size-and-position x=149.99999999999994 y=40.0 w=80.0 h=50.0  -->
+    <transition event="animdone.flashRight" target="FlashRightOff"><!--   edge-path [FlashRightOff]  x=120.0 y=90.0 pointx=0.0 pointy=13.0 offsetx=3.0 offsety=0.0  --></transition>
+   </state>
+  </state>
+  <state id="FlashLeft" initial="FlashLeftOff"><!--   node-size-and-position x=230.0 y=23.000000000000004 w=230.0 h=110.0  -->
+   <state id="FlashLeftOff"><!--   node-size-and-position x=9.999999999999925 y=40.0 w=80.0 h=50.0  -->
+    <transition event="flash.left" target="FlashLeftOn"><!--   edge-path [FlashLeftOn]  x=120.0 y=40.0 pointx=0.0 pointy=3.0 offsetx=-4.0 offsety=1.0  --></transition>
+   </state>
+   <state id="FlashLeftOn"><!--   node-size-and-position x=139.99999999999991 y=40.0 w=80.0 h=50.0  -->
+    <transition event="animdone.flashLeft" target="FlashLeftOff"><!--   edge-path [FlashLeftOff]  x=120.0 y=90.0 pointx=0.0 pointy=13.0 offsetx=3.0 offsety=0.0  --></transition>
+   </state>
+  </state>
+  <state id="Navigation" initial="intro"><!--   node-size-and-position x=0.0 y=129.99999999999997 w=940.0 h=570.0  -->
+   <state id="intro"><!--   node-size-and-position x=40.0 y=40.00000000000005 w=50.0 h=40.0  -->
+    <transition cond="(not restoreAppFlag) and hasGamesFlag" target="Games1"><!--   edge-path [Games1]  x=10.0 y=90.0 x=30.0 y=340.0 pointx=0.0 pointy=4.0 offsetx=-33.0 offsety=84.0  --></transition>
+    <transition cond="(not restoreAppFlag) and not hasGamesFlag" target="Store1"><!--   edge-path [Store1]  x=250.0 y=70.00000000000003 x=280.0 y=340.0  --></transition>
+    <transition cond="restoreAppFlag" target="app_history"><!--   edge-path [app_history]  x=140.0 y=200.0 pointx=0.0 pointy=-8.0 offsetx=34.0 offsety=3.0  --></transition>
+   </state>
+   <state id="Games"><!--   node-size-and-position x=40.0 y=90.0 w=190.0 h=460.0  -->
+    <transition event="bumper.right" target="StoreSection"><!--   edge-path [StoreSection]  pointx=-1.0 pointy=-2.0 offsetx=21.0 offsety=14.0  --></transition>
+    <transition event="bumper.left">
+     <raise event="flash.left"></raise>
+    </transition>
+    <state id="Games0"><!--   node-size-and-position x=60.00000000000001 y=50.0 w=80.0 h=50.0  -->
+     <transition event="dpad.down touch.focusContent" target="Games1"><!--   edge-path [Games1]  x=70.0 y=160.0 pointx=0.0 pointy=3.0 offsetx=4.0 offsety=-29.0  --></transition>
+     <transition event="dpad.left">
+      <raise event="flash.left"></raise>
+     </transition>
+     <transition event="dpad.right touch.focusStore0" target="Store0"><!--   edge-path [Store0]  x=280.0 y=150.00000000000003 pointx=0.0 pointy=5.0 offsetx=-40.0 offsety=0.0  --></transition>
+     <transition event="dpad.up">
+      <raise event="flashTop"></raise>
+     </transition>
+     <transition event="back" target="quit"><!--   edge-path [quit]  x=220.0 y=330.0 pointx=-1.0 pointy=3.0 offsetx=-29.0 offsety=-12.0  --></transition>
+     <transition event="touch.focusGrid0" target="Grid0"><!--   edge-path [Grid0]  x=390.0 y=50.00000000000003 pointx=0.0 pointy=-6.0 offsetx=-35.0 offsety=11.0  --></transition>
+    </state>
+    <state id="GamesContent" initial="Games1"><!--   node-size-and-position x=20.00000000000001 y=169.99999999999997 w=150.0 h=270.0  -->
+     <transition event="launch.game" target="LaunchGame"></transition>
+     <state id="Games2"><!--   node-size-and-position x=40.0 y=160.00000000000003 w=80.0 h=40.0  -->
+      <transition event="back games2.pastTop touch.prevScreen" target="Games1"><!--   edge-path [Games1]  x=100.0 y=140.0 pointx=0.0 pointy=-22.0 offsetx=1.0 offsety=23.0  --></transition>
+      <transition event="games2.pastLeft">
+       <raise event="flash.left"></raise>
+      </transition>
+      <transition event="games2.pastBottom">
+       <raise event="flash.bottom"></raise>
+      </transition>
+     </state>
+     <history id="GameSection" type="shallow"><transition target="Games1"/><!--   node-size-and-position x=40.0 y=230.00000000000006 w=80.0 h=30.0  --></history>
+     <state id="Games1"><!--   node-size-and-position x=40.0 y=70.00000000000007 w=80.0 h=40.0  -->
+      <transition event="dpad.up.held touch.focusNav" target="Games0"><!--   edge-path [Games0]  x=125.0 y=145.0 pointx=0.0 pointy=-38.0 offsetx=-7.0 offsety=33.0  --></transition>
+      <transition event="dpad.down touch.nextScreen" target="Games2"><!--   edge-path [Games2]  x=60.0 y=150.0 pointx=0.0 pointy=-25.0 offsetx=-1.0 offsety=2.0  --></transition>
+      <transition event="Games1.PastLeft">
+       <raise event="flash.left"></raise>
+      </transition>
+      <transition event="back" target="quit"><!--   edge-path [quit]  pointx=-1.0 pointy=7.0 offsetx=-19.0 offsety=-24.0  --></transition>
+     </state>
+    </state>
+   </state>
+   <state id="Store"><!--   node-size-and-position x=309.9999999999999 y=90.0 w=180.0 h=460.0  -->
+    <transition event="bumper.left" target="GameSection"><!--   edge-path [GameSection]  pointx=-1.0 pointy=-11.0 offsetx=-4.0 offsety=2.0  --></transition>
+    <transition event="bumper.right" target="GridSection"><!--   edge-path [GridSection]  pointx=-1.0 pointy=18.0 offsetx=30.0 offsety=21.0  --></transition>
+    <state id="Store0"><!--   node-size-and-position x=50.0 y=50.0 w=80.0 h=50.0  -->
+     <transition event="dpad.down touch.focusContent" target="Store1"><!--   edge-path [Store1]  x=70.0 y=210.0 pointx=-1.0 pointy=-32.0 offsetx=-5.0 offsety=35.0  --></transition>
+     <transition cond="hasGamesFlag" event="dpad.left back touch.focusGames0" target="Games0"><!--   edge-path [Games0]  x=240.0 y=200.00000000000003 pointx=-1.0 pointy=7.0 offsetx=-41.0 offsety=4.0  --></transition>
+     <transition event="dpad.right touch.focusGrid0" target="Grid0"><!--   edge-path [Grid0]  x=590.0 y=140.00000000000003 pointx=-1.0 pointy=4.0 offsetx=41.0 offsety=-6.0  --></transition>
+     <transition event="dpad.up">
+      <raise event="flash.top"></raise>
+     </transition>
+     <transition cond="not hasGamesFlag" event="back" target="quit"><!--   edge-path [quit]  x=420.0 y=300.0 x=400.0 y=210.0 x=240.0 y=190.0 pointx=-1.0 pointy=-22.0 offsetx=-35.0 offsety=6.0  --></transition>
+    </state>
+    <state id="StoreContent" initial="Store1"><!--   node-size-and-position x=20.000000000000068 y=169.99999999999997 w=140.0 h=270.0  -->
+     <transition event="store.showDetails" target="StoreDetails"><!--   edge-path [StoreDetails]  x=650.0 y=700.0  --></transition>
+     <state id="Store1"><!--   node-size-and-position x=29.999999999999936 y=70.00000000000007 w=80.0 h=40.0  -->
+      <transition event="dpad.up.held touch.focusNav" target="Store0"><!--   edge-path [Store0]  x=110.0 y=120.0 pointx=-1.0 pointy=-33.0 offsetx=3.0 offsety=-16.0  --></transition>
+      <transition event="dpad.down touch.nextScreen" target="Store2"><!--   edge-path [Store2]  x=50.0 y=150.0 pointx=0.0 pointy=-25.0 offsetx=-1.0 offsety=2.0  --></transition>
+      <transition event="store1.pastLeft">
+       <raise event="flash.left"></raise>
+      </transition>
+      <transition cond="hasGamesFlag" event="back" target="Games0"><!--   edge-path [Games0]  x=300.0 y=310.0 pointx=-1.0 pointy=5.0 offsetx=-19.0 offsety=-14.0  --></transition>
+      <transition cond="not hasGamesFlag" event="back" target="quit"><!--   edge-path [quit]  x=420.0 y=420.0 x=390.0 y=220.0 x=230.0 y=200.0 pointx=-1.0 pointy=11.0 offsetx=-59.0 offsety=-49.0  --></transition>
+     </state>
+     <state id="Store2"><!--   node-size-and-position x=29.999999999999936 y=160.00000000000003 w=80.0 h=40.0  -->
+      <transition event="store2.pastTop back touch.prevScreen" target="Store1"><!--   edge-path [Store1]  x=90.0 y=130.0 pointx=0.0 pointy=-26.0 offsetx=-2.0 offsety=6.0  --></transition>
+      <transition event="store2.pastBottom">
+       <raise event="flash.bottom"></raise>
+      </transition>
+      <transition event="store2.pastLeft">
+       <raise event="flash.left"></raise>
+      </transition>
+     </state>
+     <history id="StoreSection" type="shallow"><transition target="Store1"/><!--   node-size-and-position x=29.999999999999936 y=230.00000000000006 w=80.0 h=30.0  --></history>
+    </state>
+   </state>
+   <state id="Grid"><!--   node-size-and-position x=560.0000000000001 y=90.0 w=310.0 h=460.0  -->
+    <transition event="bumper.left" target="StoreSection"><!--   edge-path [StoreSection]  pointx=-1.0 pointy=1.0 offsetx=-30.0 offsety=18.0  --></transition>
+    <transition event="bumper.right">
+     <raise event="flash.right"></raise>
+    </transition>
+    <state id="Grid0"><!--   node-size-and-position x=59.99999999999998 y=50.0 w=80.0 h=40.0  -->
+     <transition cond="hasRecentServersFlag" event="dpad.down touch.focusContent" target="Grid1"><!--   edge-path [Grid1]  x=79.99999999999989 y=140.0 x=70.0 y=220.0 pointx=0.0 pointy=-3.0 offsetx=6.0 offsety=-36.0  --></transition>
+     <transition event="dpad.right">
+      <raise event="flash.right"></raise>
+     </transition>
+     <transition event="dpad.left back touch.focusStore0" target="Store0"><!--   edge-path [Store0]  x=490.0 y=200.00000000000003 pointx=-1.0 pointy=13.0 offsetx=-31.0 offsety=3.0  --></transition>
+     <transition event="dpad.up">
+      <raise event="flash.top"></raise>
+     </transition>
+     <transition cond="not hasAvailableServersFlag" event="dpad.down" target="NoServers"><!--   edge-path [NoServers]  x=189.9999999999999 y=100.0  --></transition>
+     <transition cond="hasAvailableServersFlag and not hasRecentServersFlag" event="dpad.down touch.focusContent" target="Grid2"><!--   edge-path [Grid2]  x=49.999999999999886 y=140.0 x=40.0 y=280.0 pointx=-1.0 pointy=-2.0 offsetx=-44.0 offsety=62.0  --></transition>
+     <transition event="touch.focusGames0" target="Games0"><!--   edge-path [Games0]  x=490.0 y=60.00000000000003 pointx=-1.0 pointy=-3.0 offsetx=-97.0 offsety=-57.0  --></transition>
+    </state>
+    <state id="GridContent" initial="Grid1"><!--   node-size-and-position x=29.999999999999883 y=169.99999999999997 w=180.0 h=270.0  -->
+     <state id="Grid1"><!--   node-size-and-position x=29.99999999999999 y=70.00000000000007 w=80.0 h=40.0  -->
+      <transition event="dpad.up.held touch.focusNav" target="Grid0"><!--   edge-path [Grid0]  x=120.0 y=130.0 pointx=-1.0 pointy=-24.0 offsetx=3.0 offsety=-24.0  --></transition>
+      <transition event="dpad.down touch.nextScreen" target="Grid2"><!--   edge-path [Grid2]  x=50.0 y=130.0  --></transition>
+      <transition event="back" target="Store0"><!--   edge-path [Store0]  pointx=-1.0 pointy=5.0 offsetx=-19.0 offsety=-14.0  --></transition>
+      <transition event="grid1.pastRight"></transition>
+      <transition event="grid1.pastLeft"></transition>
+      <transition event="connect.start" target="ConnectingDialog"><!--   edge-path [ConnectingDialog]  x=1120.0 y=560.0 pointx=0.0 pointy=2.0 offsetx=-40.0 offsety=1.0  --></transition>
+      <transition event="server.forget" target="Forget"><!--   edge-path [Forget]  x=1070.0 y=500.0  --></transition>
+     </state>
+     <state id="Grid2"><!--   node-size-and-position x=29.99999999999999 y=160.00000000000003 w=80.0 h=40.0  -->
+      <transition event="dpad.down">
+       <raise event="flash.bottom"></raise>
+      </transition>
+      <transition event="grid2.pastRight">
+       <raise event="flash.right"></raise>
+      </transition>
+      <transition cond="hasRecentServersFlag" event="grid2.pastTop back touch.prevScreen" target="Grid1"><!--   edge-path [Grid1]  x=90.0 y=130.0 pointx=0.0 pointy=-26.0 offsetx=-2.0 offsety=6.0  --></transition>
+      <transition cond="not hasRecentServersFlag" event="grid2.pastTop back touch.focusNav" target="Grid0"><!--   edge-path [Grid0]  x=239.9999999999999 y=320.0 x=249.9999999999999 y=150.00000000000006 pointx=0.0 pointy=9.0 offsetx=3.0 offsety=-62.0  --></transition>
+     </state>
+     <history id="GridSection" type="shallow"><transition target="Grid1"/><!--   node-size-and-position x=29.99999999999999 y=230.00000000000006 w=80.0 h=30.0  --></history>
+    </state>
+    <state id="NoServers"><!--   node-size-and-position x=219.99999999999986 y=60.000000000000036 w=70.0 h=40.0  -->
+     <transition event="launch.settings.network launch.settings.wifi" target="LaunchSettings"></transition>
+     <transition event="launch.troubleshooting" target="Troubleshooting"></transition>
+     <transition event="dpad.up back" target="Grid0"><!--   edge-path [Grid0]  x=180.0 y=40.0  --></transition>
+    </state>
+   </state>
+  </state>
+ </parallel>
+ <final id="quit"><!--   node-size-and-position x=30.0 y=40.0 w=60.0 h=40.0  --></final>
+ <state id="StoreDetails" initial="Buy"><!--   node-size-and-position x=350.0 y=770.0 w=440.0 h=180.0  -->
+  <transition event="touch.store back" target="StoreSection"><!--   edge-path [StoreSection]  x=530.0 y=740.0 pointx=-1.0 pointy=-16.0 offsetx=3.0 offsety=-22.0  --></transition>
+  <state id="Buy"><!--   node-size-and-position x=19.999999999999957 y=50.00000000000006 w=100.0 h=40.0  -->
+   <transition event="dpad.right" target="Details"><!--   edge-path [Details]  x=150.0 y=50.0 pointx=0.0 pointy=10.0 offsetx=-10.0 offsety=0.0  --></transition>
+   <transition event="select" target="googleplay"><!--   edge-path [googleplay]  pointx=-1.0 pointy=0.0 offsetx=0.0 offsety=20.0  --></transition>
+   <transition event="dpad.right" target="Details"><!--   edge-path [Details]  x=150.0 y=50.0 pointx=0.0 pointy=10.0 offsetx=-10.0 offsety=0.0  --></transition>
+  </state>
+  <state id="Details"><!--   node-size-and-position x=199.99999999999994 y=50.00000000000006 w=80.0 h=30.0  -->
+   <transition event="dpad.right" target="Visuals"><!--   edge-path [Visuals]  x=310.0 y=50.0 pointx=0.0 pointy=16.0 offsetx=-7.0 offsety=2.0  --></transition>
+   <transition event="select" target="DetailsBig"><!--   edge-path [DetailsBig]  x=210.0 y=120.0 pointx=0.0 pointy=-14.0 offsetx=-1.0 offsety=3.0  --></transition>
+   <transition event="dpad.left" target="Buy"><!--   edge-path [Buy]  x=150.0 y=90.0 pointx=0.0 pointy=-13.0 offsetx=3.0 offsety=5.0  --></transition>
+  </state>
+  <state id="Visuals"><!--   node-size-and-position x=329.99999999999994 y=50.00000000000006 w=70.0 h=30.0  -->
+   <transition event="dpad.left" target="Details"><!--   edge-path [Details]  x=300.0 y=100.0 x=270.0 y=90.0 pointx=0.0 pointy=-19.0 offsetx=14.0 offsety=13.0  --></transition>
+   <transition event="screenshot.show" target="VisualsBig"><!--   edge-path [VisualsBig]  x=340.0 y=130.0 pointx=1.0 pointy=-22.0 offsetx=-14.0 offsety=-35.0  --></transition>
+   <transition event="launch.video" target="videoplayback"><!--   edge-path [videoplayback]  pointx=0.0 pointy=10.0 offsetx=-5.0 offsety=0.0  --></transition>
+  </state>
+  <state id="VisualsBig"><!--   node-size-and-position x=329.99999999999994 y=139.99999999999991 w=70.0 h=30.0  -->
+   <transition event="back" target="Visuals"><!--   edge-path [Visuals]  x=380.0 y=100.0 pointx=0.0 pointy=-26.0 offsetx=-2.0 offsety=10.0  --></transition>
+  </state>
+  <state id="DetailsBig"><!--   node-size-and-position x=190.00000000000003 y=139.99999999999991 w=80.0 h=30.0  -->
+   <transition event="back" target="Details"><!--   edge-path [Details]  x=250.0 y=110.0 pointx=0.0 pointy=-18.0 offsetx=-3.0 offsety=10.0  --></transition>
+  </state>
+ </state>
+ <final id="videoplayback"><!--   node-size-and-position x=870.0 y=820.0 w=100.0 h=40.0  --></final>
+ <history id="app_history" type="deep"><transition target="Games1"/><!--   node-size-and-position x=20.0 y=200.0 w=80.0 h=40.0  --></history>
+ <final id="googleplay"><!--   node-size-and-position x=370.0 y=970.0 w=100.0 h=30.0  --></final>
+ <state id="GamesList" initial="BrowseGames"><!--   node-size-and-position x=999.9999999999999 y=770.0 w=300.0 h=180.0  -->
+  <state id="BrowseGames"><!--   node-size-and-position x=190.0000000000003 y=39.999999999999915 w=90.0 h=30.0  -->
+   <transition event="launch.start" target="LaunchingDialog"><!--   edge-path [LaunchingDialog]  x=210.0 y=110.0  --></transition>
+   <transition event="touch.grid1 back" target="Grid1"><!--   edge-path [Grid1]  x=1190.0 y=730.0 pointx=-1.0 pointy=23.0 offsetx=-47.0 offsety=-80.0  --></transition>
+  </state>
+  <state id="LaunchingDialog"><!--   node-size-and-position x=190.0000000000003 y=119.99999999999996 w=90.0 h=30.0  -->
+   <transition event="launch.error" target="LaunchingError"><!--   edge-path [LaunchingError]  x=140.0 y=110.0 pointx=0.0 pointy=19.0 offsetx=6.0 offsety=2.0  --></transition>
+   <transition event="launch.ok" target="streaming"><!--   edge-path [streaming]  pointx=0.0 pointy=3.0 offsetx=-1.0 offsety=-5.0  --></transition>
+   <transition event="back" target="BrowseGames"><!--   edge-path [BrowseGames]  x=260.0 y=90.0 pointx=0.0 pointy=-18.0 offsetx=-3.0 offsety=7.0  --></transition>
+  </state>
+  <state id="LaunchingError"><!--   node-size-and-position x=20.000000000000068 y=119.99999999999996 w=90.0 h=30.0  -->
+   <transition event="dialog.retry" target="LaunchingDialog"><!--   edge-path [LaunchingDialog]  x=150.0 y=160.0 pointx=0.0 pointy=-12.0 offsetx=-7.0 offsety=-2.0  --></transition>
+   <transition event="dialog.cancel back" target="BrowseGames"><!--   edge-path [BrowseGames]  x=130.0 y=90.0 pointx=-1.0 pointy=32.0 offsetx=-8.0 offsety=6.0  --></transition>
+  </state>
+ </state>
+ <state id="ConnectingDialog"><!--   node-size-and-position x=1170.0 y=600.0 w=100.0 h=30.0  -->
+  <transition event="back" target="Grid1"><!--   edge-path [Grid1]  x=1100.0 y=590.0 pointx=-1.0 pointy=3.0 offsetx=-72.0 offsety=-23.0  --></transition>
+  <transition event="connect.established" target="BrowseGames"><!--   edge-path [BrowseGames]  pointx=-1.0 pointy=1.0 offsetx=-1.0 offsety=30.0  --></transition>
+  <transition event="connect.error" target="ConnectError"><!--   edge-path [ConnectError]  x=1250.0 y=560.0 pointx=0.0 pointy=-31.0 offsetx=0.0 offsety=-1.0  --></transition>
+  <transition event="connect.timeout" target="Grid1"><!--   edge-path [Grid1]  x=1090.0 y=610.0 pointx=-1.0 pointy=8.0 offsetx=-50.0 offsety=-1.0  --></transition>
+ </state>
+ <state id="ConnectError"><!--   node-size-and-position x=1180.0 y=509.99999999999994 w=80.0 h=30.0  -->
+  <transition event="dialog.retry" target="ConnectingDialog"><!--   edge-path [ConnectingDialog]  x=1200.0 y=570.0 pointx=0.0 pointy=-1.0 offsetx=11.0 offsety=-9.0  --></transition>
+  <transition event="dialog.cancel back" target="Grid1"><!--   edge-path [Grid1]  x=1100.0 y=540.0 pointx=-1.0 pointy=-12.0 offsetx=-58.0 offsety=12.0  --></transition>
+ </state>
+ <final id="streaming"><!--   node-size-and-position x=1190.0 y=970.0 w=90.0 h=30.0  --></final>
+ <final id="LaunchSettings"><!--   node-size-and-position x=1100.0 y=230.0 w=100.0 h=30.0  --></final>
+ <final id="Troubleshooting"><!--   node-size-and-position x=1100.0 y=350.0 w=100.0 h=30.0  --></final>
+ <final id="LaunchGame"><!--   node-size-and-position x=20.0 y=630.0 w=80.0 h=30.0  --></final>
+ <state id="Forget"><!--   node-size-and-position x=1160.0 y=450.0 w=80.0 h=20.0  -->
+  <transition event="dialog.cancel back" target="Grid1"><!--   edge-path [Grid1]  x=1030.0 y=460.0 pointx=-1.0 pointy=0.0 offsetx=-80.0 offsety=0.0  --></transition>
+  <transition event="dialog.ok" target="Grid1">
+   <script>forgetSelectedServer()</script>
+<!--   edge-path [Grid1]  x=1060.0 y=430.0 pointx=-1.0 pointy=-13.0 offsetx=-43.0 offsety=-9.0  --></transition>
+ </state>
+</scxml>

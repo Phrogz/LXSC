@@ -15,6 +15,8 @@ function LXSC:state(kind)
 		states      = {},
 		reals       = {},
 		transitions = {},
+		_eventlessTransitions = {},
+		_eventedTransitions   = {},
 
 		_onentrys   = {},
 		_onexits    = {},
@@ -64,8 +66,7 @@ function LXSC.State:addChild(item)
 		item.state = self
 		table.insert(self._invokes,item)
 
-	else
-		-- print("Warning: unhandled child of state: "..item._kind )
+	-- else print("Warning: unhandled child of state: "..item._kind )
 	end
 end
 

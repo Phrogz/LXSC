@@ -24,7 +24,7 @@ function test0_parsing()
 end
 
 function test1_dataAccess()
-	s = LXSC:parse([[<scxml xmlns='http://www.w3.org/2005/07/scxml' version='1.0'>
+	s = LXSC:parse[[<scxml xmlns='http://www.w3.org/2005/07/scxml' version='1.0'>
 		<script>boot(); boot()</script>
 		<datamodel><data id="n" expr="0"/></datamodel>
 		<state id='s'>
@@ -32,7 +32,7 @@ function test1_dataAccess()
 			<transition cond="n==7" target="pass"/>
 		</state>
 		<final id="pass"/><final id="errord"/>
-	</scxml>]])
+	</scxml>]]
 
 	s:start()
 	assert(s:isActive('errord'),"There should be an error when boot() can't be found")
@@ -68,9 +68,33 @@ function test1_dataAccess()
 	assert(s:isActive('errord'))
 end
 
+function test2_eventlist()
+	local m = LXSC:parse[[
+		<scxml xmlns='http://www.w3.org/2005/07/scxml' version='1.0'>
+			<parallel>
+				<state>
+					<transition event="a b.c" target="x"/>
+					<state><transition event="d.e.f g.*" target="x"/></state>
+				</state>
+				<state><transition event="h." target="x"/></state>
+			</parallel>
+			<state id="x"><transition event="x y.z" target="x" /></state>
+		</scxml>]]
+	local possible = m:allEvents()
+	local expected = {["a"]=1,["b.c"]=1,["d.e.f"]=1,["g"]=1,["h"]=1,["x"]=1,["y.z"]=1}
+	assertSameKeys(possible,expected)
+
+	assertNil(next(m:availableEvents()),"There should be no events before the machine has started.")
+	m:start()
+
+	local available = m:availableEvents()
+	local expected = {["a"]=1,["b.c"]=1,["d.e.f"]=1,["g"]=1,["h"]=1}
+	assertSameKeys(available,expected)
+end
+
 for filename in io.popen(string.format('ls "%s"',DIR)):lines() do
 	local testName = filename:sub(1,-7)
-	_M["test_"..testName] = function()
+	_M["testcase-"..testName] = function()
 		local xml = io.input(DIR..'/'..filename):read("*all")
 		local machine = LXSC:parse(xml)
 		assertFalse(machine.running, testName.." should not be running before starting.")

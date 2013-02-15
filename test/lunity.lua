@@ -1,5 +1,5 @@
 --[=========================================================================[
-   Lunity v0.9.1 by Gavin Kistner
+   Lunity v0.10 by Gavin Kistner
 
    This work is licensed under the Creative Commons Attribution 3.0
    United States License. To view a copy of this license, visit
@@ -47,7 +47,7 @@ local setmetatable=setmetatable
 local _G=_G
 module( 'lunity' )
 
-VERSION = "0.9.1"
+VERSION = "0.10"
 
 local lunity = _M
 setmetatable( lunity, {
@@ -265,6 +265,16 @@ function assertTableNotEmpty( actual, msg )
 		end
 		return __assertionSucceeded()
 	end
+end
+
+function assertSameKeys( t1, t2, msg )
+	local function bail(k,x,y)
+		if not msg then msg = string.format("Table #%d has key '%s' not present in table #%d",x,tostring(k),y) end
+		error( msg, 3 )
+	end
+	for k,_ in pairs(t1) do if t2[k]==nil then bail(k,1,2) end end
+	for k,_ in pairs(t2) do if t1[k]==nil then bail(k,2,1) end end
+	return __assertionSucceeded()
 end
 
 -- Ensures that the value is a function OR may be called as one

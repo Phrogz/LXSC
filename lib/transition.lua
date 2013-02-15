@@ -11,6 +11,7 @@ function LXSC.Transition:attr(name,value)
 		for event in string.gmatch(value,'[^%s]+') do
 			local tokens = {}
 			for token in string.gmatch(event,'[^.*]+') do table.insert(tokens,token) end
+			tokens.name = table.concat(tokens,'.')
 			table.insert(self.events,tokens)
 		end
 

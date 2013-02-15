@@ -1,7 +1,7 @@
 LXSC = { SCXML={}, State={}, Transition={}, Generic={} }
 for k,t in pairs(LXSC) do t.__meta={__index=t} end
 
-LXSC.VERSION = "0.2"
+LXSC.VERSION = "0.3"
 
 setmetatable(LXSC,{__index=function(kind)
 	return function(self,kind)
@@ -77,6 +77,8 @@ function LXSC:state(kind)
 		states      = {},
 		reals       = {},
 		transitions = {},
+		_eventlessTransitions = {},
+		_eventedTransitions   = {},
 
 		_onentrys   = {},
 		_onexits    = {},
@@ -126,8 +128,7 @@ function LXSC.State:addChild(item)
 		item.state = self
 		table.insert(self._invokes,item)
 
-	else
-		-- print("Warning: unhandled child of state: "..item._kind )
+	-- else print("Warning: unhandled child of state: "..item._kind )
 	end
 end
 
@@ -205,34 +206,29 @@ function LXSC:scxml()
 	t.id        = nil
 
 	t.running   = false
-	t._data     = LXSC.Datamodel(t)
 	t._config   = OrderedSet()
 
-	setmetatable(t,LXSC.SCXML.__meta)
-	return t
+	return setmetatable(t,LXSC.SCXML.__meta)
 end
 
-function LXSC.SCXML:get(key)
-	return self._data:get(key)
+-- Fetch a single named value from the data model
+function LXSC.SCXML:get(location)
+	return self._data:get(location)
 end
 
-function LXSC.SCXML:set(key,value)
-	self._data:set(key,value)
+-- Set a single named value in the data model
+function LXSC.SCXML:set(location,value)
+	self._data:set(location,value)
 end
 
-function LXSC.SCXML:clear()
-	self._data:clear()
+-- Evaluate a single Lua expression and return the value
+function LXSC.SCXML:eval(expression)
+	return self._data:eval(expression)
 end
 
-function LXSC.SCXML:eval(code)
-	return self._data:run(code)
-end
-
-function LXSC.SCXML:expandScxmlSource()
-	self:convertInitials()
-	self._stateById = {}
-	for _,s in ipairs(self.states) do s:cacheReference(self._stateById) end
-	self:resolveReferences(self._stateById)
+-- Run arbitrary script code (multiple lines) with no return value
+function LXSC.SCXML:run(code)
+	self._data:run(code)
 end
 
 function LXSC.SCXML:isActive(stateId)
@@ -241,9 +237,7 @@ end
 
 function LXSC.SCXML:activeStateIds()
 	local a = OrderedSet()
-	for _,s in ipairs(self._config) do
-		a:add(s.id)
-	end
+	for _,s in ipairs(self._config) do a:add(s.id) end
 	return a
 end
 
@@ -253,6 +247,42 @@ function LXSC.SCXML:activeAtomicIds()
 		if s.isAtomic then a:add(s.id) end
 	end
 	return a
+end
+
+function LXSC.SCXML:allEvents()
+	local all = {}
+	local function crawl(state)
+		for _,s in ipairs(state.states) do
+			for _,t in ipairs(s._eventedTransitions) do
+				for _,e in ipairs(t.events) do
+					all[e.name] = true
+				end
+			end
+			crawl(s)
+		end
+	end
+	crawl(self)
+	return all
+end
+
+function LXSC.SCXML:availableEvents()
+	local all = {}
+	for _,s in ipairs(self._config) do
+		for _,t in ipairs(s._eventedTransitions) do
+			for _,e in ipairs(t.events) do
+				all[e.name] = true
+			end
+		end
+	end
+	return all
+end
+
+function LXSC.SCXML:addChild(item)
+	if item._kind=='script' then
+		self._script = item
+	else
+		LXSC.State.addChild(self,item)
+	end
 end
 function LXSC:transition()
 	local t = { _kind='transition', _exec={}, type="external" }
@@ -267,6 +297,7 @@ function LXSC.Transition:attr(name,value)
 		for event in string.gmatch(value,'[^%s]+') do
 			local tokens = {}
 			for token in string.gmatch(event,'[^.*]+') do table.insert(tokens,token) end
+			tokens.name = table.concat(tokens,'.')
 			table.insert(self.events,tokens)
 		end
 
@@ -295,7 +326,7 @@ function LXSC.Transition:addTarget(stateOrId)
 end
 
 function LXSC.Transition:conditionMatched(datamodel)
-	return not self.cond or datamodel:run(self.cond)
+	return not self.cond or datamodel:eval(self.cond)
 end
 
 function LXSC.Transition:matchesEvent(event)
@@ -329,15 +360,11 @@ end
 
 LXSC.Datamodel = {}
 LXSC.Datamodel.__meta = {__index=LXSC.Datamodel}
-setmetatable(LXSC.Datamodel,{__call=function(o,scxml)
-	local dm = setmetatable({ statesInited={}, scxml=scxml },o.__meta)
-	dm:clear()
-	return dm
+setmetatable(LXSC.Datamodel,{__call=function(dm,scxml,scope)
+	if not scope then scope = {} end
+	function scope.In(id) return scxml:isActive(id) end
+	return setmetatable({ statesInited={}, scxml=scxml, scope=scope, cache={} },dm.__meta)
 end})
-
-function LXSC.Datamodel:clear()
-	self.data = { In=function(id) return self.scxml:isActive(id) end }
-end
 
 function LXSC.Datamodel:initAll()
 	local function recurse(state)
@@ -351,24 +378,31 @@ function LXSC.Datamodel:initState(state)
 	if not self.statesInited[state] then
 		for _,data in ipairs(state._datamodels) do
 			-- TODO: support data.src
-			self:set( data.id, self:run(data.expr or tostring(data._text)) )
+			self:set( data.id, self:eval(data.expr or tostring(data._text)) )
 		end
 		self.statesInited[state] = true
 	end
 end
 
-function LXSC.Datamodel:run(expression)
-	-- TODO: cache string->function
-	local f,message = loadstring('return '..expression)
-	if not f then
-		self.scxml:fireEvent("error.execution.syntax",{message=message},true)
-		-- print("error.execution.syntax",message)
-	else
-		setfenv(f,self.data)
-		local ok,result = pcall(f)
+function LXSC.Datamodel:eval(expression)
+	return self:run('return '..expression)
+end
+
+function LXSC.Datamodel:run(code)
+	local func,message = self.cache[code]
+	if not func then
+		func,message = loadstring(code)
+		if func then
+			self.cache[code] = func
+			setfenv(func,self.scope)
+		else
+			self.scxml:fireEvent("error.execution.syntax",message,true)
+		end
+	end
+	if func then
+		local ok,result = pcall(func)
 		if not ok then
-			self.scxml:fireEvent("error.execution.evaluation",{message=result},true)
-			-- print("error.execution.evaluation",result)
+			self.scxml:fireEvent("error.execution.evaluation",result,true)
 		else
 			return result
 		end
@@ -376,11 +410,11 @@ function LXSC.Datamodel:run(expression)
 end
 
 function LXSC.Datamodel:set(id,value)
-	self.data[id] = value
+	self.scope[id] = value
 end
 
 function LXSC.Datamodel:get(id)
-	return self.data[id]
+	return self.scope[id]
 end
 LXSC.Event = function(name,data)
 	local e = {name=name,data=data,tokens={}}
@@ -405,6 +439,10 @@ function LXSC.Exec:raise(scxml)
 	scxml:fireEvent(self.event,nil,true)
 end
 
+function LXSC.Exec:script(scxml)
+	scxml:run(self._text)
+end
+
 function LXSC.Exec:send(scxml)
 	-- TODO: warn about delay/delayexpr no support
 	-- TODO: support type/typeexpr/target/targetexpr
@@ -423,8 +461,7 @@ function LXSC.SCXML:executeContent(item)
 	if handler then
 		handler(item,self)
 	else
-		self:fireEvent('error.execution.unhandled',{message="unhandled executable type "..item._kind},true)
-		-- print('error.execution.unhandled',item._kind)
+		self:fireEvent('error.execution.unhandled',"unhandled executable type "..item._kind,true)
 	end
 end
 
@@ -572,20 +609,19 @@ end
 
 -- ****************************************************************************
 
-function S:interpret()
+function S:interpret(options)
 	-- if not self:validate() then self:failWithError() end
 	self:expandScxmlSource()
 	self._config:clear()
 	-- self.statesToInvoke = OrderedSet()
-	-- self._data:clear()
+	self._data = LXSC.Datamodel(self,options and options.data)
 	self.historyValue   = {}
 
-	-- self:executeGlobalScriptElements()
 	self._internalQueue = Queue()
 	self._externalQueue = Queue()
 	self.running = true
 	if self.binding == "early" then self._data:initAll() end
-	self:executeTransitionContent(self.initial.transitions)
+	if self._script then self:executeContent(self._script) end
 	self:enterStates(self.initial.transitions)
 	self:mainEventLoop()
 end
@@ -613,7 +649,7 @@ function S:mainEventLoop()
 			end
 			if not enabledTransitions:isEmpty() then
 				anyChange = true
-				self:microstep(enabledTransitions:toList()) -- TODO: (optimization) can remove toList() call
+				self:microstep(enabledTransitions)
 			end
 			iterations = iterations + 1
 		end
@@ -626,6 +662,7 @@ function S:mainEventLoop()
 		if self._internalQueue:isEmpty() then
 			local externalEvent = self._externalQueue:dequeue()
 			if externalEvent then
+				anyChange = true
 				if externalEvent.name=='quit.lxsc' then
 					self.running = false
 				else
@@ -638,8 +675,7 @@ function S:mainEventLoop()
 					-- end
 					enabledTransitions = self:selectTransitions(externalEvent)
 					if not enabledTransitions:isEmpty() then
-						anyChange = true
-						self:microstep(enabledTransitions:toList()) -- TODO: (optimization) can remove toList() call
+						self:microstep(enabledTransitions)
 					end
 				end
 			end
@@ -676,8 +712,8 @@ end
 -- TODO: store sets of evented vs. eventless transitions
 function S:addEventlessTransition(state,enabledTransitions)
 	for _,s in ipairs(state.selfAndAncestors) do
-		for _,t in ipairs(s.transitions) do
-			if not t.events and t:conditionMatched(self._data) then
+		for _,t in ipairs(s._eventlessTransitions) do
+			if t:conditionMatched(self._data) then
 				enabledTransitions:add(t)
 				return
 			end
@@ -696,8 +732,8 @@ end
 -- TODO: store sets of evented vs. eventless transitions
 function S:addTransitionForEvent(state,event,enabledTransitions)
 	for _,s in ipairs(state.selfAndAncestors) do
-		for _,t in ipairs(s.transitions) do
-			if t.events and t:matchesEvent(event) and t:conditionMatched(self._data) then
+		for _,t in ipairs(s._eventedTransitions) do
+			if t:matchesEvent(event) and t:conditionMatched(self._data) then
 				enabledTransitions:add(t)
 				return
 			end
@@ -740,14 +776,6 @@ function S:microstep(enabledTransitions)
 		for _,executable in ipairs(t._exec) do self:executeContent(executable) end
 	end
 	self:enterStates(enabledTransitions)
-end
-
-function S:executeTransitionContent(transitions)
-	for _,t in ipairs(transitions) do
-		for _,executable in ipairs(t._exec) do
-			self:executeContent(executable)
-		end
-	end
 end
 
 function S:exitStates(enabledTransitions)
@@ -866,7 +894,13 @@ function S:enterStates(enabledTransitions)
 			if self.binding=="late" then self._data:initState(s) end -- The datamodel ensures this happens only once per state
 			for _,content in ipairs(s._onentrys) do self:executeContent(content) end
 			if self.onAfterEnter then self.onAfterEnter(s.id,s._kind) end
-			if statesForDefaultEntry:member(s) then self:executeTransitionContent(s.initial.transitions) end
+			if statesForDefaultEntry:member(s) then
+				for _,t in ipairs(s.initial.transitions) do
+					for _,executable in ipairs(t._exec) do
+						self:executeContent(executable)
+					end
+				end
+			end
 			if s._kind=='final' then
 				local parent = s.parent
 				if parent._kind=='scxml' then
@@ -911,15 +945,23 @@ function S:isInFinalState(s)
 	end
 end
 
+function S:expandScxmlSource()
+	self:convertInitials()
+	self._stateById = {}
+	for _,s in ipairs(self.states) do s:cacheReference(self._stateById) end
+	self:resolveReferences(self._stateById)
+end
+
+
 function S:donedata(state)
 	local c = state._donedatas[1]
 	if c then
 		if c.kinc=='content' then
-			return c.expr and self._data:run(c.expr) or c._text
+			return c.expr and self._data:eval(c.expr) or c._text
 		else
 			local map = {}
 			for _,p in ipairs(state._donedatas) do
-				map[p.name] = self._data:run(p.expr)
+				map[p.name] = self._data:eval(p.expr)
 			end
 			return map
 		end
@@ -928,6 +970,7 @@ end
 
 function S:fireEvent(name,data,internalFlag)
 	-- print("fireEvent(",name,data,internalFlag,")")
+	-- if string.sub(name,1,15) == 'error.execution' then print("!!!",name,data) end
 	self[internalFlag and "_internalQueue" or "_externalQueue"]:enqueue(LXSC.Event(name,data))
 end
 
@@ -1130,6 +1173,9 @@ function LXSC:parse(scxml)
 		closeElement = function(name)
 			if current._kind ~= name then
 				error(string.format("I was working with a '%s' element but got a close notification for '%s'",current._kind,name))
+			end
+			if name=="transition" then
+				table.insert( current.source[current.events and '_eventedTransitions' or '_eventlessTransitions'], current )
 			end
 			pop(stack)
 			current = stack[#stack] or current
