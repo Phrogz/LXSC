@@ -40,7 +40,6 @@ function S:interpret(options)
 	self.running = true
 	if self.binding == "early" then self._data:initAll() end
 	if self._script then self:executeContent(self._script) end
-	self:executeTransitionContent(self.initial.transitions)
 	self:enterStates(self.initial.transitions)
 	self:mainEventLoop()
 end
@@ -197,14 +196,6 @@ function S:microstep(enabledTransitions)
 	self:enterStates(enabledTransitions)
 end
 
-function S:executeTransitionContent(transitions)
-	for _,t in ipairs(transitions) do
-		for _,executable in ipairs(t._exec) do
-			self:executeContent(executable)
-		end
-	end
-end
-
 function S:exitStates(enabledTransitions)
 	local statesToExit = OrderedSet()
 	for _,t in ipairs(enabledTransitions) do
@@ -321,7 +312,13 @@ function S:enterStates(enabledTransitions)
 			if self.binding=="late" then self._data:initState(s) end -- The datamodel ensures this happens only once per state
 			for _,content in ipairs(s._onentrys) do self:executeContent(content) end
 			if self.onAfterEnter then self.onAfterEnter(s.id,s._kind) end
-			if statesForDefaultEntry:member(s) then self:executeTransitionContent(s.initial.transitions) end
+			if statesForDefaultEntry:member(s) then
+				for _,t in ipairs(s.initial.transitions) do
+					for _,executable in ipairs(t._exec) do
+						self:executeContent(executable)
+					end
+				end
+			end
 			if s._kind=='final' then
 				local parent = s.parent
 				if parent._kind=='scxml' then
