@@ -1,7 +1,7 @@
 LXSC = { SCXML={}, State={}, Transition={}, Generic={} }
 for k,t in pairs(LXSC) do t.__meta={__index=t} end
 
-LXSC.VERSION = "0.2"
+LXSC.VERSION = "0.3"
 
 setmetatable(LXSC,{__index=function(kind)
 	return function(self,kind)
@@ -249,6 +249,34 @@ function LXSC.SCXML:activeAtomicIds()
 	return a
 end
 
+function LXSC.SCXML:allEvents()
+	local all = {}
+	local function crawl(state)
+		for _,s in ipairs(state.states) do
+			for _,t in ipairs(s._eventedTransitions) do
+				for _,e in ipairs(t.events) do
+					all[e.name] = true
+				end
+			end
+			crawl(s)
+		end
+	end
+	crawl(self)
+	return all
+end
+
+function LXSC.SCXML:availableEvents()
+	local all = {}
+	for _,s in ipairs(self._config) do
+		for _,t in ipairs(s._eventedTransitions) do
+			for _,e in ipairs(t.events) do
+				all[e.name] = true
+			end
+		end
+	end
+	return all
+end
+
 function LXSC.SCXML:addChild(item)
 	if item._kind=='script' then
 		self._script = item
@@ -269,6 +297,7 @@ function LXSC.Transition:attr(name,value)
 		for event in string.gmatch(value,'[^%s]+') do
 			local tokens = {}
 			for token in string.gmatch(event,'[^.*]+') do table.insert(tokens,token) end
+			tokens.name = table.concat(tokens,'.')
 			table.insert(self.events,tokens)
 		end
 

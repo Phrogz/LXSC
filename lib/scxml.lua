@@ -51,6 +51,34 @@ function LXSC.SCXML:activeAtomicIds()
 	return a
 end
 
+function LXSC.SCXML:allEvents()
+	local all = {}
+	local function crawl(state)
+		for _,s in ipairs(state.states) do
+			for _,t in ipairs(s._eventedTransitions) do
+				for _,e in ipairs(t.events) do
+					all[e.name] = true
+				end
+			end
+			crawl(s)
+		end
+	end
+	crawl(self)
+	return all
+end
+
+function LXSC.SCXML:availableEvents()
+	local all = {}
+	for _,s in ipairs(self._config) do
+		for _,t in ipairs(s._eventedTransitions) do
+			for _,e in ipairs(t.events) do
+				all[e.name] = true
+			end
+		end
+	end
+	return all
+end
+
 function LXSC.SCXML:addChild(item)
 	if item._kind=='script' then
 		self._script = item
