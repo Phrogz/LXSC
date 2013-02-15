@@ -15,6 +15,8 @@ function LXSC:state(kind)
 		states      = {},
 		reals       = {},
 		transitions = {},
+		_eventlessTransitions = {},
+		_eventedTransitions   = {},
 
 		_onentrys   = {},
 		_onexits    = {},

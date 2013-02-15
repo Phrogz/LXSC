@@ -130,8 +130,8 @@ end
 -- TODO: store sets of evented vs. eventless transitions
 function S:addEventlessTransition(state,enabledTransitions)
 	for _,s in ipairs(state.selfAndAncestors) do
-		for _,t in ipairs(s.transitions) do
-			if not t.events and t:conditionMatched(self._data) then
+		for _,t in ipairs(s._eventlessTransitions) do
+			if t:conditionMatched(self._data) then
 				enabledTransitions:add(t)
 				return
 			end
@@ -150,8 +150,8 @@ end
 -- TODO: store sets of evented vs. eventless transitions
 function S:addTransitionForEvent(state,event,enabledTransitions)
 	for _,s in ipairs(state.selfAndAncestors) do
-		for _,t in ipairs(s.transitions) do
-			if t.events and t:matchesEvent(event) and t:conditionMatched(self._data) then
+		for _,t in ipairs(s._eventedTransitions) do
+			if t:matchesEvent(event) and t:conditionMatched(self._data) then
 				enabledTransitions:add(t)
 				return
 			end
