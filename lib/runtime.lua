@@ -67,7 +67,7 @@ function S:mainEventLoop()
 			end
 			if not enabledTransitions:isEmpty() then
 				anyChange = true
-				self:microstep(enabledTransitions:toList()) -- TODO: (optimization) can remove toList() call
+				self:microstep(enabledTransitions)
 			end
 			iterations = iterations + 1
 		end
@@ -80,6 +80,7 @@ function S:mainEventLoop()
 		if self._internalQueue:isEmpty() then
 			local externalEvent = self._externalQueue:dequeue()
 			if externalEvent then
+				anyChange = true
 				if externalEvent.name=='quit.lxsc' then
 					self.running = false
 				else
@@ -92,8 +93,7 @@ function S:mainEventLoop()
 					-- end
 					enabledTransitions = self:selectTransitions(externalEvent)
 					if not enabledTransitions:isEmpty() then
-						anyChange = true
-						self:microstep(enabledTransitions:toList()) -- TODO: (optimization) can remove toList() call
+						self:microstep(enabledTransitions)
 					end
 				end
 			end
