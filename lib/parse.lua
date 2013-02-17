@@ -32,6 +32,6 @@ function LXSC:parse(scxml)
 			current._text = text
 		end
 	}
-	parser:parse(scxml)
+	parser:parse(scxml,{stripWhitespace=true})
 	return root
 end
