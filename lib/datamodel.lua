@@ -49,8 +49,10 @@ function LXSC.Datamodel:run(code)
 	end
 end
 
-function LXSC.Datamodel:set(id,value)
-	self.scope[id] = value
+function LXSC.Datamodel:set(location,value)
+	-- TODO: support foo.bar location dereferencing
+	self.scope[location] = value
+	if self.scxml.onDataSet then self.scxml.onDataSet(location,value) end
 end
 
 function LXSC.Datamodel:get(id)

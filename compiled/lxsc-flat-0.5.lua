@@ -1,4 +1,4 @@
-local LXSC = { VERSION="0.4" }
+local LXSC = { VERSION="0.5" }
 local real = getfenv(0)
 
 setfenv(0,setmetatable({LXSC=LXSC},{__index=real}))
@@ -366,8 +366,10 @@ function LXSC.Datamodel:run(code)
 	end
 end
 
-function LXSC.Datamodel:set(id,value)
-	self.scope[id] = value
+function LXSC.Datamodel:set(location,value)
+	-- TODO: support foo.bar location dereferencing
+	self.scope[location] = value
+	if self.scxml.onDataSet then self.scxml.onDataSet(location,value) end
 end
 
 function LXSC.Datamodel:get(id)

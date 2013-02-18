@@ -66,6 +66,14 @@ function test1_dataAccess()
 
 	s:restart()
 	assert(s:isActive('errord'))
+
+	local s = LXSC:parse[[<scxml xmlns='http://www.w3.org/2005/07/scxml' version='1.0'><state/></scxml>]]
+	local values = {}
+	s.onDataSet = function(name,value) values[name]=value end
+	s:start()
+	assertNil(values.foo)
+	s:set("foo",42)
+	assertEqual(values.foo,42)
 end
 
 function test2_eventlist()

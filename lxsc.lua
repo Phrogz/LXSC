@@ -1,4 +1,4 @@
-local LXSC = { VERSION="0.4" }
+local LXSC = { VERSION="0.5" }
 local real = getfenv(0)
 
 setfenv(0,setmetatable({LXSC=LXSC},{__index=real}))
