@@ -1,8 +1,8 @@
 -- Merges all the files into one -flat file
 -- Creates a compiled bytecode -bin version
 -- Creates a simplified -min version (if lstrip is available)
-package.path = '../lib/?.lua;' .. package.path
-require 'lxsc'
+package.path = '../lib/?.lua;../?.lua;' .. package.path
+local LXSC = require 'lxsc'
 require 'io'
 require 'os'
 
@@ -10,12 +10,24 @@ local flatName = "lxsc-flat-"..LXSC.VERSION..".lua"
 local binName  = "lxsc-bin-"..LXSC.VERSION..".luac"
 local minName  = "lxsc-min-"..LXSC.VERSION..".lua"
 
-local merged = {}
-for line in io.lines('../lxsc.lua') do
-	table.insert(merged,io.open("../"..string.match(line,"'([^']+)'")..".lua"):read('*all'))
+DIR = "../"
+
+function unwrapRequire(file)
+	local lines = {}
+	for line in io.lines(DIR..file) do
+		local preamble,target = string.match(line,[[^(.-)require ["']([^"']+)]])
+		if target then
+			line = unwrapRequire(target..".lua")
+			if preamble~="" then line = preamble.."(function()\n"..line.."\nend)()" end
+		end
+		table.insert(lines,line)
+	end
+	return table.concat(lines,"\n")
 end
+
+local flatContents = unwrapRequire('lxsc.lua')
 local flat = io.open(flatName,"w")
-flat:write(table.concat(merged,"\n"))
+flat:write(flatContents.."\n")
 flat:close()
 
 os.execute(string.format("luac -s -o %s %s",binName,flatName))

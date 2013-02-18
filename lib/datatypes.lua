@@ -1,5 +1,5 @@
-OrderedSet = {}
-OrderedSet.__meta = {__index=OrderedSet}
+OrderedSet = { LXSC=LXSC }; OrderedSet.__meta = {__index=OrderedSet}
+
 setmetatable(OrderedSet,{__call=function(o)
 	return setmetatable({},o.__meta)
 end})
@@ -39,8 +39,7 @@ end
 
 -- *******************************************************************
 
-List = {}
-List.__meta = {__index=List}
+List = { LXSC=LXSC }; List.__meta = {__index=List}
 setmetatable(List,{__call=function(o,...)
 	local l = {...}
 	setmetatable(l,o.__meta)
@@ -94,8 +93,7 @@ end
 
 -- *******************************************************************
 
-Queue = {}
-Queue.__meta = {__index=Queue}
+Queue = {}; Queue.__meta = {__index=Queue}
 setmetatable(Queue,{__call=function(o)
 	local q = {}
 	setmetatable(q,o.__meta)

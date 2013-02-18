@@ -1,10 +1,13 @@
-LXSC.stateKinds = {state=1,parallel=1,final=1,history=1,initial=1}
-LXSC.realKinds  = {state=1,parallel=1,final=1}
-LXSC.aggregates = {onentry=1,onexit=1,datamodel=1,donedata=1}
+LXSC.State={}; LXSC.State.__meta = {__index=LXSC.State}
+
+LXSC.State.stateKinds = {state=1,parallel=1,final=1,history=1,initial=1}
+LXSC.State.realKinds  = {state=1,parallel=1,final=1}
+LXSC.State.aggregates = {onentry=1,onexit=1,datamodel=1,donedata=1}
+
 function LXSC:state(kind)
 	local t = {
 		_kind       = kind or 'state',
-		id          = kind.."-"..LXSC.uuid4(),
+		id          = kind.."-"..self.uuid4(),
 		isAtomic    = true,
 		isCompound  = false,
 		isParallel  = kind=='parallel',
@@ -42,10 +45,10 @@ function LXSC.State:addChild(item)
 		item.source = self
 		table.insert( self.transitions, item )
 
-	elseif LXSC.aggregates[item._kind] then
+	elseif self.aggregates[item._kind] then
 		item.state = self
 
-	elseif LXSC.stateKinds[item._kind] then
+	elseif self.stateKinds[item._kind] then
 		table.insert(self.states,item)
 		item.parent = self
 		item.ancestors[1] = self
@@ -56,7 +59,7 @@ function LXSC.State:addChild(item)
 			item.ancestors[anc]        = true
 			item.selfAndAncestors[i+2] = anc
 		end
-		if LXSC.realKinds[item._kind] then
+		if self.realKinds[item._kind] then
 			table.insert(self.reals,item)
 			self.isCompound = self._kind~='parallel'
 			self.isAtomic   = false
@@ -132,4 +135,15 @@ end
 
 function LXSC.State:descendantOf(possibleAncestor)
 	return self.ancestors[possibleAncestor]
+end
+
+-- ********************************************************
+
+-- These elements pass their children through to the appropriate collection on the state
+for kind,collection in pairs{ datamodel='_datamodels', donedata='_donedatas', onentry='_onentrys', onexit='_onexits' } do
+	LXSC[kind] = function()
+		local t = {_kind=kind}
+		function t:addChild(item) table.insert(self.state[collection],item) end
+		return t
+	end
 end

@@ -1,15 +1,21 @@
+local SLAXML = require 'lib/slaxml'
 function LXSC:parse(scxml)
 	local push, pop = table.insert, table.remove
 	local i, stack = 1, {}
 	local current, root
-	local stateKinds = LXSC.stateKinds
+	local stateKinds = LXSC.State.stateKinds
+	local scxmlNS    = LXSC.scxmlNS
 	local parser = SLAXML:parser{
-		startElement = function(name)
+		startElement = function(name,nsURI)
 			local item
-			if stateKinds[name] then
-				item = LXSC:state(name)
+			if nsURI == scxmlNS then
+				if stateKinds[name] then
+					item = LXSC:state(name)
+				else
+					item = LXSC[name](LXSC,name,nsURI)
+				end
 			else
-				item = LXSC[name](LXSC,name)
+				item = LXSC:_generic(name,nsURI)
 			end
 			item._order = i; i=i+1
 			if current then current:addChild(item) end

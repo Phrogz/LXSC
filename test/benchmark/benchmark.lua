@@ -1,7 +1,7 @@
 package.path = '../../?.lua;' .. package.path
 require 'io'
-require 'lxsc'
 require 'os'
+local LXSC = require 'lxsc'
 
 local c,t,lxsc = os.clock
 

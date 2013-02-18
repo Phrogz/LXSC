@@ -1,7 +1,7 @@
 package.path = "../?.lua;" .. package.path
 require 'io'
-require 'lxsc'
 require 'lunity'
+LXSC = require 'lxsc'
 
 module( 'TEST_LXSC', lunity )
 
@@ -24,7 +24,7 @@ function test0_parsing()
 end
 
 function test1_dataAccess()
-	s = LXSC:parse[[<scxml xmlns='http://www.w3.org/2005/07/scxml' version='1.0'>
+	local s = LXSC:parse[[<scxml xmlns='http://www.w3.org/2005/07/scxml' version='1.0'>
 		<script>boot(); boot()</script>
 		<datamodel><data id="n" expr="0"/></datamodel>
 		<state id='s'>
@@ -90,6 +90,22 @@ function test2_eventlist()
 	local available = m:availableEvents()
 	local expected = {["a"]=1,["b.c"]=1,["d.e.f"]=1,["g"]=1,["h"]=1}
 	assertSameKeys(available,expected)
+end
+
+function test3_customHandlers()
+	local s = LXSC:parse[[
+		<scxml xmlns='http://www.w3.org/2005/07/scxml' version='1.0'
+			xmlns:a="foo" xmlns:b="bar">
+			<state><onentry><a:go/><b:go/></onentry></state>
+		</scxml>
+	]]
+	local goSeen = {}
+	function LXSC.Exec:go() goSeen[self._nsURI] = true end
+	assertNil(goSeen.foo)
+	assertNil(goSeen.bar)
+	s:start()
+	assertTrue(goSeen.foo)
+	assertTrue(goSeen.bar)
 end
 
 for filename in io.popen(string.format('ls "%s"',DIR)):lines() do

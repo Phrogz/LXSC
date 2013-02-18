@@ -1,3 +1,5 @@
+LXSC.Transition={}; LXSC.Transition.__meta = {__index=LXSC.Transition}
+
 function LXSC:transition()
 	local t = { _kind='transition', _exec={}, type="external" }
 	setmetatable(t,self.Transition.__meta)

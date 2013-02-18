@@ -1,3 +1,4 @@
+LXSC.SCXML={}; LXSC.SCXML.__meta = {__index=LXSC.SCXML}
 setmetatable(LXSC.SCXML,{__index=LXSC.State})
 
 function LXSC:scxml()

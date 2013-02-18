@@ -1,5 +1,5 @@
-LXSC.Datamodel = {}
-LXSC.Datamodel.__meta = {__index=LXSC.Datamodel}
+LXSC.Datamodel = {}; LXSC.Datamodel.__meta = {__index=LXSC.Datamodel}
+
 setmetatable(LXSC.Datamodel,{__call=function(dm,scxml,scope)
 	if not scope then scope = {} end
 	function scope.In(id) return scxml:isActive(id) end
