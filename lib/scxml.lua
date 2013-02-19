@@ -80,6 +80,33 @@ function LXSC.SCXML:availableEvents()
 	return all
 end
 
+function LXSC.SCXML:allStateIds()
+	local all = {}
+	local function crawl(state)
+		for _,s in ipairs(state.states) do
+			if s.id and s._kind~='initial' then all[s.id] = true end
+			crawl(s)
+		end
+	end
+	crawl(self)
+	return all
+end
+
+function LXSC.SCXML:atomicStateIds()
+	local all = {}
+	local function crawl(state)
+		for _,s in ipairs(state.states) do
+			if s.isAtomic and s._kind~='initial' then
+				all[s.id] = true
+			else
+				crawl(s)
+			end
+		end
+	end
+	crawl(self)
+	return all
+end
+
 function LXSC.SCXML:addChild(item)
 	if item._kind=='script' then
 		self._script = item

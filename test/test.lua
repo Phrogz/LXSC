@@ -8,9 +8,14 @@ module( 'TEST_LXSC', lunity )
 DIR = 'testcases'
 SHOULD_NOT_FINISH = {final2=true}
 
+XML = {}
+for filename in io.popen(string.format('ls "%s"',DIR)):lines() do
+	local testName = filename:sub(1,-7)
+	XML[testName] = io.open(DIR.."/"..filename):read("*all")
+end
+
 function test0_parsing()
-	local xml = io.input(DIR..'/internal_transition.scxml'):read("*all")
-	local m = LXSC:parse(xml)
+	local m = LXSC:parse(XML['internal_transition'])
 	assertNil(m.id,"The scxml should not have an id")
 	assertTrue(m.isCompound,'The root state should be compound')
 	assertEqual(m.states[1].id,'outer')
@@ -21,6 +26,14 @@ function test0_parsing()
 	assertEqual(#outer.states,2,"There should be 2 child states of the 'outer' state")
 	assertEqual(#outer._onexits,1,"There should be 1 onexit command for the 'outer' state")
 	assertEqual(#outer._onentrys,0,"There should be 0 onentry commands for the 'outer' state")
+
+	m = LXSC:parse(XML['history'])
+	assertSameKeys(m:allStateIds(),{["wrap"]=1,["universe"]=1,["history-actions"]=1,["action-1"]=1,["action-2"]=1,["action-3"]=1,["action-4"]=1,["modal-dialog"]=1,["pass"]=1,["fail"]=1})
+	assertSameKeys(m:atomicStateIds(),{["history-actions"]=1,["action-1"]=1,["action-2"]=1,["action-3"]=1,["action-4"]=1,["modal-dialog"]=1,["pass"]=1,["fail"]=1})
+
+	m = LXSC:parse(XML['parallel4'])
+	assertSameKeys(m:allStateIds(),{["wrap"]=1,["p"]=1,["a"]=1,["a1"]=1,["a2"]=1,["b"]=1,["b1"]=1,["b2"]=1,["pass"]=1})
+	assertSameKeys(m:atomicStateIds(),{["a1"]=1,["a2"]=1,["b1"]=1,["b2"]=1,["pass"]=1})
 end
 
 function test1_dataAccess()
@@ -116,10 +129,8 @@ function test3_customHandlers()
 	assertTrue(goSeen.bar)
 end
 
-for filename in io.popen(string.format('ls "%s"',DIR)):lines() do
-	local testName = filename:sub(1,-7)
+for testName,xml in pairs(XML) do
 	_M["testcase-"..testName] = function()
-		local xml = io.input(DIR..'/'..filename):read("*all")
 		local machine = LXSC:parse(xml)
 		assertFalse(machine.running, testName.." should not be running before starting.")
 		assertTableEmpty(machine:activeStateIds(), testName.." should be empty before running.")
