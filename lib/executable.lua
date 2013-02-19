@@ -1,3 +1,4 @@
+local LXSC = require 'lib/lxsc'
 LXSC.Exec = {}
 
 function LXSC.Exec:log(scxml)

@@ -1,3 +1,4 @@
+local LXSC = require 'lib/lxsc'
 LXSC.SCXML={}; LXSC.SCXML.__meta = {__index=LXSC.SCXML}
 setmetatable(LXSC.SCXML,{__index=LXSC.State})
 
@@ -9,7 +10,7 @@ function LXSC:scxml()
 	t.id        = nil
 
 	t.running   = false
-	t._config   = OrderedSet()
+	t._config   = LXSC.OrderedSet()
 
 	return setmetatable(t,LXSC.SCXML.__meta)
 end
@@ -39,13 +40,13 @@ function LXSC.SCXML:isActive(stateId)
 end
 
 function LXSC.SCXML:activeStateIds()
-	local a = OrderedSet()
+	local a = LXSC.OrderedSet()
 	for _,s in ipairs(self._config) do a:add(s.id) end
 	return a
 end
 
 function LXSC.SCXML:activeAtomicIds()
-	local a = OrderedSet()
+	local a = LXSC.OrderedSet()
 	for _,s in ipairs(self._config) do
 		if s.isAtomic then a:add(s.id) end
 	end
@@ -81,30 +82,19 @@ function LXSC.SCXML:availableEvents()
 end
 
 function LXSC.SCXML:allStateIds()
-	local all = {}
-	local function crawl(state)
-		for _,s in ipairs(state.states) do
-			if s.id and s._kind~='initial' then all[s.id] = true end
-			crawl(s)
-		end
+	local stateById = {}
+	for id,s in pairs(self._stateById) do
+		if s._kind~="initial" then stateById[id]=s end
 	end
-	crawl(self)
-	return all
+	return stateById
 end
 
 function LXSC.SCXML:atomicStateIds()
-	local all = {}
-	local function crawl(state)
-		for _,s in ipairs(state.states) do
-			if s.isAtomic and s._kind~='initial' then
-				all[s.id] = true
-			else
-				crawl(s)
-			end
-		end
+	local stateById = {}
+	for id,s in pairs(self._stateById) do
+		if s.isAtomic and s._kind~="initial" then stateById[id]=s end
 	end
-	crawl(self)
-	return all
+	return stateById
 end
 
 function LXSC.SCXML:addChild(item)

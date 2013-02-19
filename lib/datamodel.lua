@@ -1,3 +1,4 @@
+local LXSC = require 'lib/lxsc'
 LXSC.Datamodel = {}; LXSC.Datamodel.__meta = {__index=LXSC.Datamodel}
 
 setmetatable(LXSC.Datamodel,{__call=function(dm,scxml,scope)

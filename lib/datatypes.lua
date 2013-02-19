@@ -1,10 +1,11 @@
-OrderedSet = { LXSC=LXSC }; OrderedSet.__meta = {__index=OrderedSet}
+local LXSC = require 'lib/lxsc'
+LXSC.OrderedSet = {}; LXSC.OrderedSet.__meta = {__index=LXSC.OrderedSet}
 
-setmetatable(OrderedSet,{__call=function(o)
+setmetatable(LXSC.OrderedSet,{__call=function(o)
 	return setmetatable({},o.__meta)
 end})
 
-function OrderedSet:add(e)
+function LXSC.OrderedSet:add(e)
 	if not self[e] then
 		local idx = #self+1
 		self[idx] = e
@@ -12,7 +13,7 @@ function OrderedSet:add(e)
 	end
 end
 
-function OrderedSet:delete(e)
+function LXSC.OrderedSet:delete(e)
 	local index = self[e]
 	if index then
 		table.remove(self,index)
@@ -21,48 +22,48 @@ function OrderedSet:delete(e)
 	end
 end
 
-function OrderedSet:member(e)
+function LXSC.OrderedSet:member(e)
 	return self[e]
 end
 
-function OrderedSet:isEmpty()
+function LXSC.OrderedSet:isEmpty()
 	return not self[1]
 end
 
-function OrderedSet:clear()
+function LXSC.OrderedSet:clear()
 	for k,v in pairs(self) do self[k]=nil end
 end
 
-function OrderedSet:toList()
-	return List(unpack(self))
+function LXSC.OrderedSet:toList()
+	return LXSC.List(unpack(self))
 end
 
 -- *******************************************************************
 
-List = { LXSC=LXSC }; List.__meta = {__index=List}
-setmetatable(List,{__call=function(o,...)
+LXSC.List = {}; LXSC.List.__meta = {__index=LXSC.List}
+setmetatable(LXSC.List,{__call=function(o,...)
 	local l = {...}
 	setmetatable(l,o.__meta)
 	return l
 end})
 
-function List:head()
+function LXSC.List:head()
 	return self[1]
 end
 
-function List:tail()
-	local l = List(unpack(self))
+function LXSC.List:tail()
+	local l = LXSC.List(unpack(self))
 	table.remove(l,1)
 	return l
 end
 
-function List:append(...)
+function LXSC.List:append(...)
 	local len=#self
 	for i,v in ipairs{...} do self[len+i] = v end
 	return self
 end
 
-function List:filter(f)
+function LXSC.List:filter(f)
 	local t={}
 	local i=1
 	for _,v in ipairs(self) do
@@ -70,44 +71,44 @@ function List:filter(f)
 			t[i]=v; i=i+1
 		end
 	end
-	return List(unpack(t))
+	return LXSC.List(unpack(t))
 end
 
-function List:some(f)
+function LXSC.List:some(f)
 	for _,v in ipairs(self) do
 		if f(v) then return true end
 	end
 end
 
-function List:every(f)
+function LXSC.List:every(f)
 	for _,v in ipairs(self) do
 		if not f(v) then return false end
 	end
 	return true
 end
 
-function List:sort(f)
+function LXSC.List:sort(f)
 	table.sort(self,f)
 	return self
 end
 
 -- *******************************************************************
 
-Queue = {}; Queue.__meta = {__index=Queue}
-setmetatable(Queue,{__call=function(o)
+LXSC.Queue = {}; LXSC.Queue.__meta = {__index=LXSC.Queue}
+setmetatable(LXSC.Queue,{__call=function(o)
 	local q = {}
 	setmetatable(q,o.__meta)
 	return q
 end})
 
-function Queue:enqueue(e)
+function LXSC.Queue:enqueue(e)
 	self[#self+1] = e
 end
 
-function Queue:dequeue()
+function LXSC.Queue:dequeue()
 	return table.remove(self,1)
 end
 
-function Queue:isEmpty()
+function LXSC.Queue:isEmpty()
 	return not self[1]
 end

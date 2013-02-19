@@ -1,3 +1,4 @@
+local LXSC = require 'lib/lxsc'
 local SLAXML = require 'lib/slaxml'
 function LXSC:parse(scxml)
 	local push, pop = table.insert, table.remove

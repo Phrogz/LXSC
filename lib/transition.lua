@@ -1,3 +1,4 @@
+local LXSC = require 'lib/lxsc'
 LXSC.Transition={}; LXSC.Transition.__meta = {__index=LXSC.Transition}
 
 function LXSC:transition()
@@ -37,7 +38,7 @@ function LXSC.Transition:addChild(item)
 end
 
 function LXSC.Transition:addTarget(stateOrId)
-	if not self.targets then self.targets = List() end
+	if not self.targets then self.targets = LXSC.List() end
 	table.insert(self.targets,stateOrId)
 end
 

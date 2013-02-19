@@ -28,10 +28,12 @@ function test0_parsing()
 	assertEqual(#outer._onentrys,0,"There should be 0 onentry commands for the 'outer' state")
 
 	m = LXSC:parse(XML['history'])
+	m:start()
 	assertSameKeys(m:allStateIds(),{["wrap"]=1,["universe"]=1,["history-actions"]=1,["action-1"]=1,["action-2"]=1,["action-3"]=1,["action-4"]=1,["modal-dialog"]=1,["pass"]=1,["fail"]=1})
 	assertSameKeys(m:atomicStateIds(),{["history-actions"]=1,["action-1"]=1,["action-2"]=1,["action-3"]=1,["action-4"]=1,["modal-dialog"]=1,["pass"]=1,["fail"]=1})
 
 	m = LXSC:parse(XML['parallel4'])
+	m:start()
 	assertSameKeys(m:allStateIds(),{["wrap"]=1,["p"]=1,["a"]=1,["a1"]=1,["a2"]=1,["b"]=1,["b1"]=1,["b2"]=1,["pass"]=1})
 	assertSameKeys(m:atomicStateIds(),{["a1"]=1,["a2"]=1,["b1"]=1,["b2"]=1,["pass"]=1})
 end

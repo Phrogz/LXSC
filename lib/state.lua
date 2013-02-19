@@ -1,3 +1,4 @@
+local LXSC = require 'lib/lxsc'
 LXSC.State={}; LXSC.State.__meta = {__index=LXSC.State}
 
 LXSC.State.stateKinds = {state=1,parallel=1,final=1,history=1,initial=1}

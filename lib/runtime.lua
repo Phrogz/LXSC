@@ -1,5 +1,7 @@
+local LXSC = require 'lib/lxsc';
 (function(S)
 S.MAX_ITERATIONS = 1000
+local OrderedSet,Queue = LXSC.OrderedSet, LXSC.Queue
 
 -- ****************************************************************************
 
@@ -15,7 +17,7 @@ local function findLCPA(first,rest) -- least common parallel ancestor
 		end
 	end
 end
-function findLCCA(first,rest) -- least common compound ancestor
+local function findLCCA(first,rest) -- least common compound ancestor
 	for _,anc in ipairs(first.ancestors) do
 		if anc.isCompound then
 			if rest:every(function(s) return s:descendantOf(anc) end) then
@@ -237,7 +239,7 @@ function S:exitStates(enabledTransitions)
 	end
 
 	for _,s in ipairs(statesToExit) do
-		if self.onBeforeExit then self.onBeforeExit(s.id,s._kind) end
+		if self.onBeforeExit then self.onBeforeExit(s.id,s._kind,s.isAtomic) end
 		for _,content in ipairs(s._onexits) do self:executeContent(content) end
 		-- for _,inv in ipairs(s._invokes)     do self:cancelInvoke(inv) end
 		self._config:delete(s)
@@ -311,7 +313,7 @@ function S:enterStates(enabledTransitions)
 			-- self.statesToInvoke:add(s)
 			if self.binding=="late" then self._data:initState(s) end -- The datamodel ensures this happens only once per state
 			for _,content in ipairs(s._onentrys) do self:executeContent(content) end
-			if self.onAfterEnter then self.onAfterEnter(s.id,s._kind) end
+			if self.onAfterEnter then self.onAfterEnter(s.id,s._kind,s.isAtomic) end
 			if statesForDefaultEntry:member(s) then
 				for _,t in ipairs(s.initial.transitions) do
 					for _,executable in ipairs(t._exec) do
