@@ -1,0 +1,12 @@
+                Parse XML:  6.30ms
+            Start Machine:  1.13ms
+ Inject 10 Useless Events:  0.03ms
+Process 10 Useless Events:  0.71ms
+Fire 4 Events and Process:  0.41ms
+Fire 4 Events and Process:  0.30ms
+Fire 0 Events and Process:  0.02ms
+Fire 0 Events and Process:  0.02ms
+Fire 3 Events and Process:  0.26ms
+Fire 5 Events and Process:  0.30ms
+----------------------------------
+               Total time:  9.48ms ± 20%

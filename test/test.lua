@@ -131,6 +131,61 @@ function test3_customHandlers()
 	assertTrue(goSeen.bar)
 end
 
+function test4_customCallbacks()
+	local s = LXSC:parse[[
+		<scxml xmlns='http://www.w3.org/2005/07/scxml' version='1.0'>
+			<state>
+				<onentry><raise event="e" /></onentry>
+				<parallel>
+					<state id="s1"><transition event="e" target="s3" /></state>
+					<state id="s2" />
+				</parallel>
+			</state>
+			<final id="s3" />
+		</scxml>
+	]]
+	local eventCountById = {}
+	s.onAfterEnter = function(id,kind,atomic)
+		assertType(id,'string')
+		if not eventCountById[id] then eventCountById[id] = {} end
+		eventCountById[id].enter = (eventCountById[id].enter or 0 ) + 1
+		if id=='s1' or id=='s2' then
+			assertEqual(kind,'state')
+			assertTrue(atomic)
+		elseif id=='s3' then
+			assertEqual(kind,'final')
+			assertTrue(atomic)
+		else
+			assertFalse(atomic)
+		end
+	end
+	s.onBeforeExit = function(id,kind,atomic)
+		assertType(id,'string')
+		if not eventCountById[id] then eventCountById[id] = {} end
+		eventCountById[id].exit = (eventCountById[id].exit or 0 ) + 1
+		if id=='s1' or id=='s2' then
+			assertEqual(kind,'state')
+			assertTrue(atomic)
+		elseif id=='s3' then
+			assertEqual(kind,'final')
+			assertTrue(atomic)
+		else
+			assertFalse(atomic)
+		end
+	end
+	s:start()
+	for id,counts in pairs(eventCountById) do
+		if id=='s3' then
+			assertEqual(counts.enter,1)
+			assertNil(counts.exit, 0)
+		else
+			assertEqual(counts.enter,1)
+			assertEqual(counts.exit, 1)
+		end
+	end
+end
+
+
 for testName,xml in pairs(XML) do
 	_M["testcase-"..testName] = function()
 		local machine = LXSC:parse(xml)
@@ -146,5 +201,7 @@ for testName,xml in pairs(XML) do
 		end
 	end
 end
+
+
 
 runTests{ useANSI=false }
