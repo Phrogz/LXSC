@@ -14,8 +14,6 @@ LXSC aims to be _almost_ 100% compliant with the [SCXML Interpretation Algorithm
 
 * **Configuration Clearing**: The W3C algorithm calls for the state machine configuration to be cleared when the interpreter is exited. LXSC will instead leave the configuration (and data model) intact for you to inspect the final state of the machine.
 
-* **No Delayed `<send>`**: Given the non-threaded nature of LXSC, there are no immediate plans to support the `delay` or `delayexpr` attributes for `<send>` actions. (Please file an issue if this is important to you.)
-
 ## License & Contact
 
 LXSC is copyright ©2013 by Gavin Kistner and is licensed under the [MIT License][6]. See the LICENSE.txt file for more details.
