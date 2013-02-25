@@ -47,6 +47,32 @@ function LXSC.Exec:send(scxml)
 	end
 end
 
+function LXSC.Exec:cancel(scxml)
+	scxml:cancelDelayedSend(self.sendid or scxml:eval(self.sendidexpr))
+end
+
+function LXSC.SCXML:processDelayedSends() -- automatically called by :step()
+	local i,last=1,#self._delayedSend
+	while i<=last do
+		local delayedEvent = self._delayedSend[i]
+		if delayedEvent.expires <= os.clock() then
+			table.remove(self._delayedSend,i)
+			self:fireEvent(delayedEvent.name,delayedEvent.data,false)
+			last = last-1
+		else
+			i=i+1
+		end
+	end
+end
+
+function LXSC.SCXML:cancelDelayedSend(sendId)
+	for i=#self._delayedSend,1,-1 do
+		if self._delayedSend[i].id==sendId then table.remove(self._delayedSend,i) end
+	end
+end
+
+-- ******************************************************************
+
 function LXSC.SCXML:executeContent(item)
 	local handler = LXSC.Exec[item._kind]
 	if handler then

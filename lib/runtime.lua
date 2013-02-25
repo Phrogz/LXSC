@@ -404,24 +404,4 @@ function S:step()
 	self:mainEventLoop()
 end
 
-function S:processDelayedSends()
-	local i,last=1,#self._delayedSend
-	while i<=last do
-		local delayedEvent = self._delayedSend[i]
-		if delayedEvent.expires <= os.clock() then
-			table.remove(self._delayedSend,i)
-			self:fireEvent(delayedEvent.name,delayedEvent.data,false)
-			last = last-1
-		else
-			i=i+1
-		end
-	end
-end
-
-function S:cancelDelayedSend(sendId)
-	for i,t in ipairs(self._delayedSend) do
-		if t.id==sendId then return table.remove(self._delayedSend,i) end
-	end
-end
-
 end)(LXSC.SCXML)

@@ -198,18 +198,20 @@ function test5_delayedSend()
 				<onentry>
 					<send event="g" delayexpr="'200ms'"/>
 					<send event="x" delayexpr="'150ms'" id="killme"/>
+					<send event="y" delay="0.18s" id="andme2"/>
 					<send event="f" delay="100ms"/>
 					<send event="e" />
 				</onentry>
-				<transition event="f g x" target="fail" />
+				<transition event="f g x y" target="fail" />
 				<transition event="e" target="s2" />
 			</state>
 			<state id="s2">
-				<transition event="g x" target="fail" />
+				<onentry><cancel sendid="andme2" /></onentry>
+				<transition event="g x y" target="fail" />
 				<transition event="f" target="s3" />
 			</state>
 			<state id="s3">
-				<transition event="x" target="fail" />
+				<transition event="x y" target="fail" />
 				<transition event="g" target="pass" />
 			</state>
 			<final id="fail" /><final id="pass" />
