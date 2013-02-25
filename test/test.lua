@@ -185,6 +185,45 @@ function test4_customCallbacks()
 	end
 end
 
+function test5_delayedSend()
+	require 'os'
+	local clock = os.clock
+	local function sleep(n)  -- Horrible busy-wait sleeper
+	  local t0 = clock()
+	  while clock() - t0 <= n do end
+	end
+	local s = LXSC:parse[[
+		<scxml xmlns='http://www.w3.org/2005/07/scxml' version='1.0'>
+			<state>
+				<onentry>
+					<send event="g" delayexpr="'200ms'"/>
+					<send event="x" delayexpr="'150ms'" id="killme"/>
+					<send event="f" delay="100ms"/>
+					<send event="e" />
+				</onentry>
+				<transition event="f g x" target="fail" />
+				<transition event="e" target="s2" />
+			</state>
+			<state id="s2">
+				<transition event="g x" target="fail" />
+				<transition event="f" target="s3" />
+			</state>
+			<state id="s3">
+				<transition event="x" target="fail" />
+				<transition event="g" target="pass" />
+			</state>
+			<final id="fail" /><final id="pass" />
+		</scxml>
+	]]
+	s:start()
+	assert(s:isActive('s2'))
+	s:step()
+	assert(s:isActive('s2'))
+	s:cancelDelayedSend('killme')
+	sleep(0.5)
+	s:step()
+	assert(s:isActive('pass'))
+end
 
 for testName,xml in pairs(XML) do
 	_M["testcase-"..testName] = function()

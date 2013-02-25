@@ -33,6 +33,7 @@ function S:interpret(options)
 	-- if not self:validate() then self:failWithError() end
 	self:expandScxmlSource()
 	self._config:clear()
+	self._delayedSend = {}
 	-- self.statesToInvoke = OrderedSet()
 	self._data = LXSC.Datamodel(self,options and options.data)
 	self.historyValue   = {}
@@ -397,6 +398,30 @@ end
 -- Sensible aliases
 S.start   = S.interpret
 S.restart = S.interpret
-S.step    = S.mainEventLoop	
+
+function S:step()
+	self:processDelayedSends()
+	self:mainEventLoop()
+end
+
+function S:processDelayedSends()
+	local i,last=1,#self._delayedSend
+	while i<=last do
+		local delayedEvent = self._delayedSend[i]
+		if delayedEvent.expires <= os.clock() then
+			table.remove(self._delayedSend,i)
+			self:fireEvent(delayedEvent.name,delayedEvent.data,false)
+			last = last-1
+		else
+			i=i+1
+		end
+	end
+end
+
+function S:cancelDelayedSend(sendId)
+	for i,t in ipairs(self._delayedSend) do
+		if t.id==sendId then return table.remove(self._delayedSend,i) end
+	end
+end
 
 end)(LXSC.SCXML)

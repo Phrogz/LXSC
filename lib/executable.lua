@@ -30,7 +30,21 @@ function LXSC.Exec:send(scxml)
 		for name in string.gmatch(self.namelist,'[^%s]+') do data[name] = scxml:get(name) end
 	end
 	if self.idlocation and not self.id then scxml:set( scxml:eval(self.idlocation), LXSC.uuid4() ) end
-	scxml:fireEvent(name,data,false)
+
+	if self.delay or self.delayexpr then
+		local delay = self.delay or scxml:eval(self.delayexpr)
+		local delaySeconds, units = string.match(delay,'^(.-)(m?s)')
+		delaySeconds = tonumber(delaySeconds)
+		if units=="ms" then delaySeconds = delaySeconds/1000 end
+		local delayedEvent = { expires=os.clock()+delaySeconds, name=name, data=data, id=self.id }
+		local i=1
+		for _,delayed2 in ipairs(scxml._delayedSend) do
+			if delayed2.expires>delayedEvent.expires then break else i=i+1 end
+		end
+		table.insert(scxml._delayedSend,i,delayedEvent)
+	else
+		scxml:fireEvent(name,data,false)
+	end
 end
 
 function LXSC.SCXML:executeContent(item)
@@ -41,3 +55,4 @@ function LXSC.SCXML:executeContent(item)
 		self:fireEvent('error.execution.unhandled',"unhandled executable type "..item._kind,true)
 	end
 end
+
