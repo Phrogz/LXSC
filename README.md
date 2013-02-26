@@ -185,7 +185,10 @@ you would need to do something like:
       if self._nsURI=='goodstuff' then
         print("The state machine wants to explode with an amount of",self.amount)
       else
-        machine:fireEvent("error.execution.unhandled")
+        machine:fireEvent(
+          "error.execution.unhandled",
+          "Dunno how to handle 'explode' in the "..self._nsURI.." namespace"
+        )
       end
     end
 
