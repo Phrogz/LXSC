@@ -22,7 +22,7 @@ LXSC stands for "Lua XML StateCharts", and is pronounced _"Lexie"_. The LXSC lib
 
 ### The Basics
 
-    require"lxsc-min-0.8"                    -- or dofile"lxsc-bin-0.8.luac"
+    require"lxsc-min-0.8.1"                    -- or dofile"lxsc-bin-0.8.1.luac"
 
     local scxml   = io.read('my.scxml'):read('*all')
     local machine = LXSC:parse(scxml)
@@ -159,11 +159,11 @@ Anywhere that [executable content](http://www.w3.org/TR/scxml/#executable) is pe
       <onentry><my:explode amount="10"/></onentry>
     </state>
 
-With no modifications, when LXSC encounters such an executable it fires a `error.execution.unhandled` event internally with the `_event.data` set to the string `"unhandled executable type explode"`. This does not halt execution of the intepreter (unless the state machine reacts to that event in a violent manner, such as transitioning to a `<final>` state).
+With no modifications, when LXSC encounters such an executable it fires an `error.execution.unhandled` event internally with the `_event.data` set to the string `"unhandled executable type explode"`. 
 
-However, if you want such elements to actually do something, you can extend LXSC like so:
+Internal error events do not halt execution of the intepreter (unless the state machine reacts to that event in a violent manner, such as transitioning to a `<final>` state). However, if you want such elements to actually do something, you must extend LXSC to handle the executable type like so:
 
-    require'lxsc-min-0.8' -- or dofilelxsc-min-0.8.luac'
+    require'lxsc-min-0.8.1'
     function LXSC.Exec:explode(machine)
       print("The state machine wants to explode with an amount of",self.amount)
     end
@@ -206,7 +206,6 @@ LXSC aims to be _almost_ 100% compliant with the [SCXML Interpretation Algorithm
 
 * **Manual Event Processing**: Where the W3C implementation calls for the interpreter to run in a separate thread with a blocking queue feeding in the events, LXSC is designed to be frame-based. You feed events into the machine and then manually call `my_lxsc:step()` to crank the machine in the same thread. This will cause the event queues to be fully processed and the machine to run until it is stable, and then return. Rinse/repeat the process of event population followed by calling `step()` each frame.
   * This single-threaded, on-demand approach affects a delayed `<send>` the most. While a `<send event="e" delay="1s"/>` command will not inject the event _at least_ one second has passed, it could be substantially longer than that **if** your script only calls `step()` every 30 seconds, or (worse) waits until some user interaction occurs to call `step()` again.
-
 * **Configuration Clearing**: The W3C algorithm calls for the state machine configuration to be cleared when the interpreter is exited. LXSC will instead leave the configuration (and data model) intact for you to inspect the final state of the machine.
 
 ## TODO (aka Known Limitations)
