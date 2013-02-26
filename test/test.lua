@@ -1,3 +1,4 @@
+#!/usr/bin/env lua
 package.path = "../?.lua;" .. package.path
 require 'io'
 require 'lunity'
