@@ -216,14 +216,15 @@ LXSC aims to be _almost_ 100% compliant with the [SCXML Interpretation Algorithm
 
 ## TODO (aka Known Limitations)
 
-* The `src="…"` attribute is unsupported for `<data>` elements.
-* Data model locations like `foo.bar` get and set a single key instead of nested tables.
+* The `src="…"` attribute is unsupported for `<data>` or `<script>` elements.
+* The `_event` system variable supports `.name` and `.data` but none of the other properties (`.type`, `.sendid`, `.origin`, `.origintype`, `.invokeid`).
 * `<assign>` elements do not support executable content instead of `expr="…"`
 * `<send>` selements do not support the `type`/`typeexpr`/`target`/`targetexpr` attributes.
 * No support for executable elements `<if>`/`<elseif>`/`<else>`/`<foreach>`.
 * No support for inter-machine communication.
 * No support for `<invoke>`.
 * No support for `<param>` in `<donedata>`, nor has there been extensive testing of donedata.
+* Data model locations like `foo.bar` get and set a single key instead of nested tables.
 
 ## License & Contact
 
