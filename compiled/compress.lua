@@ -1,3 +1,4 @@
+#!/usr/bin/env lua
 -- Merges all the files into one -flat file
 -- Creates a compiled bytecode -bin version
 -- Creates a simplified -min version (if lstrip is available)
