@@ -216,7 +216,6 @@ LXSC aims to be _almost_ 100% compliant with the [SCXML Interpretation Algorithm
 * `<assign>` elements do not support executable content instead of `expr="…"`
 * `<send>` selements do not support the `type`/`typeexpr`/`target`/`targetexpr` attributes.
 * No support for executable elements `<if>`/`<elseif>`/`<else>`/`<foreach>`.
-* No support for executable elements `<if>`/`<elseif>`/`<else>`/`<foreach>`.
 * No support for inter-machine communication.
 * No support for `<invoke>`.
 * No support for `<param>` in `<donedata>`, nor has there been extensive testing of donedata.
