@@ -15,7 +15,7 @@ LXSC stands for "Lua XML StateCharts", and is pronounced _"Lexie"_. The LXSC lib
   * [Examining the State of the Machine](#examining-the-state-of-the-machine)
 * [Custom Executable Content](#custom-executable-content)
 * [SCXML Compliance](#scxml-compliance)
-* [TODO (aka Known Limitations)](#todo--aka-known-limitations)
+* [TODO (aka Known Limitations)](#todo-aka-known-limitations)
 * [License & Contact](#license--contact)
 
 ## Usage
