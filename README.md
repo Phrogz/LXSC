@@ -173,7 +173,10 @@ The current machine is passed to your function so that you may call `:fireEvent(
 **Note**: executable elements with conflicting names in different namespaces will use the same callback function. The only way to disambiguate them currently is via a `_nsURI` property set on the table. For example, to handle this document:
 
     <state xmlns:my="goodstuff" xmlns:their="badstuff">
-      <onentry><my:explode amount="10"/><my:explode chunkiness="very"/></onentry>
+      <onentry>
+        <my:explode amount="10"/>
+        <their:explode chunkiness="very"/>
+      </onentry>
     </state>
 
 you would need to do something like:
