@@ -1,5 +1,5 @@
 local LXSC = {
-	VERSION="0.8",
+	VERSION="0.8.1",
 	scxmlNS="http://www.w3.org/2005/07/scxml"
 }
 
@@ -446,7 +446,6 @@ function LXSC.Exec:script(scxml)
 end
 
 function LXSC.Exec:send(scxml)
-	-- TODO: warn about delay/delayexpr no support
 	-- TODO: support type/typeexpr/target/targetexpr
 	local name = self.event or scxml:eval(self.eventexpr)
 	local data
@@ -998,7 +997,7 @@ end
 function S:donedata(state)
 	local c = state._donedatas[1]
 	if c then
-		if c.kinc=='content' then
+		if c.kind=='content' then
 			return c.expr and self._data:eval(c.expr) or c._text
 		else
 			local map = {}
