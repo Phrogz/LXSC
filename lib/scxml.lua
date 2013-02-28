@@ -36,6 +36,7 @@ function LXSC.SCXML:run(code)
 end
 
 function LXSC.SCXML:isActive(stateId)
+	if not self._stateById then self:expandScxmlSource() end
 	return self._config[self._stateById[stateId]]
 end
 
@@ -82,6 +83,7 @@ function LXSC.SCXML:availableEvents()
 end
 
 function LXSC.SCXML:allStateIds()
+	if not self._stateById then self:expandScxmlSource() end
 	local stateById = {}
 	for id,s in pairs(self._stateById) do
 		if s._kind~="initial" then stateById[id]=s end
@@ -90,6 +92,7 @@ function LXSC.SCXML:allStateIds()
 end
 
 function LXSC.SCXML:atomicStateIds()
+	if not self._stateById then self:expandScxmlSource() end
 	local stateById = {}
 	for id,s in pairs(self._stateById) do
 		if s.isAtomic and s._kind~="initial" then stateById[id]=s end

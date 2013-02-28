@@ -31,7 +31,7 @@ end
 
 function S:interpret(options)
 	-- if not self:validate() then self:failWithError() end
-	self:expandScxmlSource()
+	if not self._stateById then self:expandScxmlSource() end
 	self._config:clear()
 	self._delayedSend = {}
 	-- self.statesToInvoke = OrderedSet()
