@@ -21,7 +21,6 @@ function LXSC.Exec:script(scxml)
 end
 
 function LXSC.Exec:send(scxml)
-	-- TODO: warn about delay/delayexpr no support
 	-- TODO: support type/typeexpr/target/targetexpr
 	local name = self.event or scxml:eval(self.eventexpr)
 	local data

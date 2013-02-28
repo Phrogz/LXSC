@@ -1,5 +1,5 @@
 local LXSC = {
-	VERSION="0.8",
+	VERSION="0.8.1",
 	scxmlNS="http://www.w3.org/2005/07/scxml"
 }
 

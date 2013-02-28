@@ -377,7 +377,7 @@ end
 function S:donedata(state)
 	local c = state._donedatas[1]
 	if c then
-		if c.kinc=='content' then
+		if c.kind=='content' then
 			return c.expr and self._data:eval(c.expr) or c._text
 		else
 			local map = {}
