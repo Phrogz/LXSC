@@ -1,6 +1,6 @@
 local LXSC = require 'lib/lxsc'
 
-local function triggers(self,descriptor)
+local function triggersDescriptor(self,descriptor)
 	if self.name==descriptor or descriptor=="*" then
 		return true
 	else
@@ -14,8 +14,12 @@ local function triggers(self,descriptor)
 	return false
 end
 
+local function triggersTransition(self,t)
+	return t:matchesEvent(self)
+end
+
 LXSC.Event = function(name,data)
-	local e = {name=name,data=data,_tokens={},triggers=triggers}
+	local e = {name=name,data=data,_tokens={},triggersDescriptor=triggersDescriptor,triggersTransition=triggersTransition}
 	for token in string.gmatch(name,'[^.*]+') do table.insert(e._tokens,token) end
 	return e
 end

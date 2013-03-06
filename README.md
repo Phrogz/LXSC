@@ -56,7 +56,7 @@ You supply a custom data model table by passing a named `data` parameter to the 
 
 ### Callbacks as the Machine Changes
 
-There are four special machine keys that you may set to a function value to keep track of what the machine is doing: `onBeforeExit`, `onAfterEnter`, `onDataSet`, and `onTransition`.
+There are five special keys that you may setto a function value on the machine to keep track of what the machine is doing: `onBeforeExit`, `onAfterEnter`, `onDataSet`, `onTransition`, and `onEventFired`.
 
 #### State Change Callbacks
 
@@ -95,6 +95,30 @@ The `onTransition` callback is invoked right before the executable content of a 
 * `events` - an array of internal `LXSC.Event` tables, one for each event, or `nil`.
 * `targets` - an array of internal `LXSC.State` tables, one for each target, or `nil`.
 * Any custom attributes supplied on the transition appear as direct attributes (with no namespace information or protection).
+
+#### Event Fire Callback
+
+    machine.onEventFired = function(eventTable) ... end   
+
+The `onEventFired` callback is invoked whenever `fireEvent()` is called on the machine (either by your own code or by internal machine code). The event has not been processed, and there is not guarantee that the event is going to cause any effect later on. This is mostly a debugging callback allowing you to ensure that events you thought that you were injecting were, in fact, making it in.
+
+The table supplied to this callback is a `LXSC.Event` object with the following keys:
+
+* `name` - the string name of the fired event, e.g. `"foo"` or `"foo.bar.jim.jam"`.
+* `data` - whatever data (if any) was supplied as the second parameter to `fireEvent()`.
+* `triggersDescriptor` - a function that can be used to determine if this event would trigger a particular event descriptor string.
+
+        machine.onEventFired = function(evt)
+          print(evt.name, evt:triggersDescriptor('a'), evt:triggersDescriptor('a.b'))
+        end
+        machine:fireEvent("a")   --> a true nil
+        machine:fireEvent("a.b") --> a true true
+
+* `triggersTransition` - similar to `triggersDescriptor()`, but it takes a transition table (as supplied to the `onTransition` callback) and uses the event descriptor(s) for that transition's `event="..."` attribute to evaluate if the event should cause the transition to be triggered.
+  * _Note: this does not test any conditional code that may be present inthe transition's `cond="..."` attribute. This function may return true, and then the transition may subsequently not be triggered by this event if the conditions are not right._
+* `_tokens` - an array of the event name split by periods (an implementation detail used for optimized transition descriptor matching).
+
+Note that the event object described above is also returned from `machine:fireEvent()`, in case you need that.
 
 ### Peeking and Poking at the Data Model
 

@@ -255,13 +255,18 @@ function test6_eventMatching()
 			shouldNotMatch={"a","a.b","b.c","b.c.d","c.d.e","c.d.e.f","d.e.f","d.e.f.g","alpha","b.charlie","d.e.frank","frank","b","z.a"} },
 	}
 	for descriptor,events in pairs(descriptors) do
+		local t = LXSC:transition()
+		t:attr('event',descriptor)
+
 		for _,eventName in ipairs(events.shouldMatch) do
 			local event = LXSC.Event(eventName)
-			assertTrue(event:triggers(descriptor))
+			assertTrue(event:triggersDescriptor(descriptor))
+			assertTrue(event:triggersTransition(t))
 		end
 		for _,eventName in ipairs(events.shouldNotMatch) do
 			local event = LXSC.Event(eventName)
-			assertFalse(event:triggers(descriptor))
+			assertTrue(not event:triggersDescriptor(descriptor))
+			assertTrue(not event:triggersTransition(t))
 		end
 	end
 end

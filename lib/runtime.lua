@@ -394,6 +394,7 @@ function S:fireEvent(name,data,internalFlag)
 	local event = LXSC.Event(name,data)
 	if self.onEventFired then self.onEventFired(event) end
 	self[internalFlag and "_internalQueue" or "_externalQueue"]:enqueue(event)
+	return event
 end
 
 -- Sensible aliases
