@@ -391,8 +391,9 @@ end
 
 function S:fireEvent(name,data,internalFlag)
 	-- print("fireEvent(",name,data,internalFlag,")")
-	-- if string.sub(name,1,15) == 'error.execution' then print("!!!",name,data) end
-	self[internalFlag and "_internalQueue" or "_externalQueue"]:enqueue(LXSC.Event(name,data))
+	local event = LXSC.Event(name,data)
+	if self.onEventFired then self.onEventFired(event) end
+	self[internalFlag and "_internalQueue" or "_externalQueue"]:enqueue(event)
 end
 
 -- Sensible aliases

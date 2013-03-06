@@ -48,10 +48,12 @@ end
 
 function LXSC.Transition:matchesEvent(event)
 	for _,tokens in ipairs(self.events) do
-		if #tokens <= #event.tokens then
+		if event.name==tokens.name or tokens.name=="*" then
+			return true
+		elseif #tokens <= #event._tokens then
 			local matched = true
 			for i,token in ipairs(tokens) do
-				if event.tokens[i]~=token then
+				if event._tokens[i]~=token then
 					matched = false
 					break
 				end

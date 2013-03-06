@@ -143,11 +143,12 @@ function test4_customCallbacks()
 			<final id="s3" />
 		</scxml>
 	]]
-	local eventCountById = {}
+	local callbackCountById = {}
+	local eventsSeen = {}
 	s.onAfterEnter = function(id,kind,atomic)
 		assertType(id,'string')
-		if not eventCountById[id] then eventCountById[id] = {} end
-		eventCountById[id].enter = (eventCountById[id].enter or 0 ) + 1
+		if not callbackCountById[id] then callbackCountById[id] = {} end
+		callbackCountById[id].enter = (callbackCountById[id].enter or 0 ) + 1
 		if id=='s1' or id=='s2' then
 			assertEqual(kind,'state')
 			assertTrue(atomic)
@@ -160,8 +161,8 @@ function test4_customCallbacks()
 	end
 	s.onBeforeExit = function(id,kind,atomic)
 		assertType(id,'string')
-		if not eventCountById[id] then eventCountById[id] = {} end
-		eventCountById[id].exit = (eventCountById[id].exit or 0 ) + 1
+		if not callbackCountById[id] then callbackCountById[id] = {} end
+		callbackCountById[id].exit = (callbackCountById[id].exit or 0 ) + 1
 		if id=='s1' or id=='s2' then
 			assertEqual(kind,'state')
 			assertTrue(atomic)
@@ -172,8 +173,11 @@ function test4_customCallbacks()
 			assertFalse(atomic)
 		end
 	end
+	s.onEventFired = function(event)
+		eventsSeen[event.name] = true
+	end
 	s:start()
-	for id,counts in pairs(eventCountById) do
+	for id,counts in pairs(callbackCountById) do
 		if id=='s3' then
 			assertEqual(counts.enter,1)
 			assertNil(counts.exit, 0)
@@ -182,6 +186,9 @@ function test4_customCallbacks()
 			assertEqual(counts.exit, 1)
 		end
 	end
+	s:fireEvent("foo.bar")
+	assert(eventsSeen.e)
+	assert(eventsSeen["foo.bar"])
 end
 
 function test5_delayedSend()
@@ -224,6 +231,39 @@ function test5_delayedSend()
 	sleep(0.5)
 	s:step()
 	assert(s:isActive('pass'))
+end
+
+function test6_eventMatching()
+	local descriptors = {
+		["*"] = {
+			shouldMatch={"a","a.b","b.c","b.c.d","c.d.e","c.d.e.f","d.e.f","d.e.f.g","f","f.g","alpha","b.charlie","d.e.frank","frank","b","z.a"},
+			shouldNotMatch={} },
+		["a"] = {
+			shouldMatch={"a","a.b"},
+			shouldNotMatch={"b.c","b.c.d","c.d.e","c.d.e.f","d.e.f","d.e.f.g","f","f.g","alpha","b.charlie","d.e.frank","frank","b","z.a"} },
+		["b.c"] = {
+			shouldMatch={"b.c","b.c.d"},
+			shouldNotMatch={"a","a.b","alpha","b.charlie","d.e.frank","frank","b","z.a","c.d.e","c.d.e.f","d.e.f","d.e.f.g","f","f.g"} },
+		["c.d.e"] = {
+			shouldMatch={"c.d.e","c.d.e.f"},
+			shouldNotMatch={"a","a.b","b.c","b.c.d","alpha","b.charlie","d.e.frank","frank","b","z.a","d.e.f","d.e.f.g","f","f.g"} },
+		["d.e.f.*"] = {
+			shouldMatch={"d.e.f","d.e.f.g"},
+			shouldNotMatch={"a","a.b","b.c","b.c.d","c.d.e","c.d.e.f","alpha","b.charlie","d.e.frank","frank","b","z.a","f","f.g"} },
+		["f."] = {
+			shouldMatch={"f","f.g"},
+			shouldNotMatch={"a","a.b","b.c","b.c.d","c.d.e","c.d.e.f","d.e.f","d.e.f.g","alpha","b.charlie","d.e.frank","frank","b","z.a"} },
+	}
+	for descriptor,events in pairs(descriptors) do
+		for _,eventName in ipairs(events.shouldMatch) do
+			local event = LXSC.Event(eventName)
+			assertTrue(event:triggers(descriptor))
+		end
+		for _,eventName in ipairs(events.shouldNotMatch) do
+			local event = LXSC.Event(eventName)
+			assertFalse(event:triggers(descriptor))
+		end
+	end
 end
 
 for testName,xml in pairs(XML) do

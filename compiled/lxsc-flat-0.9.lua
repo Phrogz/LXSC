@@ -1,5 +1,5 @@
 local LXSC = {
-	VERSION="0.8.2",
+	VERSION="0.9",
 	scxmlNS="http://www.w3.org/2005/07/scxml"
 }
 
@@ -320,10 +320,12 @@ end
 
 function LXSC.Transition:matchesEvent(event)
 	for _,tokens in ipairs(self.events) do
-		if #tokens <= #event.tokens then
+		if event.name==tokens.name or tokens.name=="*" then
+			return true
+		elseif #tokens <= #event._tokens then
 			local matched = true
 			for i,token in ipairs(tokens) do
-				if event.tokens[i]~=token then
+				if event._tokens[i]~=token then
 					matched = false
 					break
 				end
@@ -406,9 +408,24 @@ end
 function LXSC.Datamodel:get(id)
 	return self.scope[id]
 end
+
+local function triggers(self,descriptor)
+	if self.name==descriptor or descriptor=="*" then
+		return true
+	else
+		local i=1
+		for token in string.gmatch(descriptor,'[^.*]+') do
+			if self._tokens[i]~=token then return false end
+			i=i+1
+		end
+		return true
+	end
+	return false
+end
+
 LXSC.Event = function(name,data)
-	local e = {name=name,data=data,tokens={}}
-	for token in string.gmatch(name,'[^.*]+') do table.insert(e.tokens,token) end
+	local e = {name=name,data=data,_tokens={},triggers=triggers}
+	for token in string.gmatch(name,'[^.*]+') do table.insert(e._tokens,token) end
 	return e
 end
 local generic = {}
@@ -1014,8 +1031,9 @@ end
 
 function S:fireEvent(name,data,internalFlag)
 	-- print("fireEvent(",name,data,internalFlag,")")
-	-- if string.sub(name,1,15) == 'error.execution' then print("!!!",name,data) end
-	self[internalFlag and "_internalQueue" or "_externalQueue"]:enqueue(LXSC.Event(name,data))
+	local event = LXSC.Event(name,data)
+	if self.onEventFired then self.onEventFired(event) end
+	self[internalFlag and "_internalQueue" or "_externalQueue"]:enqueue(event)
 end
 
 -- Sensible aliases
