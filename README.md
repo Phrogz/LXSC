@@ -24,7 +24,7 @@ LXSC stands for "Lua XML StateCharts", and is pronounced _"Lexie"_. The LXSC lib
 ### The Basics
 
 ```lua
-require"lxsc-min-0.8.1"                    -- or dofile"lxsc-bin-0.8.1.luac"
+local LXSC = require"lxsc-min-0.8.1"
 
 local scxml   = io.read('my.scxml'):read('*all')
 local machine = LXSC:parse(scxml)
@@ -224,7 +224,7 @@ With no modifications, when LXSC encounters such an executable it fires an `erro
 Internal error events do not halt execution of the intepreter (unless the state machine reacts to that event in a violent manner, such as transitioning to a `<final>` state). However, if you want such elements to actually do something, you must extend LXSC to handle the executable type like so:
 
 ```lua
-require'lxsc-min-0.8.1'
+local LXSC = require'lxsc-min-0.8.1'
 function LXSC.Exec:explode(machine)
   print("The state machine wants to explode with an amount of",self.amount)
 end
