@@ -271,6 +271,40 @@ function test6_eventMatching()
 	end
 end
 
+function test7_eval()
+	local m = LXSC:parse[[
+		<scxml xmlns='http://www.w3.org/2005/07/scxml' version='1.0'>
+			<datamodel><data id="a" expr="1"/></datamodel>
+			<state id="s"/>
+		</scxml>
+	]]
+	m:start()
+	assertEqual(m:get('a'),1)
+	assertEqual(m:eval('a'),1)
+	m:set('a',2)
+	assertEqual(m:get('a'),2)
+	assertEqual(m:eval('a'),2)
+	m:run('a = 3')
+	assertEqual(m:get('a'),3)
+	assertEqual(m:eval('a'),3)
+
+	m = LXSC:parse[[
+		<scxml xmlns='http://www.w3.org/2005/07/scxml' version='1.0'><state id="s"/></scxml>
+	]]
+	local d = {a=1}
+	m:start{ data=d }
+	assertEqual(m:get('a'),1)
+	assertEqual(m:eval('a'),1)
+	m:set('a',2)
+	assertEqual(m:get('a'),2)
+	assertEqual(m:eval('a'),2)
+	assertEqual(d.a,2)
+	m:run('a = 3')
+	assertEqual(m:get('a'),3)
+	assertEqual(m:eval('a'),3)
+	assertEqual(d.a,3)
+end
+
 for testName,xml in pairs(XML) do
 	_M["testcase-"..testName] = function()
 		local machine = LXSC:parse(xml)
