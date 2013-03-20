@@ -23,20 +23,22 @@ LXSC stands for "Lua XML StateCharts", and is pronounced _"Lexie"_. The LXSC lib
 
 ### The Basics
 
-    require"lxsc-min-0.8.1"                    -- or dofile"lxsc-bin-0.8.1.luac"
+```lua
+require"lxsc-min-0.8.1"                    -- or dofile"lxsc-bin-0.8.1.luac"
 
-    local scxml   = io.read('my.scxml'):read('*all')
-    local machine = LXSC:parse(scxml)
-    machine:start()                          -- initiate the interpreter and run until stable
+local scxml   = io.read('my.scxml'):read('*all')
+local machine = LXSC:parse(scxml)
+machine:start()                          -- initiate the interpreter and run until stable
 
-    machine:fireEvent("my.event")            -- add events to the event queue to be processed
-    machine:fireEvent("another.event.name")  -- as many as you like; they won't have any effect until you
-    machine:step()                           -- call step() to process all events and run until stable
+machine:fireEvent("my.event")            -- add events to the event queue to be processed
+machine:fireEvent("another.event.name")  -- as many as you like; they won't have any effect until you
+machine:step()                           -- call step() to process all events and run until stable
 
-    print("Is the machine still running?",machine.running)
-    print("Is a state in the configuration?",machine:isActive('some-state-id'))
+print("Is the machine still running?",machine.running)
+print("Is a state in the configuration?",machine:isActive('some-state-id'))
 
-    -- Keep firing events and calling step() to process them
+-- Keep firing events and calling step() to process them
+```
 
 ### Customizing the Data Model
 
@@ -50,10 +52,12 @@ Providing your own data model table allows you to:
 
 You supply a custom data model table by passing a named `data` parameter to the `start()` method:
 
-    local mydata = { reloading=true, userName="Gavin"   } -- populate initial data values
-    local funcs  = { print=print, doTheThing=utils.doIt } -- create 'global' functions
-    setmetatable( mydata, {__index=funcs} )
-    machine:start{ data=mydata }
+```lua
+local mydata = { reloading=true, userName="Gavin"   } -- populate initial data values
+local funcs  = { print=print, doTheThing=utils.doIt } -- create 'global' functions
+setmetatable( mydata, {__index=funcs} )
+machine:start{ data=mydata }
+```
 
 ### Callbacks as the Machine Changes
 
@@ -61,8 +65,10 @@ There are five special keys that you may setto a function value on the machine t
 
 #### State Change Callbacks
 
-    machine.onBeforeExit = function(stateId,stateKind,isAtomic) ... end
-    machine.onAfterEnter = function(stateId,stateKind,isAtomic) ... end
+```lua
+machine.onBeforeExit = function(stateId,stateKind,isAtomic) ... end
+machine.onAfterEnter = function(stateId,stateKind,isAtomic) ... end
+```
 
 The state change callbacks are passed three parameters:
 
@@ -75,7 +81,9 @@ As implied by the names the `onBeforeExit` callback is invoked right **before** 
 
 #### Data Model Callback
 
-    machine.onDataSet = function(dataid,newvalue) ... end
+```lua
+machine.onDataSet = function(dataid,newvalue) ... end
+```
 
 If supplied, this callback will be invoked any time the data model is changed.
 
@@ -83,7 +91,9 @@ If supplied, this callback will be invoked any time the data model is changed.
 
 #### Transition Callback
 
-    machine.onTransition = function(transitionTable) ... end   
+```lua
+machine.onTransition = function(transitionTable) ... end   
+```
 
 The `onTransition` callback is invoked right before the executable content of a transition (if any) is run.
 
@@ -99,7 +109,9 @@ The `onTransition` callback is invoked right before the executable content of a 
 
 #### Event Fire Callback
 
-    machine.onEventFired = function(eventTable) ... end   
+```lua
+machine.onEventFired = function(eventTable) ... end   
+```
 
 The `onEventFired` callback is invoked whenever `fireEvent()` is called on the machine (either by your own code or by internal machine code). The event has not been processed, and there is not guarantee that the event is going to cause any effect later on. This is mostly a debugging callback allowing you to ensure that events you thought that you were injecting were, in fact, making it in.
 
@@ -109,11 +121,13 @@ The table supplied to this callback is a `LXSC.Event` object with the following 
 * `data` - whatever data (if any) was supplied as the second parameter to `fireEvent()`.
 * `triggersDescriptor` - a function that can be used to determine if this event would trigger a particular event descriptor string.
 
-        machine.onEventFired = function(evt)
-          print(evt.name, evt:triggersDescriptor('a'), evt:triggersDescriptor('a.b'))
-        end
-        machine:fireEvent("a")   --> a true nil
-        machine:fireEvent("a.b") --> a true true
+    ```lua
+    machine.onEventFired = function(evt)
+      print(evt.name, evt:triggersDescriptor('a'), evt:triggersDescriptor('a.b'))
+    end
+    machine:fireEvent("a")   --> a true nil
+    machine:fireEvent("a.b") --> a true true
+    ```
 
 * `triggersTransition` - similar to `triggersDescriptor()`, but it takes a transition table (as supplied to the `onTransition` callback) and uses the event descriptor(s) for that transition's `event="..."` attribute to evaluate if the event should cause the transition to be triggered.
   * _Note: this does not test any conditional code that may be present inthe transition's `cond="..."` attribute. This function may return true, and then the transition may subsequently not be triggered by this event if the conditions are not right._
@@ -125,111 +139,139 @@ Note that the event object described above is also returned from `machine:fireEv
 
 While the machine is running (after you have called `start()`) you can peek at the data for a specific location via:
 
-    local theValue = machine:get("dataId")
+```lua
+local theValue = machine:get("dataId")
+```
 
 …and you can set the value for a particular location via:
 
-    machine:set("dataId",someValue)
+```lua
+machine:set("dataId",someValue)
+```
 
 You can evaluate code in the data model (just like a `cond="…"` or `expr="…"` attribute does) by:
 
-    local theResult = machine:eval("mycodestring")
+```lua
+local theResult = machine:eval("mycodestring")
+```
 
 …and you can run arbitrary code against the data model (just like a `<script>` block does) by:
 
-    machine:run("mycodestring")
+```lua
+machine:run("mycodestring")
+```
 
 ### Examining the State of the Machine
 
 You can ask a running machine if a particular state id is active (in the current configuration):
 
-    print("Is the foo-bar state active?", machine:isActive('foo-bar'))
+```lua
+print("Is the foo-bar state active?", machine:isActive('foo-bar'))
+```
 
 …or you can ask for the set of all states that are active:
 
-    for stateId,_ in pairs(machine:activeStateIds()) do
-      print("This state is currently active:",stateId)
-    end
+```lua
+for stateId,_ in pairs(machine:activeStateIds()) do
+  print("This state is currently active:",stateId)
+end
+```
 
 …or you can ask just for the set of atomic (no sub-state) states:
 
-    for stateId,_ in pairs(machine:activeAtomicIds()) do
-      print("This atomic state is currently active:",stateId)
-    end
+```lua
+for stateId,_ in pairs(machine:activeAtomicIds()) do
+  print("This atomic state is currently active:",stateId)
+end
+```
 
 You can also ask for a list of all state IDs in the machine, including those autogenerated for states that have no `id="…"` attribute:
 
-    for stateId,_ in pairs(machine:allStateIds()) do
-      print("One of the states has this id:",stateId)
-    end
+```lua
+for stateId,_ in pairs(machine:allStateIds()) do
+  print("One of the states has this id:",stateId)
+end
+```
 
 You can ask a machine for the set of all events that trigger transitions:
 
-    for eventDescriptor,_ in pairs(machine:allEvents()) do
-      -- eventDescriptor is a simple dotted string, e.g. "foo.bar"
-      print("There's at least one transition triggered by:",eventDescriptor)
-    end
-
+```lua
+for eventDescriptor,_ in pairs(machine:allEvents()) do
+  -- eventDescriptor is a simple dotted string, e.g. "foo.bar"
+  print("There's at least one transition triggered by:",eventDescriptor)
+end
+```
 …or you can ask just for the events that may trigger a transition in the current configuration:
 
+```lua
     for eventDescriptor,_ in pairs(machine:availableEvents()) do
       print("There's at least one active transition triggered by:",eventDescriptor)
     end
+```
 
 ## Custom Executable Content
 
 Anywhere that [executable content](http://www.w3.org/TR/scxml/#executable) is permitted—in `<onentry>`, `<onexit>`, and `<transition>`—a state chart may specify custom elements via a custom XML namespace. For example:
 
-    <state xmlns:my="goodstuff">
-      <onentry><my:explode amount="10"/></onentry>
-    </state>
+```xml
+<state xmlns:my="goodstuff">
+  <onentry><my:explode amount="10"/></onentry>
+</state>
+```
 
 With no modifications, when LXSC encounters such an executable it fires an `error.execution.unhandled` event internally with the `_event.data` set to the string `"unhandled executable type explode"`. 
 
 Internal error events do not halt execution of the intepreter (unless the state machine reacts to that event in a violent manner, such as transitioning to a `<final>` state). However, if you want such elements to actually do something, you must extend LXSC to handle the executable type like so:
 
-    require'lxsc-min-0.8.1'
-    function LXSC.Exec:explode(machine)
-      print("The state machine wants to explode with an amount of",self.amount)
-    end
+```lua
+require'lxsc-min-0.8.1'
+function LXSC.Exec:explode(machine)
+  print("The state machine wants to explode with an amount of",self.amount)
+end
+```
 
 The current machine is passed to your function so that you may call `:fireEvent()`, `:eval()`, etc. as needed. Attributes on the element are set as named keys on the `self` table supplied to your function (e.g. `amount` above).
 
 **Note**: executable elements with conflicting names in different namespaces will use the same callback function. The only way to disambiguate them currently is via a `_nsURI` property set on the table. For example, to handle this document:
 
-    <state xmlns:my="goodstuff" xmlns:their="badstuff">
-      <onentry>
-        <my:explode amount="10"/>
-        <their:explode chunkiness="very"/>
-      </onentry>
-    </state>
+```xml
+<state xmlns:my="goodstuff" xmlns:their="badstuff">
+  <onentry>
+    <my:explode amount="10"/>
+    <their:explode chunkiness="very"/>
+  </onentry>
+</state>
+```
 
 you would need to do something like:
 
-    function LXSC.Exec:explode(machine)
-      if self._nsURI=='goodstuff' then
-        print("The state machine wants to explode with an amount of",self.amount)
-      else
-        machine:fireEvent(
-          "error.execution.unhandled",
-          "Dunno how to handle 'explode' in the "..self._nsURI.." namespace"
-        )
-      end
-    end
+```lua
+function LXSC.Exec:explode(machine)
+  if self._nsURI=='goodstuff' then
+    print("The state machine wants to explode with an amount of",self.amount)
+  else
+    machine:fireEvent(
+      "error.execution.unhandled",
+      "Dunno how to handle 'explode' in the "..self._nsURI.." namespace"
+    )
+  end
+end
+```
 
 You can also use this to re-implement or augment existing executables like `<log>`:
 
-    -- Augmenting the <log> to use a logger with a custom logging level, e.g.
-    -- <transition event="error.*">
-    --   <log label="An error occurred" expr="_event.data" my:log-level="error" />
-    -- </transition>
-    function LXSC.Exec:log(machine)
-      local result = {self.label}
-      if self.expr then table.insert(result,machine:eval(self.expr)) end
-      local level = self['log-level'] or 'info'
-      my_global_logger[level]( my_global_logger, table.concat(result,": ") )
-    end
-
+```lua
+-- Augmenting the <log> to use a logger with a custom logging level, e.g.
+-- <transition event="error.*">
+--   <log label="An error occurred" expr="_event.data" my:log-level="error" />
+-- </transition>
+function LXSC.Exec:log(machine)
+  local result = {self.label}
+  if self.expr then table.insert(result,machine:eval(self.expr)) end
+  local level = self['log-level'] or 'info'
+  my_global_logger[level]( my_global_logger, table.concat(result,": ") )
+end
+```
 
 ## SCXML Compliance
 
