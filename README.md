@@ -9,8 +9,8 @@ LXSC stands for "Lua XML StateCharts", and is pronounced _"Lexie"_. The LXSC lib
   * [Customizing the Data Model](#customizing-the-data-model)
   * [Callbacks as the Machine Changes](#callbacks-as-the-machine-changes)
      * [State Change Callbacks](#state-change-callbacks)
-     * [Data Model Callback](#data-model-callback)
      * [Transition Callback](#transition-callback)
+     * [Data Model Callback](#data-model-callback)
      * [Event Fire Callback](#event-fire-callback)
   * [Peeking and Poking at the Data Model](#peeking-and-poking-at-the-data-model)
   * [Examining the State of the Machine](#examining-the-state-of-the-machine)
@@ -24,7 +24,7 @@ LXSC stands for "Lua XML StateCharts", and is pronounced _"Lexie"_. The LXSC lib
 ### The Basics
 
 ```lua
-local LXSC = require"lxsc-min-0.8.1"
+local LXSC = require"lxsc-min-10"
 
 local scxml   = io.read('my.scxml'):read('*all')
 local machine = LXSC:parse(scxml)
@@ -61,16 +61,17 @@ machine:start{ data=mydata }
 
 ### Callbacks as the Machine Changes
 
-There are five special keys that you may setto a function value on the machine to keep track of what the machine is doing: `onBeforeExit`, `onAfterEnter`, `onDataSet`, `onTransition`, and `onEventFired`.
+There are six special keys that you may set to a function value on the machine to keep track of what the machine is doing: `onBeforeExit`, `onAfterEnter`, `onAllChanged`, `onDataSet`, `onTransition`, and `onEventFired`.
 
 #### State Change Callbacks
 
 ```lua
 machine.onBeforeExit = function(stateId,stateKind,isAtomic) ... end
 machine.onAfterEnter = function(stateId,stateKind,isAtomic) ... end
+machine.onEnteredAll = function() ... end
 ```
 
-The state change callbacks are passed three parameters:
+The state-specific change callbacks are passed three parameters:
 
 * The string id of the state being exited or entered.
 * The string kind of the state: `"state"`, `"parallel"`, or `"final"`.
@@ -78,6 +79,8 @@ The state change callbacks are passed three parameters:
 * A boolean indicating whether the state is atomic or not.
 
 As implied by the names the `onBeforeExit` callback is invoked right **before** leaving a state, whilte the `onAfterEnter` callback is invoked right **after** entering a state.
+
+The `onEnteredAll` callback will be invoked once after the last state is entered for a particular _microstep_. 
 
 #### Data Model Callback
 
@@ -224,7 +227,7 @@ With no modifications, when LXSC encounters such an executable it fires an `erro
 Internal error events do not halt execution of the intepreter (unless the state machine reacts to that event in a violent manner, such as transitioning to a `<final>` state). However, if you want such elements to actually do something, you must extend LXSC to handle the executable type like so:
 
 ```lua
-local LXSC = require'lxsc-min-0.8.1'
+local LXSC = require'lxsc-min-10'
 function LXSC.Exec:explode(machine)
   print("The state machine wants to explode with an amount of",self.amount)
 end

@@ -1,5 +1,5 @@
 local LXSC = {
-	VERSION="0.9.2",
+	VERSION="0.10",
 	scxmlNS="http://www.w3.org/2005/07/scxml"
 }
 
@@ -845,6 +845,7 @@ function S:microstep(enabledTransitions)
 		for _,executable in ipairs(t._exec) do self:executeContent(executable) end
 	end
 	self:enterStates(enabledTransitions)
+	if self.onEnteredAll then self.onEnteredAll() end
 end
 
 function S:exitStates(enabledTransitions)

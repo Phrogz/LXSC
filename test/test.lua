@@ -143,8 +143,8 @@ function test4_customCallbacks()
 			<final id="s3" />
 		</scxml>
 	]]
-	local callbackCountById = {}
-	local eventsSeen = {}
+	local callbackCountById, eventsSeen = {}, {}
+	local changesSeen = 0
 	s.onAfterEnter = function(id,kind,atomic)
 		assertType(id,'string')
 		if not callbackCountById[id] then callbackCountById[id] = {} end
@@ -176,6 +176,7 @@ function test4_customCallbacks()
 	s.onEventFired = function(event)
 		eventsSeen[event.name] = true
 	end
+	s.onEnteredAll = function() changesSeen = changesSeen+1 print("CHANGE") end
 	s:start()
 	for id,counts in pairs(callbackCountById) do
 		if id=='s3' then
@@ -189,6 +190,7 @@ function test4_customCallbacks()
 	s:fireEvent("foo.bar")
 	assert(eventsSeen.e)
 	assert(eventsSeen["foo.bar"])
+	assertEqual(changesSeen,1)
 end
 
 function test5_delayedSend()
