@@ -197,6 +197,7 @@ function S:microstep(enabledTransitions)
 		for _,executable in ipairs(t._exec) do self:executeContent(executable) end
 	end
 	self:enterStates(enabledTransitions)
+	if self.onEnteredAll then self.onEnteredAll() end
 end
 
 function S:exitStates(enabledTransitions)

@@ -1,5 +1,5 @@
 local LXSC = {
-	VERSION="0.9.1",
+	VERSION="0.10",
 	scxmlNS="http://www.w3.org/2005/07/scxml"
 }
 
@@ -401,8 +401,12 @@ end
 
 function LXSC.Datamodel:set(location,value)
 	-- TODO: support foo.bar location dereferencing
-	self.scope[location] = value
-	if self.scxml.onDataSet then self.scxml.onDataSet(location,value) end
+	if location~=nil then
+		self.scope[location] = value
+		if self.scxml.onDataSet then self.scxml.onDataSet(location,value) end
+	else
+		self.scxml:fireEvent("error.execution.invalid-set",true)
+	end
 end
 
 function LXSC.Datamodel:get(id)
@@ -841,6 +845,7 @@ function S:microstep(enabledTransitions)
 		for _,executable in ipairs(t._exec) do self:executeContent(executable) end
 	end
 	self:enterStates(enabledTransitions)
+	if self.onEnteredAll then self.onEnteredAll() end
 end
 
 function S:exitStates(enabledTransitions)

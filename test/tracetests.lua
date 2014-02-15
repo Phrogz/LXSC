@@ -1,7 +1,7 @@
 package.path = "../?.lua;" .. package.path
 
 require 'io'
-require 'lxsc'
+local LXSC = require 'lxsc'
 
 DIR = 'testcases'
 

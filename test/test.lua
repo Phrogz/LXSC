@@ -143,8 +143,8 @@ function test4_customCallbacks()
 			<final id="s3" />
 		</scxml>
 	]]
-	local callbackCountById = {}
-	local eventsSeen = {}
+	local callbackCountById, eventsSeen = {}, {}
+	local changesSeen = 0
 	s.onAfterEnter = function(id,kind,atomic)
 		assertType(id,'string')
 		if not callbackCountById[id] then callbackCountById[id] = {} end
@@ -176,6 +176,7 @@ function test4_customCallbacks()
 	s.onEventFired = function(event)
 		eventsSeen[event.name] = true
 	end
+	s.onEnteredAll = function() changesSeen = changesSeen+1 print("CHANGE") end
 	s:start()
 	for id,counts in pairs(callbackCountById) do
 		if id=='s3' then
@@ -189,6 +190,7 @@ function test4_customCallbacks()
 	s:fireEvent("foo.bar")
 	assert(eventsSeen.e)
 	assert(eventsSeen["foo.bar"])
+	assertEqual(changesSeen,1)
 end
 
 function test5_delayedSend()
@@ -269,6 +271,40 @@ function test6_eventMatching()
 			assertTrue(not event:triggersTransition(t))
 		end
 	end
+end
+
+function test7_eval()
+	local m = LXSC:parse[[
+		<scxml xmlns='http://www.w3.org/2005/07/scxml' version='1.0'>
+			<datamodel><data id="a" expr="1"/></datamodel>
+			<state id="s"/>
+		</scxml>
+	]]
+	m:start()
+	assertEqual(m:get('a'),1)
+	assertEqual(m:eval('a'),1)
+	m:set('a',2)
+	assertEqual(m:get('a'),2)
+	assertEqual(m:eval('a'),2)
+	m:run('a = 3')
+	assertEqual(m:get('a'),3)
+	assertEqual(m:eval('a'),3)
+
+	m = LXSC:parse[[
+		<scxml xmlns='http://www.w3.org/2005/07/scxml' version='1.0'><state id="s"/></scxml>
+	]]
+	local d = {a=1}
+	m:start{ data=d }
+	assertEqual(m:get('a'),1)
+	assertEqual(m:eval('a'),1)
+	m:set('a',2)
+	assertEqual(m:get('a'),2)
+	assertEqual(m:eval('a'),2)
+	assertEqual(d.a,2)
+	m:run('a = 3')
+	assertEqual(m:get('a'),3)
+	assertEqual(m:eval('a'),3)
+	assertEqual(d.a,3)
 end
 
 for testName,xml in pairs(XML) do
