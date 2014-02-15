@@ -61,7 +61,7 @@ machine:start{ data=mydata }
 
 ### Callbacks as the Machine Changes
 
-There are six special keys that you may set to a function value on the machine to keep track of what the machine is doing: `onBeforeExit`, `onAfterEnter`, `onAllChanged`, `onDataSet`, `onTransition`, and `onEventFired`.
+There are six special keys that you may set to a function value on the machine to keep track of what the machine is doing: `onBeforeExit`, `onAfterEnter`, `onEnteredAll`, `onDataSet`, `onTransition`, and `onEventFired`.
 
 #### State Change Callbacks
 
