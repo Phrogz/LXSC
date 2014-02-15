@@ -1,9 +1,9 @@
 --[=====================================================================[
-v0.5.1 Copyright © 2013 Gavin Kistner <!@phrogz.net>; MIT Licensed
+v0.5.3 Copyright © 2013 Gavin Kistner <!@phrogz.net>; MIT Licensed
 See http://github.com/Phrogz/SLAXML for details.
 --]=====================================================================]
 local SLAXML = {
-	VERSION = "0.5.1",
+	VERSION = "0.5.3",
 	_call = {
 		pi = function(target,content)
 			print(string.format("<?%s %s?>",target,content))
@@ -36,6 +36,7 @@ function SLAXML:parse(xml,options)
 	-- Cache references for maximum speed
 	local find, sub, gsub, char, push, pop = string.find, string.sub, string.gsub, string.char, table.insert, table.remove
 	local first, last, match1, match2, match3, pos2, nsURI
+	local unpack = unpack or table.unpack
 	local pos = 1
 	local state = "text"
 	local textStart = 1
@@ -47,6 +48,7 @@ function SLAXML:parse(xml,options)
 	local entityMap  = { ["lt"]="<", ["gt"]=">", ["amp"]="&", ["quot"]='"', ["apos"]="'" }
 	local entitySwap = function(orig,n,s) return entityMap[s] or n=="#" and char(s) or orig end
 	local function unescape(str) return gsub( str, '(&(#?)([%d%a]+);)', entitySwap ) end
+	local anyElement = false
 
 	local function finishText()
 		if first>textStart and self._call.text then
@@ -83,11 +85,13 @@ function SLAXML:parse(xml,options)
 	end
 
 	local function nsForPrefix(prefix)
+		if prefix=='xml' then return 'http://www.w3.org/XML/1998/namespace' end -- http://www.w3.org/TR/xml-names/#ns-decl
 		for i=#nsStack,1,-1 do if nsStack[i][prefix] then return nsStack[i][prefix] end end
 		error(("Cannot find namespace for prefix %s"):format(prefix))
 	end
 
 	local function startElement()
+		anyElement = true
 		first, last, match1 = find( xml, '^<([%a_][%w_.-]*)', pos )
 		if first then
 			currentElement[2] = nil
@@ -166,8 +170,7 @@ function SLAXML:parse(xml,options)
 			textStart = pos
 
 			if self._call.startElement then self._call.startElement(unpack(currentElement)) end
-			if self._call.attribute then
-			for i=1,currentAttributeCt do self._call.attribute(unpack(currentAttributes[i])) end end
+			if self._call.attribute then for i=1,currentAttributeCt do self._call.attribute(unpack(currentAttributes[i])) end end
 
 			if match1=="/" then
 				pop(nsStack)
@@ -214,6 +217,9 @@ function SLAXML:parse(xml,options)
 			end
 		end
 	end
+
+	if not anyElement then error("Parsing did not discover any elements") end
+	if #nsStack > 0 then error("Parsing ended with unclosed elements") end
 end
 
 return SLAXML
