@@ -26,7 +26,7 @@ LXSC stands for "Lua XML StateCharts", and is pronounced _"Lexie"_. The LXSC lib
 ```lua
 local LXSC = require"lxsc-min-10"
 
-local scxml   = io.read('my.scxml'):read('*all')
+local scxml   = io.open('my.scxml'):read('*all')
 local machine = LXSC:parse(scxml)
 machine:start()                          -- initiate the interpreter and run until stable
 
