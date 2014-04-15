@@ -35,8 +35,8 @@ def run_test(uri)
 end
 
 def convert_to_scxml!(doc)
-	doc.at_xpath('//conf:pass').replace '<final id="test-pass" />' if doc.at_xpath('//conf:pass')
-	doc.at_xpath('//conf:fail').replace '<final id="test-fail" />' if doc.at_xpath('//conf:fail')
+	doc.at_xpath('//conf:pass').replace '<final id="pass" />' if doc.at_xpath('//conf:pass')
+	doc.at_xpath('//conf:fail').replace '<final id="fail" />' if doc.at_xpath('//conf:fail')
 	{
 		arrayVar:             ->(a){ ['array',  "testvar#{a}"                 ]},
 		arrayTextVar:         ->(a){ ['array',  "testvar#{a}"                 ]},
@@ -125,8 +125,8 @@ def convert_to_scxml!(doc)
 		namelist:                 ->(a){ ['namelist',   "testvar#{a}"      ]},
 		sendIDExpr:               ->(a){ ['sendidexpr', "testvar#{a}"      ]},
 		srcExpr:                  ->(a){ ['srcexpr',    "testvar#{a}"      ]},
-		targetpass:               ->(a){ ['target',     'test-pass'        ]},
-		targetfail:               ->(a){ ['target',     'test-fail'        ]},
+		targetpass:               ->(a){ ['target',     'pass'             ]},
+		targetfail:               ->(a){ ['target',     'fail'             ]},
 		illegalTarget:            ->(a){ ['target',     'xxxxxxxxx'        ]},
 		unreachableTarget:        ->(a){ ['target',     'FIXME'            ]},
 		targetVar:                ->(a){ ['targetexpr', "testvar#{a}"      ]},

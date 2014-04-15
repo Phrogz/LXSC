@@ -50,6 +50,33 @@ function LXSC.Exec:cancel(scxml)
 	scxml:cancelDelayedSend(self.sendid or scxml:eval(self.sendidexpr))
 end
 
+LXSC.Exec['if'] = function (self,scxml)
+	if scxml:eval(self.cond) then
+		for _,child in ipairs(self._kids) do
+			if child._kind=='else' or child._kind=='elseif' then
+				break
+			else
+				scxml:executeContent(child)
+			end
+		end
+	else
+		local executeFlag = false
+		for _,child in ipairs(self._kids) do
+			if child._kind=='else' then
+				if executeFlag then break else executeFlag = true end
+			elseif child._kind=='elseif' then
+				if executeFlag then
+					break
+				elseif scxml:eval(child.cond) then
+					executeFlag = true
+				end
+			elseif executeFlag then
+				scxml:executeContent(child)
+			end
+		end
+	end
+end
+
 function LXSC.SCXML:processDelayedSends() -- automatically called by :step()
 	local i,last=1,#self._delayedSend
 	while i<=last do
@@ -77,6 +104,7 @@ function LXSC.SCXML:executeContent(item)
 	if handler then
 		handler(item,self)
 	else
+		-- print("UNHANDLED EXECUTABLE: "..item._kind)
 		self:fireEvent('error.execution.unhandled',"unhandled executable type "..item._kind,true)
 	end
 end
