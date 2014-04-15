@@ -115,7 +115,11 @@ end
 function S:exitInterpreter()
 	local statesToExit = self._config:toList():sort(documentOrder)
 	for _,s in ipairs(statesToExit) do
-		for _,content in ipairs(s._onexits) do self:executeContent(content) end
+		for _,content in ipairs(s._onexits) do
+			if not self:executeContent(content) then
+				break
+			end
+		end
 		-- for _,inv     in ipairs(s._invokes) do self:cancelInvoke(inv)       end
 		-- self._config:delete(s)
 		-- if self:isFinalState(s) and s.parent._kind=='scxml' then self:returnDoneEvent(self:donedata(s)) end
@@ -194,7 +198,11 @@ function S:microstep(enabledTransitions)
 	self:exitStates(enabledTransitions)
 	for _,t in ipairs(enabledTransitions) do
 		if self.onTransition then self.onTransition(t) end
-		for _,executable in ipairs(t._exec) do self:executeContent(executable) end
+		for _,executable in ipairs(t._exec) do
+			if not self:executeContent(executable) then
+				break
+			end
+		end
 	end
 	self:enterStates(enabledTransitions)
 	if self.onEnteredAll then self.onEnteredAll() end
@@ -242,7 +250,11 @@ function S:exitStates(enabledTransitions)
 
 	for _,s in ipairs(statesToExit) do
 		if self.onBeforeExit then self.onBeforeExit(s.id,s._kind,s.isAtomic) end
-		for _,content in ipairs(s._onexits) do self:executeContent(content) end
+		for _,content in ipairs(s._onexits) do
+			if not self:executeContent(content) then
+				break
+			end
+		end
 		-- for _,inv in ipairs(s._invokes)     do self:cancelInvoke(inv) end
 		self._config:delete(s)
 	end
@@ -314,12 +326,18 @@ function S:enterStates(enabledTransitions)
 			self._config:add(s)
 			-- self.statesToInvoke:add(s)
 			if self.binding=="late" then self._data:initState(s) end -- The datamodel ensures this happens only once per state
-			for _,content in ipairs(s._onentrys) do self:executeContent(content) end
+			for _,content in ipairs(s._onentrys) do
+				if not self:executeContent(content) then
+					break
+				end
+			end
 			if self.onAfterEnter then self.onAfterEnter(s.id,s._kind,s.isAtomic) end
 			if statesForDefaultEntry:member(s) then
 				for _,t in ipairs(s.initial.transitions) do
 					for _,executable in ipairs(t._exec) do
-						self:executeContent(executable)
+						if not self:executeContent(executable) then
+							break
+						end
 					end
 				end
 			end

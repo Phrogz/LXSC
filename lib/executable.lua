@@ -5,19 +5,23 @@ function LXSC.Exec:log(scxml)
 	local message = {self.label}
 	if self.expr then table.insert(message,scxml:eval(self.expr)) end
 	print(table.concat(message,": "))
+	return true
 end
 
 function LXSC.Exec:assign(scxml)
 	-- TODO: support child executable content in place of expr
 	scxml:set( self.location, scxml:eval(self.expr) )
+	return true
 end
 
 function LXSC.Exec:raise(scxml)
 	scxml:fireEvent(self.event,nil,true)
+	return true
 end
 
 function LXSC.Exec:script(scxml)
 	scxml:run(self._text)
+	return true
 end
 
 function LXSC.Exec:send(scxml)
@@ -44,10 +48,12 @@ function LXSC.Exec:send(scxml)
 	else
 		scxml:fireEvent(name,data,false)
 	end
+	return true
 end
 
 function LXSC.Exec:cancel(scxml)
 	scxml:cancelDelayedSend(self.sendid or scxml:eval(self.sendidexpr))
+	return true
 end
 
 LXSC.Exec['if'] = function (self,scxml)
@@ -74,6 +80,26 @@ LXSC.Exec['if'] = function (self,scxml)
 				scxml:executeContent(child)
 			end
 		end
+	end
+	return true
+end
+
+function LXSC.Exec:foreach(scxml)
+	local array = scxml:get(self.array)
+	if type(array) ~= 'table' then
+		scxml:fireEvent('error.execution',"foreach array '"..self.array.."' is not a table",true)
+	else
+		local list = {}	
+		for i,v in ipairs(array) do list[i]=v end
+		for i,v in ipairs(list) do
+			scxml:set(self.item,v)
+			if self.index then scxml:set(self.index,i) end
+			for _,child in ipairs(self._kids) do
+				-- FIXME: if a child element errors, must break
+				scxml:executeContent(child)
+			end
+		end
+		return true
 	end
 end
 
@@ -102,7 +128,7 @@ end
 function LXSC.SCXML:executeContent(item)
 	local handler = LXSC.Exec[item._kind]
 	if handler then
-		handler(item,self)
+		return handler(item,self)
 	else
 		-- print("UNHANDLED EXECUTABLE: "..item._kind)
 		self:fireEvent('error.execution.unhandled',"unhandled executable type "..item._kind,true)

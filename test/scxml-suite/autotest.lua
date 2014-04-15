@@ -10,9 +10,8 @@ machine.onBeforeExit = function(id,kind) print("…exiting "..kind.." '"..tostri
 machine.onAfterEnter = function(id,kind) print("…entered "..kind.." '"..tostring(id).."'") end
 machine.onTransition = function(t)       print("…running "..t:inspect()) end
 machine:start()
-machine:step()
 local activeStateIds = {}
-for stateId,_ in pairs(machine:activeStateIds()) do
+for _,stateId in ipairs(machine:activeStateIds()) do
   activeStateIds[#activeStateIds+1] = stateId
 end
 print(arg[1].." finished in state(s): "..table.concat(activeStateIds,", "))
