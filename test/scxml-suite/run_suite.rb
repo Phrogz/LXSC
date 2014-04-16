@@ -20,7 +20,6 @@ def run_tests
 	required = tests.reject{ |t| t['conformance']=='optional' }
 	auto,manual = required.partition{ |t| t['manual']=='false' }
 	auto.sort_by{ |test| test['id'] }.each do |test|
-		puts "Running test #{test['id']}…"
 		success = run_test(test.at('start')['uri'])
 	end
 end

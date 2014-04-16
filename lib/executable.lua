@@ -3,15 +3,22 @@ LXSC.Exec = {}
 
 function LXSC.Exec:log(scxml)
 	local message = {self.label}
-	if self.expr then table.insert(message,scxml:eval(self.expr)) end
+	if self.expr then
+		local value = scxml:eval(self.expr)
+		if value==LXSC.Datamodel.EVALERROR then return end
+		table.insert(message,value)
+	end
 	print(table.concat(message,": "))
 	return true
 end
 
 function LXSC.Exec:assign(scxml)
 	-- TODO: support child executable content in place of expr
-	scxml:set( self.location, scxml:eval(self.expr) )
-	return true
+	local value = scxml:eval(self.expr)
+	if value~=LXSC.Datamodel.EVALERROR then
+		scxml:set( self.location, value )
+		return true
+	end
 end
 
 function LXSC.Exec:raise(scxml)
@@ -27,15 +34,21 @@ end
 function LXSC.Exec:send(scxml)
 	-- TODO: support type/typeexpr/target/targetexpr
 	local name = self.event or scxml:eval(self.eventexpr)
+	if name == LXSC.Datamodel.EVALERROR then return end
 	local data
 	if self.namelist then
 		data = {}
 		for name in string.gmatch(self.namelist,'[^%s]+') do data[name] = scxml:get(name) end
 	end
-	if self.idlocation and not self.id then scxml:set( scxml:eval(self.idlocation), LXSC.uuid4() ) end
+	if self.idlocation and not self.id then
+		local loc = scxml:eval(self.idlocation)
+		if loc == LXSC.Datamodel.EVALERROR then return end
+		scxml:set( loc, LXSC.uuid4() )
+	end
 
 	if self.delay or self.delayexpr then
 		local delay = self.delay or scxml:eval(self.delayexpr)
+		if delay == LXSC.Datamodel.EVALERROR then return end
 		local delaySeconds, units = string.match(delay,'^(.-)(m?s)')
 		delaySeconds = tonumber(delaySeconds)
 		if units=="ms" then delaySeconds = delaySeconds/1000 end
@@ -52,17 +65,21 @@ function LXSC.Exec:send(scxml)
 end
 
 function LXSC.Exec:cancel(scxml)
-	scxml:cancelDelayedSend(self.sendid or scxml:eval(self.sendidexpr))
+	local sendid = self.sendid or scxml:eval(self.sendidexpr)
+	if sendid == LXSC.Datamodel.EVALERROR then return end
+	scxml:cancelDelayedSend(sendid)
 	return true
 end
 
 LXSC.Exec['if'] = function (self,scxml)
-	if scxml:eval(self.cond) then
+	local result = scxml:eval(self.cond)
+	if result == LXSC.Datamodel.EVALERROR then return end
+	if result then
 		for _,child in ipairs(self._kids) do
 			if child._kind=='else' or child._kind=='elseif' then
 				break
 			else
-				scxml:executeContent(child)
+				if not scxml:executeContent(child) then return end
 			end
 		end
 	else
@@ -73,11 +90,13 @@ LXSC.Exec['if'] = function (self,scxml)
 			elseif child._kind=='elseif' then
 				if executeFlag then
 					break
-				elseif scxml:eval(child.cond) then
-					executeFlag = true
+				else
+					result = scxml:eval(child.cond)
+					if result == LXSC.Datamodel.EVALERROR then return end
+					if result then executeFlag = true end
 				end
 			elseif executeFlag then
-				scxml:executeContent(child)
+				if not scxml:executeContent(child) then return end
 			end
 		end
 	end
@@ -89,14 +108,13 @@ function LXSC.Exec:foreach(scxml)
 	if type(array) ~= 'table' then
 		scxml:fireEvent('error.execution',"foreach array '"..self.array.."' is not a table",true)
 	else
-		local list = {}	
+		local list = {}
 		for i,v in ipairs(array) do list[i]=v end
 		for i,v in ipairs(list) do
 			scxml:set(self.item,v)
 			if self.index then scxml:set(self.index,i) end
 			for _,child in ipairs(self._kids) do
-				-- FIXME: if a child element errors, must break
-				scxml:executeContent(child)
+				if not scxml:executeContent(child) then return end
 			end
 		end
 		return true
@@ -132,6 +150,7 @@ function LXSC.SCXML:executeContent(item)
 	else
 		-- print("UNHANDLED EXECUTABLE: "..item._kind)
 		self:fireEvent('error.execution.unhandled',"unhandled executable type "..item._kind,true)
+		return true -- Just because we didn't understand it doesn't mean we should stop processing executable
 	end
 end
 

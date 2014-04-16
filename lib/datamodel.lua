@@ -38,12 +38,14 @@ function LXSC.Datamodel:run(code)
 			setfenv(func,self.scope)
 		else
 			self.scxml:fireEvent("error.execution.syntax",message,true)
+			return LXSC.Datamodel.EVALERROR
 		end
 	end
 	if func then
 		local ok,result = pcall(func)
 		if not ok then
 			self.scxml:fireEvent("error.execution.evaluation",result,true)
+			return LXSC.Datamodel.EVALERROR
 		else
 			return result
 		end
@@ -63,3 +65,5 @@ end
 function LXSC.Datamodel:get(id)
 	return self.scope[id]
 end
+
+LXSC.Datamodel.EVALERROR = {} -- a unique identifier for comparision

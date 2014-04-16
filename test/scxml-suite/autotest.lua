@@ -6,13 +6,21 @@ LXSC = require 'lxsc'
 
 scxml = io.open(arg[1]):read("*all")
 local machine = LXSC:parse(scxml)
-machine.onBeforeExit = function(id,kind) print("…exiting "..kind.." '"..tostring(id).."'") end
-machine.onAfterEnter = function(id,kind) print("…entered "..kind.." '"..tostring(id).."'") end
-machine.onTransition = function(t)       print("…running "..t:inspect()) end
+local messages = {"Failed running "..arg[1]..":"}
+machine.onBeforeExit = function(id,kind) table.insert(messages,"…exiting "..kind.." '"..tostring(id).."'") end
+machine.onAfterEnter = function(id,kind) table.insert(messages,"…entered "..kind.." '"..tostring(id).."'") end
+machine.onTransition = function(t)       table.insert(messages,"…running "..t:inspect()) end
 machine:start()
-local activeStateIds = {}
-for _,stateId in ipairs(machine:activeStateIds()) do
-  activeStateIds[#activeStateIds+1] = stateId
+if not machine:activeStateIds().pass then
+	local activeStateIds = {}
+	for _,stateId in ipairs(machine:activeStateIds()) do
+	  activeStateIds[#activeStateIds+1] = stateId
+	end
+	table.insert(messages,"…finished in state(s): "..table.concat(activeStateIds,", "))
+	for k,v in pairs(machine._data.scope) do
+		table.insert(messages,"datamodel."..tostring(k).." = "..tostring(v))
+	end
+	table.insert(messages," ")
+	print(table.concat(messages,"\n"))
+	os.exit(1)
 end
-print(arg[1].." finished in state(s): "..table.concat(activeStateIds,", "))
-assert(machine:activeStateIds().pass, arg[1].." should finish in the 'pass' state.")
