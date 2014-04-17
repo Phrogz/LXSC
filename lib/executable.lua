@@ -33,6 +33,17 @@ end
 
 function LXSC.Exec:send(scxml)
 	-- TODO: support type/typeexpr/target/targetexpr
+	local type = self.type or self.typeexpr and scxml:eval(self.typeexpr)
+	if type == LXSC.Datamodel.EVALERROR then return end
+	if type and type ~= 'http://www.w3.org/TR/scxml/#SCXMLEventProcessor' then
+		scxml:fireEvent('error.execution.unsupported-send-type',"LXSC does not support <send type='"..type.."'>",true)
+		return
+	end	
+
+	local target = self.target or self.targetexpr and scxml:eval(self.targetexpr)
+	if target == LXSC.Datamodel.EVALERROR then return end
+	if target and target ~= '#_internal' then return end
+
 	local name = self.event or scxml:eval(self.eventexpr)
 	if name == LXSC.Datamodel.EVALERROR then return end
 	local data
@@ -59,7 +70,7 @@ function LXSC.Exec:send(scxml)
 		end
 		table.insert(scxml._delayedSend,i,delayedEvent)
 	else
-		scxml:fireEvent(name,data,false)
+		scxml:fireEvent(name,data,target=='#_internal')
 	end
 	return true
 end
