@@ -11,6 +11,11 @@ machine.onBeforeExit = function(id,kind) table.insert(messages,"…exiting "..ki
 machine.onAfterEnter = function(id,kind) table.insert(messages,"…entered "..kind.." '"..tostring(id).."'") end
 machine.onTransition = function(t)       table.insert(messages,"…running "..t:inspect()) end
 machine:start()
+if #machine._delayedSend > 0 then
+	local lastEvent = machine._delayedSend[#machine._delayedSend]
+	machine:skipAhead(lastEvent.expires)
+	machine:step()
+end
 if not machine:activeStateIds().pass then
 	local activeStateIds = {}
 	for _,stateId in ipairs(machine:activeStateIds()) do

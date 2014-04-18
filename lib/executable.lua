@@ -51,6 +51,14 @@ function LXSC.Exec:send(scxml)
 		data = {}
 		for name in string.gmatch(self.namelist,'[^%s]+') do data[name] = scxml:get(name) end
 	end
+	for _,child in ipairs(self._kids) do
+		if child._kind=='param' then
+			if not data then data = {} end
+			if not scxml:executeContent(child,data) then return end
+		end
+		-- TODO: support <content>
+	end
+
 	if self.idlocation and not self.id then
 		local loc = scxml:eval(self.idlocation)
 		if loc == LXSC.Datamodel.EVALERROR then return end
@@ -63,7 +71,7 @@ function LXSC.Exec:send(scxml)
 		local delaySeconds, units = string.match(delay,'^(.-)(m?s)')
 		delaySeconds = tonumber(delaySeconds)
 		if units=="ms" then delaySeconds = delaySeconds/1000 end
-		local delayedEvent = { expires=os.clock()+delaySeconds, name=name, data=data, id=self.id }
+		local delayedEvent = { expires=scxml:elapsed()+delaySeconds, name=name, data=data, id=self.id }
 		local i=1
 		for _,delayed2 in ipairs(scxml._delayedSend) do
 			if delayed2.expires>delayedEvent.expires then break else i=i+1 end
@@ -72,6 +80,21 @@ function LXSC.Exec:send(scxml)
 	else
 		scxml:fireEvent(name,data,target=='#_internal')
 	end
+	return true
+end
+
+function LXSC.Exec:param(scxml,context)
+	if not context   then scxml:fireEvent('error.execution',"<param name='"..self.name.."' .../> not supported in this context",true) return end
+	if not self.name then scxml:fireEvent('error.execution',"<param> element missing 'name' attribute",true) return end
+	if not (self.location or self.expr) then scxml:fireEvent('error.execution',"<param> element needs either 'expr' or 'location' attribute",true) return end
+	local val
+	if self.location then
+		val = scxml:get(self.location)
+	elseif self.expr then
+		val = scxml:eval(self.expr)
+		if val == LXSC.Datamodel.EVALERROR then return end
+	end
+	context[self.name] = val
 	return true
 end
 
@@ -136,7 +159,7 @@ function LXSC.SCXML:processDelayedSends() -- automatically called by :step()
 	local i,last=1,#self._delayedSend
 	while i<=last do
 		local delayedEvent = self._delayedSend[i]
-		if delayedEvent.expires <= os.clock() then
+		if delayedEvent.expires <= self:elapsed() then
 			table.remove(self._delayedSend,i)
 			self:fireEvent(delayedEvent.name,delayedEvent.data,false)
 			last = last-1
@@ -154,10 +177,10 @@ end
 
 -- ******************************************************************
 
-function LXSC.SCXML:executeContent(item)
+function LXSC.SCXML:executeContent(item,...)
 	local handler = LXSC.Exec[item._kind]
 	if handler then
-		return handler(item,self)
+		return handler(item,self,...)
 	else
 		-- print("UNHANDLED EXECUTABLE: "..item._kind)
 		self:fireEvent('error.execution.unhandled',"unhandled executable type "..item._kind,true)

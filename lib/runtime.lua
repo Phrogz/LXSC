@@ -33,7 +33,7 @@ function S:interpret(options)
 	-- if not self:validate() then self:failWithError() end
 	if not self._stateById then self:expandScxmlSource() end
 	self._config:clear()
-	self._delayedSend = {}
+	self._delayedSend = { extraTime=0 }
 	-- self.statesToInvoke = OrderedSet()
 	self._data = LXSC.Datamodel(self,options and options.data)
 	self.historyValue   = {}

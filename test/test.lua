@@ -194,12 +194,6 @@ function test4_customCallbacks()
 end
 
 function test5_delayedSend()
-	require 'os'
-	local clock = os.clock
-	local function sleep(n)  -- Horrible busy-wait sleeper
-	  local t0 = clock()
-	  while clock() - t0 <= n do end
-	end
 	local s = LXSC:parse[[
 		<scxml xmlns='http://www.w3.org/2005/07/scxml' version='1.0'>
 			<state>
@@ -230,7 +224,7 @@ function test5_delayedSend()
 	s:step()
 	assert(s:isActive('s2'))
 	s:cancelDelayedSend('killme')
-	sleep(0.5)
+	s:skipAhead(0.5)
 	s:step()
 	assert(s:isActive('pass'))
 end
