@@ -120,7 +120,7 @@ def convert_to_scxml!(doc)
 		systemVarExpr:            ->(a){ ['expr',       a                  ]},
 		scxmlEventIOLocation:     ->(a){ ['expr',       "FIXME"            ]},
 		id:                       ->(a){ ['id',         "testvar#{a}"      ]},
-		idlocation:               ->(a){ ['idlocation', "testvar#{a}"      ]},
+		idlocation:               ->(a){ ['idlocation', "'testvar#{a}'"    ]},
 		index:                    ->(a){ ['index',      "testvar#{a}"      ]},
 		item:                     ->(a){ ['item',       "testvar#{a}"      ]},
 		illegalItem:              ->(a){ ['item',       "!"                ]},
