@@ -36,8 +36,7 @@ function LXSC.Exec:send(scxml)
 	local type = self.type or self.typeexpr and scxml:eval(self.typeexpr)
 	if type == LXSC.Datamodel.EVALERROR then return end
 	if type and type ~= 'http://www.w3.org/TR/scxml/#SCXMLEventProcessor' then
-		scxml:fireEvent('error.execution.unsupported-send-type',"LXSC does not support <send type='"..type.."'>",true)
-		return
+		error("LXSC does not support <send type='"..type.."'>")
 	end	
 
 	local target = self.target or self.targetexpr and scxml:eval(self.targetexpr)
@@ -55,8 +54,12 @@ function LXSC.Exec:send(scxml)
 		if child._kind=='param' then
 			if not data then data = {} end
 			if not scxml:executeContent(child,data) then return end
+		elseif child._kind=='content' then
+			if data then error("<send> may not have both <param> and <content> child elements.") end
+			data = {}
+			if not scxml:executeContent(child,data) then return end
+			data = data.content -- unwrap the content
 		end
-		-- TODO: support <content>
 	end
 
 	if self.idlocation and not self.id then
@@ -84,9 +87,9 @@ function LXSC.Exec:send(scxml)
 end
 
 function LXSC.Exec:param(scxml,context)
-	if not context   then scxml:fireEvent('error.execution',"<param name='"..self.name.."' .../> not supported in this context",true) return end
-	if not self.name then scxml:fireEvent('error.execution',"<param> element missing 'name' attribute",true) return end
-	if not (self.location or self.expr) then scxml:fireEvent('error.execution',"<param> element needs either 'expr' or 'location' attribute",true) return end
+	if not context   then error("<param name='"..self.name.."' /> only supported as child of <send>") end
+	if not self.name then error("<param> element missing 'name' attribute") end
+	if not (self.location or self.expr) then error("<param> element requires either 'expr' or 'location' attribute") end
 	local val
 	if self.location then
 		val = scxml:get(self.location)
@@ -95,6 +98,16 @@ function LXSC.Exec:param(scxml,context)
 		if val == LXSC.Datamodel.EVALERROR then return end
 	end
 	context[self.name] = val
+	return true
+end
+
+function LXSC.Exec:content(scxml,context)
+	if not context   then error("<content> only supported as child of <send>") end
+	if self.expr and self._text then error("<content> element must have either 'expr' attribute or child content, but not both") end
+	if not (self.expr or self._text) then error("<content> element requires either 'expr' attribute or child content") end
+	local val = scxml:eval(self.expr or self._text)
+	if val == LXSC.Datamodel.EVALERROR then return end
+	context.content = val
 	return true
 end
 

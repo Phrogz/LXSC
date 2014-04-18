@@ -19,8 +19,10 @@ def run_tests
 	tests = @manifest.xpath('//test')
 	required = tests.reject{ |t| t['conformance']=='optional' }
 	auto,manual = required.partition{ |t| t['manual']=='false' }
+	Dir['*.scxml'].each{ |f| File.delete(f) }
 	auto.sort_by{ |test| test['id'] }.each do |test|
 		success = test['conformance']=='invalid' || run_test(test.at('start')['uri'])
+		exit unless success
 	end
 end
 
@@ -29,8 +31,13 @@ def run_test(uri)
 	convert_to_scxml!(doc)
 	file = File.basename(uri).sub('txml','scxml')
 	File.open(file,'w:utf-8'){ |f| f.puts doc }
-	success = system("lua autotest.lua #{file}")
-	File.delete(file) if success
+	system("lua autotest.lua #{file}").tap do |successFlag|
+		if successFlag
+			File.delete(file) 
+		else
+			`subl #{file}`
+		end
+	end
 end
 
 def convert_to_scxml!(doc)
