@@ -64,7 +64,7 @@ function S:mainEventLoop()
 					stable = true
 				else
 					local internalEvent = self._internalQueue:dequeue()
-					self._data:set("_event",internalEvent)
+					self._data.scope._event = internalEvent -- do not use datamodel:set() since that guards against setting system variables
 					enabledTransitions = self:selectTransitions(internalEvent)
 				end
 			end
@@ -87,7 +87,7 @@ function S:mainEventLoop()
 				if externalEvent.name=='quit.lxsc' then
 					self.running = false
 				else
-					self._data:set("_event",externalEvent)
+					self._data.scope._event = externalEvent -- do not use datamodel:set() since that guards against setting system variables
 					-- for _,state in ipairs(self._config) do
 					-- 	for _,inv in ipairs(state._invokes) do
 					-- 		if inv.invokeid == externalEvent.invokeid then self:applyFinalize(inv, externalEvent) end

@@ -55,10 +55,14 @@ end
 function LXSC.Datamodel:set(location,value)
 	-- TODO: support foo.bar location dereferencing
 	if location~=nil then
-		self.scope[location] = value
-		if self.scxml.onDataSet then self.scxml.onDataSet(location,value) end
+		if type(location)=='string' and string.sub(location,1,1)=='_' then
+			self.scxml:fireEvent("error.execution.invalid-set","Cannot set system variables",true)
+		else
+			self.scope[location] = value
+			if self.scxml.onDataSet then self.scxml.onDataSet(location,value) end
+		end
 	else
-		self.scxml:fireEvent("error.execution.invalid-set",true)
+		self.scxml:fireEvent("error.execution.invalid-set","Location must not be nil",true)
 	end
 end
 
