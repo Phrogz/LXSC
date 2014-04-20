@@ -11,7 +11,7 @@
 			<script>bad!syntax@!?</script>
 		</transition>
 		<transition event="error.execution" target="s4">
-			<log label="Error in s3 itsel" />
+			<log label="Error in s3 itself" />
 		</transition>
 	</state><state id="s3b">
 		<transition event="error.execution" target="s4" />
