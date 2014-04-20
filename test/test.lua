@@ -122,7 +122,7 @@ function test3_customHandlers()
 		</scxml>
 	]]
 	local goSeen = {}
-	function LXSC.Exec:go() goSeen[self._nsURI] = true end
+	function LXSC.Exec:go() goSeen[self._nsURI] = true; return true end
 	assertNil(goSeen.foo)
 	assertNil(goSeen.bar)
 	s:start()
@@ -176,7 +176,7 @@ function test4_customCallbacks()
 	s.onEventFired = function(event)
 		eventsSeen[event.name] = true
 	end
-	s.onEnteredAll = function() changesSeen = changesSeen+1 print("CHANGE") end
+	s.onEnteredAll = function() changesSeen = changesSeen+1 end
 	s:start()
 	for id,counts in pairs(callbackCountById) do
 		if id=='s3' then

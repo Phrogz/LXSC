@@ -230,10 +230,13 @@ Internal error events do not halt execution of the intepreter (unless the state 
 local LXSC = require'lxsc-min-10'
 function LXSC.Exec:explode(machine)
   print("The state machine wants to explode with an amount of",self.amount)
+  return true
 end
 ```
 
 The current machine is passed to your function so that you may call `:fireEvent()`, `:eval()`, etc. as needed. Attributes on the element are set as named keys on the `self` table supplied to your function (e.g. `amount` above).
+
+Your handler must return `true` if it is successful, and return `nil` or `false` if something prevents it from executing correctly.
 
 **Note**: executable elements with conflicting names in different namespaces will use the same callback function. The only way to disambiguate them currently is via a `_nsURI` property set on the table. For example, to handle this document:
 
@@ -273,6 +276,7 @@ function LXSC.Exec:log(machine)
   if self.expr then table.insert(result,machine:eval(self.expr)) end
   local level = self['log-level'] or 'info'
   my_global_logger[level]( my_global_logger, table.concat(result,": ") )
+  return true
 end
 ```
 
