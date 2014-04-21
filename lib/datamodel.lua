@@ -52,6 +52,11 @@ function LXSC.Datamodel:run(code)
 	end
 end
 
+-- Reserved for internal use; should not be used by user scripts
+function LXSC.Datamodel:_setSystem(location,value)
+	self.scope[location] = value
+end
+
 function LXSC.Datamodel:set(location,value)
 	-- TODO: support foo.bar location dereferencing
 	if location~=nil then

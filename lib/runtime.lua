@@ -36,6 +36,7 @@ function S:interpret(options)
 	self._delayedSend = { extraTime=0 }
 	-- self.statesToInvoke = OrderedSet()
 	self._data = LXSC.Datamodel(self,options and options.data)
+	self._data:_setSystem('_sessionid',LXSC.uuid4())
 	self.historyValue   = {}
 
 	self._internalQueue = Queue()
@@ -64,7 +65,7 @@ function S:mainEventLoop()
 					stable = true
 				else
 					local internalEvent = self._internalQueue:dequeue()
-					self._data.scope._event = internalEvent -- do not use datamodel:set() since that guards against setting system variables
+					self._data:_setSystem('_event',internalEvent)
 					enabledTransitions = self:selectTransitions(internalEvent)
 				end
 			end
@@ -87,7 +88,7 @@ function S:mainEventLoop()
 				if externalEvent.name=='quit.lxsc' then
 					self.running = false
 				else
-					self._data.scope._event = externalEvent -- do not use datamodel:set() since that guards against setting system variables
+					self._data:_setSystem('_event',externalEvent)
 					-- for _,state in ipairs(self._config) do
 					-- 	for _,inv in ipairs(state._invokes) do
 					-- 		if inv.invokeid == externalEvent.invokeid then self:applyFinalize(inv, externalEvent) end
