@@ -21,8 +21,9 @@ def run_tests
 	auto,manual = required.partition{ |t| t['manual']=='false' }
 	Dir['*.scxml'].each{ |f| File.delete(f) }
 	auto.sort_by{ |test| test['id'] }.each do |test|
-		success = test['conformance']=='invalid' || run_test(test.at('start')['uri'])
-		exit unless success
+		exit unless test['conformance']=='invalid' ||
+		            test['failed']=='true'         ||
+		            run_test(test.at('start')['uri'])
 	end
 end
 

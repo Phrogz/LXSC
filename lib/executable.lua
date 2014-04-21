@@ -41,7 +41,10 @@ function LXSC.Exec:send(scxml)
 
 	local target = self.target or self.targetexpr and scxml:eval(self.targetexpr)
 	if target == LXSC.Datamodel.EVALERROR then return end
-	if target and target ~= '#_internal' and target ~= '#_scxml_' .. scxml:get('_sessionid') then return end
+	if target and target ~= '#_internal' and target ~= '#_scxml_' .. scxml:get('_sessionid') then
+		scxml:fireEvent("error.execution.invalid-send-target","Unsupported <send> target '"..tostring(target).."'",true)
+		return
+	end
 
 	local name = self.event or scxml:eval(self.eventexpr)
 	if name == LXSC.Datamodel.EVALERROR then return end
