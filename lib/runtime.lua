@@ -411,7 +411,7 @@ end
 
 function S:fireEvent(name,data,internalFlag)
 	-- print("fireEvent(",name,data,internalFlag,")")
-	local event = LXSC.Event(name,data)
+	local event = LXSC.Event(name,data,{origintype='http://www.w3.org/TR/scxml/#SCXMLEventProcessor'})
 	if self.onEventFired then self.onEventFired(event) end
 	self[internalFlag and "_internalQueue" or "_externalQueue"]:enqueue(event)
 	return event

@@ -18,8 +18,9 @@ local function triggersTransition(self,t)
 	return t:matchesEvent(self)
 end
 
-LXSC.Event = function(name,data)
+LXSC.Event = function(name,data,fields)
 	local e = {name=name,data=data,_tokens={},triggersDescriptor=triggersDescriptor,triggersTransition=triggersTransition}
+	if fields then for k,v in pairs(fields) do e[k] = v end end
 	for token in string.gmatch(name,'[^.*]+') do table.insert(e._tokens,token) end
 	return e
 end
