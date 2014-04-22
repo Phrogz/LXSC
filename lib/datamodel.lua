@@ -19,7 +19,12 @@ function LXSC.Datamodel:initState(state)
 	if not self.statesInited[state] then
 		for _,data in ipairs(state._datamodels) do
 			-- TODO: support data.src
-			self:set( data.id, self:eval(data.expr or tostring(data._text)) )
+			local value = self:eval(data.expr or tostring(data._text))
+			if value~=LXSC.Datamodel.EVALERROR then 
+				self:set( data.id, value )
+			else
+				self:set( data.id, nil )
+			end
 		end
 		self.statesInited[state] = true
 	end
