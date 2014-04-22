@@ -397,12 +397,14 @@ end
 function S:donedata(state)
 	local c = state._donedatas[1]
 	if c then
-		if c.kind=='content' then
+		if c._kind=='content' then
 			return c.expr and self._data:eval(c.expr) or c._text
 		else
 			local map = {}
 			for _,p in ipairs(state._donedatas) do
-				map[p.name] = self._data:eval(p.expr)
+				local val = p.location and self._data:get(p.location) or p.expr and self._data:eval(p.expr)
+				if val == LXSC.Datamodel.EVALERROR then val=nil end
+				map[p.name] = val
 			end
 			return map
 		end
