@@ -10,7 +10,8 @@ require 'nokogiri' # gem install nokogiri
 def run!
 	Dir.chdir(File.dirname(__FILE__)) do
 		FileUtils.mkdir_p CACHE
-		@manifest = Nokogiri.HTML( get_file('manifest.xml'), &:noblanks )
+		@manifest = Nokogiri.XML( get_file('manifest.xml'), &:noblanks )
+		@mod = Nokogiri.XML(IO.read('manifest-mod.xml'))
 		run_tests
 	end
 end
@@ -21,9 +22,13 @@ def run_tests
 	auto,manual = required.partition{ |t| t['manual']=='false' }
 	Dir['*.scxml'].each{ |f| File.delete(f) }
 	auto.sort_by{ |test| test['id'] }.each do |test|
-		exit unless test['conformance']=='invalid' ||
-		            test['failed']=='true'         ||
-		            run_test(test.at('start')['uri'])
+		if mod = @mod.at_xpath("//assert[@id='#{test['id']}']")
+			if mod['status']=='failed'
+				puts "Skipping known-failed test #{test['id']} because #{mod.text}"
+				next
+			end
+		end
+		exit unless run_test(test.at('start')['uri'])
 	end
 end
 
