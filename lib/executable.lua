@@ -163,8 +163,8 @@ function LXSC.Exec:foreach(scxml)
 		local list = {}
 		for i,v in ipairs(array) do list[i]=v end
 		for i,v in ipairs(list) do
-			scxml:set(self.item,v)
-			if self.index then scxml:set(self.index,i) end
+			if not scxml:set(self.item,v) then return end
+			if self.index and not scxml:set(self.index,i) then return end
 			for _,child in ipairs(self._kids) do
 				if not scxml:executeContent(child) then return end
 			end

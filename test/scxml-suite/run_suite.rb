@@ -124,7 +124,7 @@ def convert_to_scxml!(doc)
 		idlocation:               ->(a){ ['idlocation', "'testvar#{a}'"    ]},
 		index:                    ->(a){ ['index',      "testvar#{a}"      ]},
 		item:                     ->(a){ ['item',       "testvar#{a}"      ]},
-		illegalItem:              ->(a){ ['item',       "!"                ]},
+		illegalItem:              ->(a){ ['item',       "_no"              ]},
 		location:                 ->(a){ ['location',   "testvar#{a}"      ]},
 		invalidLocation:          ->(a){ ['location',   "-----------"      ]},
 		systemVarLocation:        ->(a){ ['location',   a                  ]},

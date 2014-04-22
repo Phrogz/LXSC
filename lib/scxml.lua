@@ -22,7 +22,7 @@ end
 
 -- Set a single named value in the data model
 function LXSC.SCXML:set(location,value)
-	self._data:set(location,value)
+	return self._data:set(location,value)
 end
 
 -- Evaluate a single Lua expression and return the value
@@ -32,7 +32,7 @@ end
 
 -- Run arbitrary script code (multiple lines) with no return value
 function LXSC.SCXML:run(code)
-	self._data:run(code)
+	return self._data:run(code)
 end
 
 function LXSC.SCXML:isActive(stateId)

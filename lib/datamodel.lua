@@ -70,6 +70,7 @@ function LXSC.Datamodel:set(location,value)
 		else
 			self.scope[location] = value
 			if self.scxml.onDataSet then self.scxml.onDataSet(location,value) end
+			return true
 		end
 	else
 		self.scxml:fireEvent("error.execution.invalid-set","Location must not be nil",true)
