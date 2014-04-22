@@ -35,8 +35,10 @@ function LXSC.Exec:send(scxml)
 	-- TODO: support type/typeexpr/target/targetexpr
 	local type = self.type or self.typeexpr and scxml:eval(self.typeexpr)
 	if type == LXSC.Datamodel.EVALERROR then return end
-	if type and type ~= 'http://www.w3.org/TR/scxml/#SCXMLEventProcessor' then
-		error("LXSC does not support <send type='"..type.."'>")
+	if not type then type = 'http://www.w3.org/TR/scxml/#SCXMLEventProcessor' end
+	if type ~= 'http://www.w3.org/TR/scxml/#SCXMLEventProcessor' then
+		scxml:fireEvent("error.execution.invalid-send-type","Unsupported <send> type '"..tostring(type).."'",true)
+		return
 	end	
 
 	local target = self.target or self.targetexpr and scxml:eval(self.targetexpr)
