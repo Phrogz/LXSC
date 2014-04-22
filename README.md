@@ -291,7 +291,7 @@ LXSC aims to be _almost_ 100% compliant with the [SCXML Interpretation Algorithm
 ## TODO (aka Known Limitations)
 
 * The `src="…"` attribute is unsupported for `<data>` or `<script>` elements.
-* The `_event` system variable supports `.name` and `.data` but none of the other properties (`.type`, `.sendid`, `.origin`, `.origintype`, `.invokeid`).
+* The `_event` system variable supports `.name`, `.data`, and `origintype`, but none of the other properties (`.type`, `.sendid`, `.origin`, `.invokeid`).
 * `<assign>` elements do not support executable content instead of `expr="…"`
 * `<send>` selements do not support the `type`/`typeexpr`/`target`/`targetexpr` attributes.
 * No support for inter-machine communication.
