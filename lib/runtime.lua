@@ -37,6 +37,7 @@ function S:interpret(options)
 	-- self.statesToInvoke = OrderedSet()
 	self._data = LXSC.Datamodel(self,options and options.data)
 	self._data:_setSystem('_sessionid',LXSC.uuid4())
+	self._data:_setSystem('_name',self.name or LXSC.uuid4())
 	self.historyValue   = {}
 
 	self._internalQueue = Queue()
