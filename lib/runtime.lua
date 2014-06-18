@@ -350,7 +350,7 @@ function S:enterStates(enabledTransitions)
 					self.running = false
 				else
 					local grandparent = parent.parent
-					self:fireEvent( "done.state."..parent.id, self:donedata(s), true )
+					self:fireEvent( "done.state."..parent.id, self:donedata(s), {type='internal'} )
 					if grandparent and grandparent._kind=='parallel' then
 						local allAreInFinal = true
 						for _,child in ipairs(grandparent.reals) do
@@ -418,12 +418,13 @@ function S:donedata(state)
 end
 
 -- eventType is 'platform' (the default), 'internal', or 'external'
-function S:fireEvent(name,data,eventType)
-	-- print("fireEvent(",name,data,eventType,")")
-	eventType = eventType or 'platform'
-	local event = LXSC.Event(name,data,{type=eventType})
+function S:fireEvent(name,data,eventValues)
+	-- print("fireEvent(",name,data,eventValues,")")
+	eventValues = eventValues or {}
+	eventValues.type = eventValues.type or 'platform'
+	local event = LXSC.Event(name,data,eventValues)
 	if self.onEventFired then self.onEventFired(event) end
-	self[eventType=='external' and "_externalQueue" or "_internalQueue"]:enqueue(event)
+	self[eventValues.type=='external' and "_externalQueue" or "_internalQueue"]:enqueue(event)
 	return event
 end
 

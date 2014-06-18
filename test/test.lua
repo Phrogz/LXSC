@@ -255,12 +255,12 @@ function test6_eventMatching()
 		t:attr('event',descriptor)
 
 		for _,eventName in ipairs(events.shouldMatch) do
-			local event = LXSC.Event(eventName)
+			local event = LXSC.Event(eventName,nil,{})
 			assertTrue(event:triggersDescriptor(descriptor))
 			assertTrue(event:triggersTransition(t))
 		end
 		for _,eventName in ipairs(events.shouldNotMatch) do
-			local event = LXSC.Event(eventName)
+			local event = LXSC.Event(eventName,nil,{})
 			assertTrue(not event:triggersDescriptor(descriptor))
 			assertTrue(not event:triggersTransition(t))
 		end

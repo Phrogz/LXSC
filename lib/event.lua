@@ -22,7 +22,7 @@ local defaultEventMeta = {__index={origintype='http://www.w3.org/TR/scxml/#SCXML
 LXSC.Event = function(name,data,fields)
 	local e = {name=name,data=data,_tokens={},triggersDescriptor=triggersDescriptor,triggersTransition=triggersTransition}
 	setmetatable(e,defaultEventMeta)
-	if fields then for k,v in pairs(fields) do e[k] = v end end
+	for k,v in pairs(fields) do e[k] = v end
 	for token in string.gmatch(name,'[^.*]+') do table.insert(e._tokens,token) end
 	return e
 end

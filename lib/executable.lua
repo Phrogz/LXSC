@@ -22,7 +22,7 @@ function LXSC.Exec:assign(scxml)
 end
 
 function LXSC.Exec:raise(scxml)
-	scxml:fireEvent(self.event,nil,'internal')
+	scxml:fireEvent(self.event,nil,{type='internal'})
 	return true
 end
 
@@ -35,16 +35,25 @@ function LXSC.Exec:send(scxml)
 	-- TODO: support type/typeexpr/target/targetexpr
 	local type = self.type or self.typeexpr and scxml:eval(self.typeexpr)
 	if type == LXSC.Datamodel.EVALERROR then return end
+
+	local id = self.id
+	if self.idlocation and not id then
+		local loc = scxml:eval(self.idlocation)
+		if loc == LXSC.Datamodel.EVALERROR then return end
+		id = LXSC.uuid4()
+		scxml:set( loc, id )
+	end
+
 	if not type then type = 'http://www.w3.org/TR/scxml/#SCXMLEventProcessor' end
 	if type ~= 'http://www.w3.org/TR/scxml/#SCXMLEventProcessor' then
-		scxml:fireEvent("error.execution.invalid-send-type","Unsupported <send> type '"..tostring(type).."'")
+		scxml:fireEvent("error.execution.invalid-send-type","Unsupported <send> type '"..tostring(type).."'",{sendid=id})
 		return
 	end	
 
 	local target = self.target or self.targetexpr and scxml:eval(self.targetexpr)
 	if target == LXSC.Datamodel.EVALERROR then return end
 	if target and target ~= '#_internal' and target ~= '#_scxml_' .. scxml:get('_sessionid') then
-		scxml:fireEvent("error.execution.invalid-send-target","Unsupported <send> target '"..tostring(target).."'")
+		scxml:fireEvent("error.execution.invalid-send-target","Unsupported <send> target '"..tostring(target).."'",{sendid=id})
 		return
 	end
 
@@ -67,26 +76,20 @@ function LXSC.Exec:send(scxml)
 		end
 	end
 
-	if self.idlocation and not self.id then
-		local loc = scxml:eval(self.idlocation)
-		if loc == LXSC.Datamodel.EVALERROR then return end
-		scxml:set( loc, LXSC.uuid4() )
-	end
-
 	if self.delay or self.delayexpr then
 		local delay = self.delay or scxml:eval(self.delayexpr)
 		if delay == LXSC.Datamodel.EVALERROR then return end
 		local delaySeconds, units = string.match(delay,'^(.-)(m?s)')
 		delaySeconds = tonumber(delaySeconds)
 		if units=="ms" then delaySeconds = delaySeconds/1000 end
-		local delayedEvent = { expires=scxml:elapsed()+delaySeconds, name=name, data=data, id=self.id }
+		local delayedEvent = { expires=scxml:elapsed()+delaySeconds, name=name, data=data }
 		local i=1
 		for _,delayed2 in ipairs(scxml._delayedSend) do
 			if delayed2.expires>delayedEvent.expires then break else i=i+1 end
 		end
 		table.insert(scxml._delayedSend,i,delayedEvent)
 	else
-		scxml:fireEvent(name,data,target=='#_internal' and 'internal' or 'external')
+		scxml:fireEvent(name,data,{type = target=='#_internal' and 'internal' or 'external'})
 	end
 	return true
 end
@@ -179,7 +182,7 @@ function LXSC.SCXML:processDelayedSends() -- automatically called by :step()
 		local delayedEvent = self._delayedSend[i]
 		if delayedEvent.expires <= self:elapsed() then
 			table.remove(self._delayedSend,i)
-			self:fireEvent(delayedEvent.name,delayedEvent.data,'external')
+			self:fireEvent(delayedEvent.name,delayedEvent.data,{type='external'})
 			last = last-1
 		else
 			i=i+1
