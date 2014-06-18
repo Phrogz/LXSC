@@ -18,9 +18,9 @@ local function triggersTransition(self,t)
 	return t:matchesEvent(self)
 end
 
-local defaultEventMeta = {__index={origintype='http://www.w3.org/TR/scxml/#SCXMLEventProcessor',type="platform",sendid="",origin="",invokeid=""}}
+local defaultEventMeta = {__index={origintype='http://www.w3.org/TR/scxml/#SCXMLEventProcessor',type="platform",sendid="",origin="",invokeid="",triggersDescriptor=triggersDescriptor,triggersTransition=triggersTransition}}
 LXSC.Event = function(name,data,fields)
-	local e = {name=name,data=data,_tokens={},triggersDescriptor=triggersDescriptor,triggersTransition=triggersTransition}
+	local e = {name=name,data=data,_tokens={}}
 	setmetatable(e,defaultEventMeta)
 	for k,v in pairs(fields) do e[k] = v end
 	for token in string.gmatch(name,'[^.*]+') do table.insert(e._tokens,token) end
