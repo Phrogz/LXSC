@@ -38,6 +38,7 @@ function S:interpret(options)
 	self._data = LXSC.Datamodel(self,options and options.data)
 	self._data:_setSystem('_sessionid',LXSC.uuid4())
 	self._data:_setSystem('_name',self.name or LXSC.uuid4())
+	self._data:_setSystem('_ioprocessors',{})
 	self.historyValue   = {}
 
 	self._internalQueue = Queue()
@@ -406,7 +407,7 @@ function S:donedata(state)
 				local val = p.location and self._data:get(p.location) or p.expr and self._data:eval(p.expr)
 				if val == LXSC.Datamodel.EVALERROR then val=nil end
 				if p.name==nil or p.name=="" then
-					self:fireEvent("error.execution.invalid-param-name","Unsupported <param> name '"..tostring(p.name).."'",true)
+					self:fireEvent("error.execution.invalid-param-name","Unsupported <param> name '"..tostring(p.name).."'")
 				else
 					map[p.name] = val
 				end
@@ -416,11 +417,13 @@ function S:donedata(state)
 	end
 end
 
-function S:fireEvent(name,data,internalFlag)
-	-- print("fireEvent(",name,data,internalFlag,")")
-	local event = LXSC.Event(name,data,{origintype='http://www.w3.org/TR/scxml/#SCXMLEventProcessor'})
+-- eventType is 'platform' (the default), 'internal', or 'external'
+function S:fireEvent(name,data,eventType)
+	-- print("fireEvent(",name,data,eventType,")")
+	eventType = eventType or 'platform'
+	local event = LXSC.Event(name,data,{type=eventType})
 	if self.onEventFired then self.onEventFired(event) end
-	self[internalFlag and "_internalQueue" or "_externalQueue"]:enqueue(event)
+	self[eventType=='external' and "_externalQueue" or "_internalQueue"]:enqueue(event)
 	return event
 end
 

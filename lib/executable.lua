@@ -22,7 +22,7 @@ function LXSC.Exec:assign(scxml)
 end
 
 function LXSC.Exec:raise(scxml)
-	scxml:fireEvent(self.event,nil,true)
+	scxml:fireEvent(self.event,nil,'internal')
 	return true
 end
 
@@ -37,14 +37,14 @@ function LXSC.Exec:send(scxml)
 	if type == LXSC.Datamodel.EVALERROR then return end
 	if not type then type = 'http://www.w3.org/TR/scxml/#SCXMLEventProcessor' end
 	if type ~= 'http://www.w3.org/TR/scxml/#SCXMLEventProcessor' then
-		scxml:fireEvent("error.execution.invalid-send-type","Unsupported <send> type '"..tostring(type).."'",true)
+		scxml:fireEvent("error.execution.invalid-send-type","Unsupported <send> type '"..tostring(type).."'")
 		return
 	end	
 
 	local target = self.target or self.targetexpr and scxml:eval(self.targetexpr)
 	if target == LXSC.Datamodel.EVALERROR then return end
 	if target and target ~= '#_internal' and target ~= '#_scxml_' .. scxml:get('_sessionid') then
-		scxml:fireEvent("error.execution.invalid-send-target","Unsupported <send> target '"..tostring(target).."'",true)
+		scxml:fireEvent("error.execution.invalid-send-target","Unsupported <send> target '"..tostring(target).."'")
 		return
 	end
 
@@ -86,7 +86,7 @@ function LXSC.Exec:send(scxml)
 		end
 		table.insert(scxml._delayedSend,i,delayedEvent)
 	else
-		scxml:fireEvent(name,data,target=='#_internal')
+		scxml:fireEvent(name,data,target=='#_internal' and 'internal' or 'external')
 	end
 	return true
 end
@@ -158,7 +158,7 @@ end
 function LXSC.Exec:foreach(scxml)
 	local array = scxml:get(self.array)
 	if type(array) ~= 'table' then
-		scxml:fireEvent('error.execution',"foreach array '"..self.array.."' is not a table",true)
+		scxml:fireEvent('error.execution',"foreach array '"..self.array.."' is not a table")
 	else
 		local list = {}
 		for i,v in ipairs(array) do list[i]=v end
@@ -179,7 +179,7 @@ function LXSC.SCXML:processDelayedSends() -- automatically called by :step()
 		local delayedEvent = self._delayedSend[i]
 		if delayedEvent.expires <= self:elapsed() then
 			table.remove(self._delayedSend,i)
-			self:fireEvent(delayedEvent.name,delayedEvent.data,false)
+			self:fireEvent(delayedEvent.name,delayedEvent.data,'external')
 			last = last-1
 		else
 			i=i+1
@@ -201,7 +201,7 @@ function LXSC.SCXML:executeContent(item,...)
 		return handler(item,self,...)
 	else
 		-- print("UNHANDLED EXECUTABLE: "..item._kind)
-		self:fireEvent('error.execution.unhandled',"unhandled executable type "..item._kind,true)
+		self:fireEvent('error.execution.unhandled',"unhandled executable type "..item._kind)
 		return true -- Just because we didn't understand it doesn't mean we should stop processing executable
 	end
 end

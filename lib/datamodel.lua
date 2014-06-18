@@ -42,14 +42,14 @@ function LXSC.Datamodel:run(code)
 			self.cache[code] = func
 			setfenv(func,self.scope)
 		else
-			self.scxml:fireEvent("error.execution.syntax",message,true)
+			self.scxml:fireEvent("error.execution.syntax",message)
 			return LXSC.Datamodel.EVALERROR
 		end
 	end
 	if func then
 		local ok,result = pcall(func)
 		if not ok then
-			self.scxml:fireEvent("error.execution.evaluation",result,true)
+			self.scxml:fireEvent("error.execution.evaluation",result)
 			return LXSC.Datamodel.EVALERROR
 		else
 			return result
@@ -66,14 +66,14 @@ function LXSC.Datamodel:set(location,value)
 	-- TODO: support foo.bar location dereferencing
 	if location~=nil then
 		if type(location)=='string' and string.sub(location,1,1)=='_' then
-			self.scxml:fireEvent("error.execution.invalid-set","Cannot set system variables",true)
+			self.scxml:fireEvent("error.execution.invalid-set","Cannot set system variables")
 		else
 			self.scope[location] = value
 			if self.scxml.onDataSet then self.scxml.onDataSet(location,value) end
 			return true
 		end
 	else
-		self.scxml:fireEvent("error.execution.invalid-set","Location must not be nil",true)
+		self.scxml:fireEvent("error.execution.invalid-set","Location must not be nil")
 	end
 end
 

@@ -24,13 +24,15 @@ function LXSC:parse(scxml)
 			if not root then root = current end
 			push(stack,item)
 		end,
-		attribute = function(name,value) current:attr(name,value) end,
-		closeElement = function(name)
+		attribute = function(name,value)
+			current:attr(name,value)
+		end,
+		closeElement = function(name,nsURI)
 			if current._kind ~= name then
 				error(string.format("I was working with a '%s' element but got a close notification for '%s'",current._kind,name))
 			end
-			if name=="transition" then
-				table.insert( current.source[current.events and '_eventedTransitions' or '_eventlessTransitions'], current )
+			if name=="transition" and nsURI==scxmlNS then
+				push( current.source[current.events and '_eventedTransitions' or '_eventlessTransitions'], current )
 			end
 			pop(stack)
 			current = stack[#stack] or current
