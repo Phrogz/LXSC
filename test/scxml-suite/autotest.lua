@@ -3,6 +3,7 @@ package.path = "../../?.lua;" .. package.path
 require 'io'
 require 'os'
 LXSC = require 'lxsc'
+local serpent = require("serpent")
 
 scxml = io.open(arg[1]):read("*all")
 local machine = LXSC:parse(scxml)
@@ -22,9 +23,10 @@ if not machine:activeStateIds().pass then
 	  activeStateIds[#activeStateIds+1] = stateId
 	end
 	table.insert(messages,"…finished in state(s): "..table.concat(activeStateIds,", "))
-	for k,v in pairs(machine._data.scope) do
-		table.insert(messages,"datamodel."..tostring(k).." = "..tostring(v))
-	end
+	table.insert(messages,"datamodel: "..serpent.block(machine._data.scope,{nocode=true,comment=false,valtypeignore={['function']=true}}))
+	-- for k,v in pairs(machine._data.scope) do
+	-- 	table.insert(messages,"datamodel."..tostring(k).." = "..tostring(v))
+	-- end
 	table.insert(messages," ")
 	print(table.concat(messages,"\n"))
 	os.exit(1)

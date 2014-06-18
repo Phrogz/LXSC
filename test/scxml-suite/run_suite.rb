@@ -37,6 +37,7 @@ def run_test(uri)
 	convert_to_scxml!(doc)
 	file = File.basename(uri).sub('txml','scxml')
 	File.open(file,'w:utf-8'){ |f| f.puts doc }
+	# puts "lua autotest.lua #{file}"
 	system("lua autotest.lua #{file}").tap do |successFlag|
 		if successFlag
 			File.delete(file) 
@@ -103,7 +104,7 @@ def convert_to_scxml!(doc)
 			['cond',"testvar#{x} == testvar#{y}"]
 		},
 		eventFieldsAreBound: ->(a){
-			['cond', "_event.name and _event.type and _event.sendid and _event.origin and _event.invokeid and _event.data"]
+			['cond', "_event.name~=nil and _event.type~=nil and _event.sendid~=nil and _event.origin~=nil and _event.invokeid~=nil"]
 		},
 		datamodel:                ->(a){ ['datamodel', 'lua'               ]},
 		delayExpr:                ->(a){ ['delayexpr', "testvar#{a}"       ]},
