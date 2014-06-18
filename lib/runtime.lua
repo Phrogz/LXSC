@@ -404,7 +404,11 @@ function S:donedata(state)
 			for _,p in ipairs(state._donedatas) do
 				local val = p.location and self._data:get(p.location) or p.expr and self._data:eval(p.expr)
 				if val == LXSC.Datamodel.EVALERROR then val=nil end
-				map[p.name] = val
+				if p.name==nil or p.name=="" then
+					self:fireEvent("error.execution.invalid-param-name","Unsupported <param> name '"..tostring(p.name).."'",true)
+				else
+					map[p.name] = val
+				end
 			end
 			return map
 		end
