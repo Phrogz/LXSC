@@ -120,6 +120,7 @@ def convert_to_scxml!(doc)
 		illegalExpr:              ->(a){ ['expr',       "!"                ]},
 		invalidSendTypeExpr:      ->(a){ ['expr',       '27'               ]},
 		invalidSessionID:         ->(a){ ['expr',       "-1"               ]},
+		invalidName:              ->(a){ ['name',       ""                 ]},
 		varExpr:                  ->(a){ ['expr',       "testvar#{a}"      ]},
 		varChildExpr:             ->(a){ ['expr',       "testvar#{a}"      ]},
 		quoteExpr:                ->(a){ ['expr',       "'#{a}'"           ]},
