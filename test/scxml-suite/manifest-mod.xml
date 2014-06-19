@@ -33,4 +33,5 @@
 	<assert id="276" status="failed"><![CDATA[Uses <invoke>]]></assert>
 	<assert id="530" status="failed"><![CDATA[Uses <invoke>]]></assert>
 	<assert id="554" status="failed"><![CDATA[Uses <invoke>]]></assert>
+	<assert id="338" status="failed"><![CDATA[Uses <invoke>]]></assert>
 <assertions>
