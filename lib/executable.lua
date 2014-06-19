@@ -22,7 +22,7 @@ function LXSC.Exec:assign(scxml)
 end
 
 function LXSC.Exec:raise(scxml)
-	scxml:fireEvent(self.event,nil,{type='internal'})
+	scxml:fireEvent(self.event,nil,{type='internal',origintype=''})
 	return true
 end
 
@@ -90,7 +90,11 @@ function LXSC.Exec:send(scxml)
 		table.insert(scxml._delayedSend,i,delayedEvent)
 	else
 		local fields = {type=target=='#_internal' and 'internal' or 'external'}
-		if fields.type=='external' then fields.origin = '#_scxml_' .. scxml:get('_sessionid') end
+		if fields.type=='external' then
+			fields.origin = '#_scxml_' .. scxml:get('_sessionid')
+		else
+			fields.origintype = ''
+		end
 		scxml:fireEvent(name,data,fields)
 	end
 	return true
