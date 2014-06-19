@@ -51,22 +51,22 @@ def convert_to_scxml!(doc)
 	doc.at_xpath('//conf:pass').replace '<final id="pass" />' if doc.at_xpath('//conf:pass')
 	doc.at_xpath('//conf:fail').replace '<final id="fail" />' if doc.at_xpath('//conf:fail')
 	{
-		arrayVar:             ->(a){ ['array',  "testvar#{a}"                 ]},
-		arrayTextVar:         ->(a){ ['array',  "testvar#{a}"                 ]},
-		eventdataVal:         ->(a){ ['cond',   "_event.data == #{a}"         ]},
-		eventNameVal:         ->(a){ ['cond',   "_event.name == '#{a}'"       ]},
-		originTypeEq:         ->(a){ ['cond',   "_event.origintype == '#{a}'" ]},
-		emptyEventData:       ->(a){ ['cond',   "_event.data == nil"          ]},
-		eventFieldHasNoValue: ->(a){ ['cond',   "_event.#{a} == ''"           ]},
-		isBound:              ->(a){ ['cond',   "testvar#{a} ~= nil"          ]},
-		inState:              ->(a){ ['cond',   "In('#{a}')"                  ]},
-		true:                 ->(a){ ['cond',   'true'                        ]},
-		false:                ->(a){ ['cond',   'false'                       ]},
-		unboundVar:           ->(a){ ['cond',   "testvar#{a}==nil"            ]},
-		noValue:              ->(a){ ['cond',   "testvar#{a}==nil"            ]},
-		nameVarVal:           ->(a){ ['cond',   "_name == '#{a}'"             ]},
-		nonBoolean:           ->(a){ ['cond',   "@@@@@@@@@@@@@@@@"            ]},
-		systemVarIsBound:     ->(a){ ['cond',   "#{a} ~= nil"                 ]},
+		arrayVar:             ->(a){ ['array',  "testvar#{a}"                         ]},
+		arrayTextVar:         ->(a){ ['array',  "testvar#{a}"                         ]},
+		eventdataVal:         ->(a){ ['cond',   "_event.data == #{a}"                 ]},
+		eventNameVal:         ->(a){ ['cond',   "_event.name == '#{a}'"               ]},
+		originTypeEq:         ->(a){ ['cond',   "_event.origintype == '#{a}'"         ]},
+		emptyEventData:       ->(a){ ['cond',   "_event.data == nil"                  ]},
+		eventFieldHasNoValue: ->(a){ ['cond',   "_event.#{a} == ''"                   ]},
+		isBound:              ->(a){ ['cond',   "testvar#{a} ~= nil"                  ]},
+		inState:              ->(a){ ['cond',   "In('#{a}')"                          ]},
+		true:                 ->(a){ ['cond',   'true'                                ]},
+		false:                ->(a){ ['cond',   'false'                               ]},
+		unboundVar:           ->(a){ ['cond',   "testvar#{a}==nil"                    ]},
+		noValue:              ->(a){ ['cond',   "testvar#{a}==nil or testvar#{a}==''" ]},
+		nameVarVal:           ->(a){ ['cond',   "_name == '#{a}'"                     ]},
+		nonBoolean:           ->(a){ ['cond',   "@@@@@@@@@@@@@@@@"                    ]},
+		systemVarIsBound:     ->(a){ ['cond',   "#{a} ~= nil"                         ]},
 		varPrefix:     ->(a){
       x,y = a.split /\s+/
 			['cond',"string.sub(testvar#{y},1,string.len(testvar#{x}))==testvar#{x}"]
