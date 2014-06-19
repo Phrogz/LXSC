@@ -39,7 +39,13 @@ end
 
 function LXSC.Transition:addTarget(stateOrId)
 	if not self.targets then self.targets = LXSC.List() end
-	table.insert(self.targets,stateOrId)
+	if type(stateOrId)=='string' then
+		for id in string.gmatch(stateOrId,'[^%s]+') do
+			table.insert(self.targets,id)
+		end
+	else
+		table.insert(self.targets,stateOrId)
+	end
 end
 
 function LXSC.Transition:conditionMatched(datamodel)
