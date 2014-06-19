@@ -78,7 +78,13 @@ function LXSC.Datamodel:set(location,value)
 end
 
 function LXSC.Datamodel:get(id)
-	return self.scope[id]
+	if id==nil or id=='' then
+		return LXSC.Datamodel.INVALIDLOCATION
+	else
+		return self.scope[id]
+	end
 end
 
-LXSC.Datamodel.EVALERROR = {} -- a unique identifier for comparision
+ -- unique identifiers for comparision
+LXSC.Datamodel.EVALERROR = {}
+LXSC.Datamodel.INVALIDLOCATION = {}
