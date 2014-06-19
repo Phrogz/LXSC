@@ -118,9 +118,9 @@ end
 function S:exitInterpreter()
 	local statesToExit = self._config:toList():sort(documentOrder)
 	for _,s in ipairs(statesToExit) do
-		for _,content in ipairs(s._onexits) do
-			if not self:executeContent(content) then
-				break
+		for _,onexit in ipairs(s._onexits) do
+			for _,content in ipairs(onexit._kids) do
+				if not self:executeContent(content) then break end
 			end
 		end
 		-- for _,inv     in ipairs(s._invokes) do self:cancelInvoke(inv)       end
@@ -253,9 +253,9 @@ function S:exitStates(enabledTransitions)
 
 	for _,s in ipairs(statesToExit) do
 		if self.onBeforeExit then self.onBeforeExit(s.id,s._kind,s.isAtomic) end
-		for _,content in ipairs(s._onexits) do
-			if not self:executeContent(content) then
-				break
+		for _,onexit in ipairs(s._onexits) do
+			for _,content in ipairs(onexit._kids) do
+				if not self:executeContent(content) then break end
 			end
 		end
 		-- for _,inv in ipairs(s._invokes)     do self:cancelInvoke(inv) end
@@ -329,9 +329,11 @@ function S:enterStates(enabledTransitions)
 			self._config:add(s)
 			-- self.statesToInvoke:add(s)
 			if self.binding=="late" then self._data:initState(s) end -- The datamodel ensures this happens only once per state
-			for _,content in ipairs(s._onentrys) do
-				if not self:executeContent(content) then
-					break
+			for _,onentry in ipairs(s._onentrys) do
+				for _,content in ipairs(onentry._kids) do
+					if not self:executeContent(content) then
+						break
+					end
 				end
 			end
 			if self.onAfterEnter then self.onAfterEnter(s.id,s._kind,s.isAtomic) end
@@ -420,7 +422,6 @@ function S:donedata(state)
 	end
 end
 
--- eventType is 'platform' (the default), 'internal', or 'external'
 function S:fireEvent(name,data,eventValues)
 	-- local s = require'serpent'
 	-- print("fireEvent(",name,data,s and s.line(eventValues,{nocode=true,comment=false}) or eventValues,")")

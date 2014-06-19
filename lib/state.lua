@@ -3,7 +3,8 @@ LXSC.State={}; LXSC.State.__meta = {__index=LXSC.State}
 
 LXSC.State.stateKinds = {state=1,parallel=1,final=1,history=1,initial=1}
 LXSC.State.realKinds  = {state=1,parallel=1,final=1}
-LXSC.State.aggregates = {onentry=1,onexit=1,datamodel=1,donedata=1}
+LXSC.State.aggregates = {datamodel=1,donedata=1}
+LXSC.State.executes   = {onentry='_onentrys',onexit='_onexits'}
 
 function LXSC:state(kind)
 	local t = {
@@ -49,6 +50,10 @@ function LXSC.State:addChild(item)
 	elseif self.aggregates[item._kind] then
 		item.state = self
 
+	elseif self.executes[item._kind] then
+		item.state = self
+		table.insert( self[self.executes[item._kind]], item )
+
 	elseif self.stateKinds[item._kind] then
 		table.insert(self.states,item)
 		item.parent = self
@@ -70,7 +75,7 @@ function LXSC.State:addChild(item)
 		item.state = self
 		table.insert(self._invokes,item)
 
-	-- else print("Warning: unhandled child of state: "..item._kind )
+	else print("Warning: unhandled child of state: "..item._kind )
 	end
 end
 
@@ -141,10 +146,12 @@ end
 -- ********************************************************
 
 -- These elements pass their children through to the appropriate collection on the state
-for kind,collection in pairs{ datamodel='_datamodels', donedata='_donedatas', onentry='_onentrys', onexit='_onexits' } do
+for kind,collection in pairs{ datamodel='_datamodels', donedata='_donedatas' } do
 	LXSC[kind] = function()
 		local t = {_kind=kind}
-		function t:addChild(item) table.insert(self.state[collection],item) end
+		function t:addChild(item)
+			table.insert(self.state[collection],item)
+		end
 		return t
 	end
 end

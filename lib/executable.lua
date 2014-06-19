@@ -211,7 +211,6 @@ function LXSC.SCXML:executeContent(item,...)
 	if handler then
 		return handler(item,self,...)
 	else
-		-- print("UNHANDLED EXECUTABLE: "..item._kind)
 		self:fireEvent('error.execution.unhandled',"unhandled executable type "..item._kind)
 		return true -- Just because we didn't understand it doesn't mean we should stop processing executable
 	end
