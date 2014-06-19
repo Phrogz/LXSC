@@ -107,6 +107,7 @@ function LXSC.Exec:param(scxml,context)
 	local val
 	if self.location then
 		val = scxml:get(self.location)
+		if val == LXSC.Datamodel.INVALIDLOCATION then return end
 	elseif self.expr then
 		val = scxml:eval(self.expr)
 		if val == LXSC.Datamodel.EVALERROR then return end
