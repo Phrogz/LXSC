@@ -82,7 +82,7 @@ function LXSC.Exec:send(scxml)
 		local delaySeconds, units = string.match(delay,'^(.-)(m?s)')
 		delaySeconds = tonumber(delaySeconds)
 		if units=="ms" then delaySeconds = delaySeconds/1000 end
-		local delayedEvent = { expires=scxml:elapsed()+delaySeconds, name=name, data=data }
+		local delayedEvent = { expires=scxml:elapsed()+delaySeconds, name=name, data=data, sendid=id }
 		local i=1
 		for _,delayed2 in ipairs(scxml._delayedSend) do
 			if delayed2.expires>delayedEvent.expires then break else i=i+1 end
@@ -192,7 +192,7 @@ end
 
 function LXSC.SCXML:cancelDelayedSend(sendId)
 	for i=#self._delayedSend,1,-1 do
-		if self._delayedSend[i].id==sendId then table.remove(self._delayedSend,i) end
+		if self._delayedSend[i].sendid==sendId then table.remove(self._delayedSend,i) end
 	end
 end
 
