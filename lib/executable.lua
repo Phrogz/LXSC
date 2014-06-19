@@ -95,6 +95,7 @@ function LXSC.Exec:send(scxml)
 		else
 			fields.origintype = ''
 		end
+		fields.sendid = self.id
 		scxml:fireEvent(name,data,fields)
 	end
 	return true
