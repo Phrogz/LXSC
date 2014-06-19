@@ -405,21 +405,25 @@ function S:donedata(state)
 			local map = {}
 			for _,p in ipairs(state._donedatas) do
 				local val = p.location and self._data:get(p.location) or p.expr and self._data:eval(p.expr)
-				if val == LXSC.Datamodel.EVALERROR then val=nil end
-				if p.name==nil or p.name=="" then
-					self:fireEvent("error.execution.invalid-param-name","Unsupported <param> name '"..tostring(p.name).."'")
+				if val == LXSC.Datamodel.EVALERROR or val == LXSC.Datamodel.INVALIDLOCATION then
+					self:fireEvent("error.execution.invalid-param-value","There was an error determining the value for a <param> inside a <donedata>")
 				else
-					map[p.name] = val
+					if p.name==nil or p.name=="" then
+						self:fireEvent("error.execution.invalid-param-name","Unsupported <param> name '"..tostring(p.name).."'")
+					else
+						map[p.name] = val
+					end
 				end
 			end
-			return map
+			return next(map) and map
 		end
 	end
 end
 
 -- eventType is 'platform' (the default), 'internal', or 'external'
 function S:fireEvent(name,data,eventValues)
-	-- print("fireEvent(",name,data,eventValues,")")
+	-- local s = require'serpent'
+	-- print("fireEvent(",name,data,s and s.line(eventValues,{nocode=true,comment=false}) or eventValues,")")
 	eventValues = eventValues or {}
 	eventValues.type = eventValues.type or 'platform'
 	local event = LXSC.Event(name,data,eventValues)
