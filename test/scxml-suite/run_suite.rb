@@ -57,7 +57,7 @@ def convert_to_scxml!(doc)
 		eventNameVal:         ->(a){ ['cond',   "_event.name == '#{a}'"       ]},
 		originTypeEq:         ->(a){ ['cond',   "_event.origintype == '#{a}'" ]},
 		emptyEventData:       ->(a){ ['cond',   "_event.data == nil"          ]},
-		eventFieldHasNoValue: ->(a){ ['cond',   "_event.#{a} == nil"          ]},
+		eventFieldHasNoValue: ->(a){ ['cond',   "_event.#{a} == ''"           ]},
 		isBound:              ->(a){ ['cond',   "testvar#{a} ~= nil"          ]},
 		inState:              ->(a){ ['cond',   "In('#{a}')"                  ]},
 		true:                 ->(a){ ['cond',   'true'                        ]},
