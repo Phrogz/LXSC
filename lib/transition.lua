@@ -1,5 +1,11 @@
 local LXSC = require 'lib/lxsc'
-LXSC.Transition={}; LXSC.Transition.__meta = {__index=LXSC.Transition}
+LXSC.Transition={}
+LXSC.Transition.__meta = {
+	__index=LXSC.Transition,
+	__tostring=function(t) return t:inspect() end
+}
+local validTransitionFields = {targets=1,cond=1,_target=1}
+setmetatable(LXSC.Transition,{__index=function(s,k) if not validTransitionFields[k] then error("Attempt to access '"..tostring(k).."' on transition "..tostring(s)) end end})
 
 function LXSC:transition()
 	local t = { _kind='transition', _exec={}, type="external" }
@@ -77,12 +83,28 @@ function LXSC.Transition:matchesEvent(event)
 	-- print("Transition",self._event,"does not match",event.name)
 end
 
-function LXSC.Transition:inspect()
-	return string.format(
-		"<transition in '%s'%s%s%s>",
-		self.source.id or self.source.name,
-		self._event and (" on '"..self._event.."'") or "",
-		self.cond and (" if '"..self.cond.."'") or "",
-		self._target and (" to '"..self._target.."'") or ""
-	)
+function LXSC.Transition:inspect(detailed)
+	local targets
+	if self.targets then
+		targets = {}
+		for i,s in ipairs(self.targets) do targets[i] = s.id end
+	end
+	if detailed then
+		return string.format(
+			"<transition in '%s'%s%s%s type=%s>",
+			self.source.id or self.source.name,
+			rawget(self,'_event')  and (" on '"..self._event.."'")  or "",
+			rawget(self,'cond')    and (" if '"..self.cond.."'")    or "",
+			targets and (" target='"..table.concat(targets,' ').."'") or " TARGETLESS",
+			self.type
+		)
+	else
+		return string.format(
+			"<transition%s%s%s %s>",
+			rawget(self,'_event')  and (" event='"..self._event.."'")  or "",
+			rawget(self,'cond')    and (" cond='"..self.cond.."'")    or "",
+			targets and (" target='"..table.concat(targets,' ').."'") or " TARGETLESS",
+			self.type
+		)
+	end
 end

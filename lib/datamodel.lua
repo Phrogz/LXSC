@@ -60,6 +60,7 @@ end
 -- Reserved for internal use; should not be used by user scripts
 function LXSC.Datamodel:_setSystem(location,value)
 	self.scope[location] = value
+	if rawget(self.scxml,'onDataSet') then self.scxml.onDataSet(location,value) end
 end
 
 function LXSC.Datamodel:set(location,value)
@@ -69,7 +70,7 @@ function LXSC.Datamodel:set(location,value)
 			self.scxml:fireEvent("error.execution.invalid-set","Cannot set system variables")
 		else
 			self.scope[location] = value
-			if self.scxml.onDataSet then self.scxml.onDataSet(location,value) end
+			if rawget(self.scxml,'onDataSet') then self.scxml.onDataSet(location,value) end
 			return true
 		end
 	else

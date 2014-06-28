@@ -1,51 +1,60 @@
 local LXSC = require 'lib/lxsc';
 (function(S)
 S.MAX_ITERATIONS = 1000
-local OrderedSet,Queue = LXSC.OrderedSet, LXSC.Queue
+local OrderedSet,Queue,List = LXSC.OrderedSet, LXSC.Queue, LXSC.List
 
 -- ****************************************************************************
 
-local function documentOrder(a,b) return a._order < b._order end
+local function entryOrder(a,b)    return a._order < b._order end
 local function exitOrder(a,b)     return b._order < a._order end
-local function isAtomicState(s)   return s.isAtomic          end
-local function findLCPA(first,rest) -- least common parallel ancestor
-	for _,anc in ipairs(first.ancestors) do
-		if anc._kind=='parallel' then
-			if rest:every(function(s) return s:descendantOf(anc) end) then
-				return anc
-			end
-		end
-	end
-end
+local function isDescendant(a,b)  return a:descendantOf(b)   end
+local function isCancelEvent(e)   return e.name=='quit.lxsc' end
+local function isFinalState(s)    return s._kind=='final'    end
+local function isScxmlState(s)    return s._kind=='scxml'    end
+local function isHistoryState(s)  return s._kind=='history'  end
+local function isParallelState(s) return s._kind=='parallel' end
+local function isCompoundState(s) return s.isCompound        end
+local function isAtomicState(s)   return s.isAtomic		       end
+local function getChildStates(s)  return s.reals             end
 local function findLCCA(first,rest) -- least common compound ancestor
 	for _,anc in ipairs(first.ancestors) do
-		if anc.isCompound then
-			if rest:every(function(s) return s:descendantOf(anc) end) then
+		if isCompoundState(anc) or isScxmlState(anc) then
+			if rest:every(function(s) return isDescendant(s,anc) end) then
 				return anc
 			end
 		end
 	end
 end
+
+local emptyList = List()
+
+local depth=0
+local function logloglog(s)
+	--print(string.rep('\t',depth)..tostring(s))
+end
+local function startfunc(s) logloglog(s) depth=depth+1 end
+local function closefunc(s) if s then logloglog(s) end depth=depth-1 end
 
 -- ****************************************************************************
 
 function S:interpret(options)
-	-- if not self:validate() then self:failWithError() end
-	if not self._stateById then self:expandScxmlSource() end
-	self._config:clear()
 	self._delayedSend = { extraTime=0 }
-	-- self.statesToInvoke = OrderedSet()
+
+	-- if not self:validate() then self:failWithError() end
+	if not rawget(self,'_stateById') then self:expandScxmlSource() end
+	self._configuration:clear()
+	self._statesToInvoke = OrderedSet() -- TODO: implement <invoke>
+	self._internalQueue  = Queue()
+	self._externalQueue  = Queue()
+	self._historyValue   = {}
+
 	self._data = LXSC.Datamodel(self,options and options.data)
 	self._data:_setSystem('_sessionid',LXSC.uuid4())
 	self._data:_setSystem('_name',self.name or LXSC.uuid4())
 	self._data:_setSystem('_ioprocessors',{})
-	self.historyValue   = {}
-
-	self._internalQueue = Queue()
-	self._externalQueue = Queue()
-	self.running = true
 	if self.binding == "early" then self._data:initAll() end
-	if self._script then self:executeContent(self._script) end
+	self.running = true
+	self:executeGlobalScriptElement()
 	self:enterStates(self.initial.transitions)
 	self:mainEventLoop()
 end
@@ -55,24 +64,28 @@ end
 -- ******************************************************************************************************
 
 function S:mainEventLoop()
-	local anyChange, enabledTransitions, stable, iterations
+	local anyTransition, enabledTransitions, macrostepDone, iterations
 	while self.running do
-		anyChange = false
-		stable = false
-		iterations = 0
-		while self.running and not stable and iterations<self.MAX_ITERATIONS do
+		anyTransition = false -- (LXSC specific)
+		iterations    = 0     -- (LXSC specific)
+		macrostepDone = false
+
+		-- Here we handle eventless transitions and transitions
+		-- triggered by internal events until macrostep is complete
+		while self.running and not macrostepDone and iterations<S.MAX_ITERATIONS do
 			enabledTransitions = self:selectEventlessTransitions()
 			if enabledTransitions:isEmpty() then
 				if self._internalQueue:isEmpty() then
-					stable = true
+					macrostepDone = true
 				else
+					logloglog("-- Internal Queue: "..self._internalQueue:inspect())
 					local internalEvent = self._internalQueue:dequeue()
 					self._data:_setSystem('_event',internalEvent)
 					enabledTransitions = self:selectTransitions(internalEvent)
 				end
 			end
 			if not enabledTransitions:isEmpty() then
-				anyChange = true
+				anyTransition = true
 				self:microstep(enabledTransitions)
 			end
 			iterations = iterations + 1
@@ -80,34 +93,44 @@ function S:mainEventLoop()
 
 		if iterations>=S.MAX_ITERATIONS then print(string.format("Warning: stopped unstable system after %d internal iterations",S.MAX_ITERATIONS)) end
 
-		-- for _,state in ipairs(self.statesToInvoke) do for _,inv in ipairs(state._invokes) do self:invoke(inv) end end
-		-- self.statesToInvoke:clear()
+		-- Either we're in a final state, and we break out of the loop…
+		if not self.running then break end
+		-- …or we've completed a macrostep, so we start a new macrostep by waiting for an external event
 
+		-- Here we invoke whatever needs to be invoked. The implementation of 'invoke' is platform-specific
+		for _,state in ipairs(self._statesToInvoke) do for _,inv in ipairs(state._invokes) do self:invoke(inv) end end
+		self._statesToInvoke:clear()
+
+		-- Invoking may have raised internal error events; if so, we skip and iterate to handle them
 		if self._internalQueue:isEmpty() then
+			logloglog("-- External Queue: "..self._externalQueue:inspect())
 			local externalEvent = self._externalQueue:dequeue()
-			if externalEvent then
-				anyChange = true
-				if externalEvent.name=='quit.lxsc' then
+			if externalEvent then -- (LXSC specific) The queue might be empty.
+				if isCancelEvent(externalEvent) then
 					self.running = false
 				else
 					self._data:_setSystem('_event',externalEvent)
-					-- for _,state in ipairs(self._config) do
-					-- 	for _,inv in ipairs(state._invokes) do
-					-- 		if inv.invokeid == externalEvent.invokeid then self:applyFinalize(inv, externalEvent) end
-					-- 		if inv.autoforward then self:send(inv.id, externalEvent) end
-					-- 	end
-					-- end
-					enabledTransitions = self:selectTransitions(externalEvent)
-					if not enabledTransitions:isEmpty() then
-						self:microstep(enabledTransitions)
+						for _,state in ipairs(self._configuration) do
+							for _,inv in ipairs(state._invokes) do
+								if inv.invokeid == externalEvent.invokeid then self:applyFinalize(inv, externalEvent) end
+								if inv.autoforward then self:send(inv.id, externalEvent) end
+							end
+						end
+						enabledTransitions = self:selectTransitions(externalEvent)
+						if not enabledTransitions:isEmpty() then
+							anyTransition = true
+							self:microstep(enabledTransitions)
+						end
 					end
 				end
-			end
-		end
 
-		if not anyChange then break end
+			-- (LXSC specific) we stop iterating as soon as no transitions occur
+			if not anyTransition then break end
+		end
 	end
 
+	-- We re-check if we're running here because we use step-based processing;
+	-- we may have exited the 'running' loop if there were no more events to process.
 	if not self.running then self:exitInterpreter() end
 end
 
@@ -115,30 +138,38 @@ end
 -- ******************************************************************************************************
 -- ******************************************************************************************************
 
+function S:executeGlobalScriptElement()
+	if rawget(self,'_script') then self:executeSingle(self._script) end
+end
+
 function S:exitInterpreter()
-	local statesToExit = self._config:toList():sort(documentOrder)
+	local statesToExit = self._configuration:toList():sort(exitOrder)
 	for _,s in ipairs(statesToExit) do
-		for _,onexit in ipairs(s._onexits) do
-			for _,content in ipairs(onexit._kids) do
-				if not self:executeContent(content) then break end
-			end
+		for _,content in ipairs(s._onexits) do self:executeContent(content) end
+		for _,inv	    in ipairs(s._invokes) do self:cancelInvoke(inv)       end
+
+		-- (LXSC specific) We do not delete the configuration on exit so that it may be examined later.
+		-- self._configuration:delete(s)
+
+		if isFinalState(s) and isScxmlState(s.parent) then
+			self:returnDoneEvent(self:donedata(s))
 		end
-		-- for _,inv     in ipairs(s._invokes) do self:cancelInvoke(inv)       end
-		-- self._config:delete(s)
-		-- if self:isFinalState(s) and s.parent._kind=='scxml' then self:returnDoneEvent(self:donedata(s)) end
 	end
 end
 
 function S:selectEventlessTransitions()
+	startfunc('selectEventlessTransitions()')
 	local enabledTransitions = OrderedSet()
-	local atomicStates = self._config:toList():filter(isAtomicState):sort(documentOrder)
+	local atomicStates = self._configuration:toList():filter(isAtomicState):sort(entryOrder)
 	for _,state in ipairs(atomicStates) do
 		self:addEventlessTransition(state,enabledTransitions)
 	end
-	return self:filterPreempted(enabledTransitions)
+	enabledTransitions = self:removeConflictingTransitions(enabledTransitions)
+	closefunc('-- selectEventlessTransitions result: '..enabledTransitions:inspect())
+	return enabledTransitions
 end
--- TODO: store sets of evented vs. eventless transitions
-function S:addEventlessTransition(state,enabledTransitions)
+-- (LXSC specific) we use this function since Lua cannot break out of a nested loop
+function S:addEventlessTransition(state,enabledTransitions) 
 	for _,s in ipairs(state.selfAndAncestors) do
 		for _,t in ipairs(s._eventlessTransitions) do
 			if t:conditionMatched(self._data) then
@@ -150,14 +181,17 @@ function S:addEventlessTransition(state,enabledTransitions)
 end
 
 function S:selectTransitions(event)
+	startfunc('selectTransitions( '..event:inspect()..' )')
 	local enabledTransitions = OrderedSet()
-	local atomicStates = self._config:toList():filter(isAtomicState):sort(documentOrder)
+	local atomicStates = self._configuration:toList():filter(isAtomicState):sort(entryOrder)
 	for _,state in ipairs(atomicStates) do
 		self:addTransitionForEvent(state,event,enabledTransitions)
 	end
-	return self:filterPreempted(enabledTransitions)
+	enabledTransitions = self:removeConflictingTransitions(enabledTransitions)
+	closefunc('-- selectTransitions result: '..enabledTransitions:inspect())
+	return enabledTransitions
 end
--- TODO: store sets of evented vs. eventless transitions
+-- (LXSC specific) we use this function since Lua cannot break out of a nested loop
 function S:addTransitionForEvent(state,event,enabledTransitions)
 	for _,s in ipairs(state.selfAndAncestors) do
 		for _,t in ipairs(s._eventedTransitions) do
@@ -169,225 +203,304 @@ function S:addTransitionForEvent(state,event,enabledTransitions)
 	end
 end
 
-function S:filterPreempted(enabledTransitions)
+function S:removeConflictingTransitions(enabledTransitions)
+	startfunc('removeConflictingTransitions( enabledTransitions:'..enabledTransitions:inspect()..' )')
 	local filteredTransitions = OrderedSet()
 	for _,t1 in ipairs(enabledTransitions) do
-		local anyPreemption = false
+		local t1Preempted = false
+		local transitionsToRemove = OrderedSet()
 		for _,t2 in ipairs(filteredTransitions) do
-			local t2Cat = self:preemptionCategory(t2)
-			if t2Cat==3 or (t2Cat==2 and self:preemptionCategory(t1)==3) then
-				anyPreemption = true
-				break
+			if self:computeExitSet(List(t1)):hasIntersection(self:computeExitSet(List(t2))) then
+				if isDescendant(t1.source,t2.source) then
+					transitionsToRemove:add(t2)
+				else
+					t1Preempted = true
+					break
+				end
 			end
 		end
-		if not anyPreemption then filteredTransitions:add(t1) end
-	end
-	return filteredTransitions
-end
-function S:preemptionCategory(t)
-	if not t.preemptionCategory then
-		if not t.targets then
-			t.preemptionCategory = 1
-		elseif findLCPA( t.type=="internal" and t.source or t.source.parent, t.targets ) then
-			t.preemptionCategory = 2
-		else
-			t.preemptionCategory = 3
+
+		if not t1Preempted then
+			for _,t3 in ipairs(transitionsToRemove) do
+				filteredTransitions:delete(t3)
+			end
+			filteredTransitions:add(t1)
 		end
 	end
-	return t.preemptionCategory
+
+	closefunc('-- removeConflictingTransitions result: '..filteredTransitions:inspect())
+	return filteredTransitions
 end
 
 function S:microstep(enabledTransitions)
+	startfunc('microstep( enabledTransitions:'..enabledTransitions:inspect()..' )')
+
 	self:exitStates(enabledTransitions)
-	for _,t in ipairs(enabledTransitions) do
-		if self.onTransition then self.onTransition(t) end
-		for _,executable in ipairs(t._exec) do
-			if not self:executeContent(executable) then
-				break
-			end
-		end
-	end
+	self:executeTransitionContent(enabledTransitions)
 	self:enterStates(enabledTransitions)
-	if self.onEnteredAll then self.onEnteredAll() end
+
+	if rawget(self,'onEnteredAll') then self.onEnteredAll() end
+
+	closefunc()
 end
 
 function S:exitStates(enabledTransitions)
-	local statesToExit = OrderedSet()
-	for _,t in ipairs(enabledTransitions) do
-		if t.targets then
-			local ancestor
-			if t.type == "internal" and t.source.isCompound and t.targets:every(function(s) return s:descendantOf(t.source) end) then
-				ancestor = t.source
-			else
-				ancestor = findLCCA(t.source, t.targets)
-			end
-			for _,s in ipairs(self._config) do
-				if s:descendantOf(ancestor) then statesToExit:add(s) end
-			end
-		end
-	end
+	startfunc('exitStates( enabledTransitions:'..enabledTransitions:inspect()..' )')
 
-	-- for _,s in ipairs(statesToExit) do self.statesToInvoke:delete(s) end
-
+	local statesToExit = self:computeExitSet(enabledTransitions)
+	for _,s in ipairs(statesToExit) do self._statesToInvoke:delete(s) end
 	statesToExit = statesToExit:toList():sort(exitOrder)
 
 	for _,s in ipairs(statesToExit) do
-		-- TODO: create special history collection for speed
 		for _,h in ipairs(s.states) do
 			if h._kind=='history' then
-				if self.historyValue[h.id] then
-					self.historyValue[h.id]:clear()
-				else
-					self.historyValue[h.id] = OrderedSet()
-				end
-				for _,s0 in ipairs(self._config) do
+				self._historyValue[h.id] = self._configuration:toList():filter(function(s0)
 					if h.type=='deep' then
-						if s0.isAtomic and s0:descendantOf(s) then self.historyValue[h.id]:add(s0) end
+						return isAtomicState(s0) and isDescendant(s0,s)
 					else
-						if s0.parent==s then self.historyValue[h.id]:add(s0) end
+						return s0.parent==s
 					end
-				end
+				end)
 			end
 		end
 	end
 
 	for _,s in ipairs(statesToExit) do
 		if self.onBeforeExit then self.onBeforeExit(s.id,s._kind,s.isAtomic) end
-		for _,onexit in ipairs(s._onexits) do
-			for _,content in ipairs(onexit._kids) do
-				if not self:executeContent(content) then break end
+		for _,content in ipairs(s._onexits) do
+			self:executeContent(content)
+		end
+		for _,inv in ipairs(s._invokes) do self:cancelInvoke(inv) end
+		self._configuration:delete(s)
+		logloglog(string.format("-- removed %s from the configuration; config is now {%s}",s:inspect(),table.concat(self:activeStateIds(),', ')))
+	end
+
+	closefunc()
+end
+
+function S:computeExitSet(transitions)
+	startfunc('computeExitSet( transitions:'..transitions:inspect()..' )')
+	local statesToExit = OrderedSet()
+	for _,t in ipairs(transitions) do
+		if t.targets then
+			local domain = self:getTransitionDomain(t)
+			for _,s in ipairs(self._configuration) do
+				if isDescendant(s,domain) then
+					statesToExit:add(s)
+				end
 			end
 		end
-		-- for _,inv in ipairs(s._invokes)     do self:cancelInvoke(inv) end
-		self._config:delete(s)
 	end
+	closefunc('-- computeExitSet result '..statesToExit:inspect())
+	return statesToExit   	
+end
+
+function S:executeTransitionContent(enabledTransitions)
+	startfunc('executeTransitionContent( enabledTransitions:'..enabledTransitions:inspect()..' )')
+	for _,t in ipairs(enabledTransitions) do
+		if self.onTransition then self.onTransition(t) end
+		for _,executable in ipairs(t._exec) do
+			if not self:executeSingle(executable) then break end
+		end
+	end
+	closefunc()
 end
 
 function S:enterStates(enabledTransitions)
-	local statesToEnter = OrderedSet()
+	startfunc('enterStates( enabledTransitions:'..enabledTransitions:inspect()..' )')
+
+	local statesToEnter         = OrderedSet()
 	local statesForDefaultEntry = OrderedSet()
+  local defaultHistoryContent = {}           -- temporary table for default content in history states
+	self:computeEntrySet(enabledTransitions,statesToEnter,statesForDefaultEntry,defaultHistoryContent)
 
-	local function addStatesToEnter(state)	
-		if state._kind=='history' then
-			if self.historyValue[state.id] then
-				for _,s in ipairs(self.historyValue[state.id]) do
-					addStatesToEnter(s)
-					for anc in s:ancestorsUntil(state.parent) do
-						statesToEnter:add(anc)
-					end
-				end
-			else
-				for _,t in ipairs(state.transitions) do
-					for _,s in ipairs(t.targets) do addStatesToEnter(s) end
-				end
-			end
-		else
-			statesToEnter:add(state)
-			if state.isCompound then
-				statesForDefaultEntry:add(state)
-				for _,s in ipairs(state.initial.transitions[1].targets) do addStatesToEnter(s) end
-			elseif state._kind=='parallel' then
-				for _,s in ipairs(state.reals) do addStatesToEnter(s) end
-			end
+	for _,s in ipairs(statesToEnter:toList():sort(entryOrder)) do
+		self._configuration:add(s)
+		logloglog(string.format("-- added %s '%s' to the configuration; config is now <%s>",s._kind,s.id,table.concat(self:activeStateIds(),', ')))
+		if isScxmlState(s) then error("Added SCXML to configuration.") end
+		self._statesToInvoke:add(s)
+
+		if self.binding=="late" then
+			-- The LXSC datamodel ensures this happens only once per state
+			self._data:initState(s)
+		end 
+
+		for _,content in ipairs(s._onentrys) do
+			self:executeContent(content)
 		end
-	end
+		if self.onAfterEnter then self.onAfterEnter(s.id,s._kind,s.isAtomic) end
 
-	for _,t in ipairs(enabledTransitions) do		
-		if t.targets then
-			local ancestor
-			if t.type=="internal" and t.source.isCompound and t.targets:every(function(s) return s:descendantOf(t.source) end) then
-				ancestor = t.source
-			else
-				ancestor = findLCCA(t.source, t.targets)
-			end
-			for _,s in ipairs(t.targets) do addStatesToEnter(s) end
-			for _,s in ipairs(t.targets) do
-				for anc in s:ancestorsUntil(ancestor) do
-					statesToEnter:add(anc)
-					if anc._kind=='parallel' then
-						for _,child in ipairs(anc.reals) do
-							local descendsFlag = false
-							for _,s in ipairs(statesToEnter) do
-								if s:descendantOf(child) then
-									descendsFlag = true
-									break
-								end
-							end
-							if not descendsFlag then addStatesToEnter(child) end
-						end
-					end
+		if statesForDefaultEntry:isMember(s) then
+			for _,t in ipairs(s.initial.transitions) do
+				for _,executable in ipairs(t._exec) do
+					if not self:executeSingle(executable) then break end
 				end
 			end
 		end
-	end
 
-	statesToEnter = statesToEnter:toList():sort(documentOrder)
-	for _,s in ipairs(statesToEnter) do
-		if s._kind=='scxml' then
-			print("WARNING: tried to add scxml to the configuration!")
-		else
-			self._config:add(s)
-			-- self.statesToInvoke:add(s)
-			if self.binding=="late" then self._data:initState(s) end -- The datamodel ensures this happens only once per state
-			for _,onentry in ipairs(s._onentrys) do
-				for _,content in ipairs(onentry._kids) do
-					if not self:executeContent(content) then
-						break
-					end
-				end
+		if defaultHistoryContent[s.id] then
+			for _,executable in ipairs(defaultHistoryContent[s.id]) do
+				if not self:executeSingle(executable) then break end
 			end
-			if self.onAfterEnter then self.onAfterEnter(s.id,s._kind,s.isAtomic) end
-			if statesForDefaultEntry:member(s) then
-				for _,t in ipairs(s.initial.transitions) do
-					for _,executable in ipairs(t._exec) do
-						if not self:executeContent(executable) then
+		end
+
+		if isFinalState(s) then
+			local parent = s.parent
+			if isScxmlState(parent) then
+				self.running = false
+			else
+				local grandparent = parent.parent
+				self:fireEvent( "done.state."..parent.id, self:donedata(s), {type='internal'} )
+				if isParallelState(grandparent) then					
+					local allAreInFinal = true
+					for _,child in ipairs(grandparent.reals) do
+						if not self:isInFinalState(child) then
+							allAreInFinal = false
 							break
 						end
 					end
-				end
-			end
-			if s._kind=='final' then
-				local parent = s.parent
-				if parent._kind=='scxml' then
-					self.running = false
-				else
-					local grandparent = parent.parent
-					self:fireEvent( "done.state."..parent.id, self:donedata(s), {type='internal'} )
-					if grandparent and grandparent._kind=='parallel' then
-						local allAreInFinal = true
-						for _,child in ipairs(grandparent.reals) do
-							if not self:isInFinalState(child) then
-								allAreInFinal = false
-								break
-							end
-						end
-						if allAreInFinal then self:fireEvent( "done.state."..grandparent.id ) end
+					if allAreInFinal then
+						self:fireEvent( "done.state."..grandparent.id, nil, {type='internal'} )
 					end
 				end
 			end
 		end
+
 	end
 
-	for _,s in ipairs(self._config) do
-		if s._kind=='final' and s.parent._kind=='scxml' then self.running = false end
+	closefunc()
+end
+
+function S:computeEntrySet(transitions,statesToEnter,statesForDefaultEntry,defaultHistoryContent)
+	startfunc('computeEntrySet( transitions:'..transitions:inspect()..', ... )')
+
+	for _,t in ipairs(transitions) do
+		if t.targets then
+			for _,s in ipairs(t.targets) do
+				self:addDescendantStatesToEnter(s,statesToEnter,statesForDefaultEntry,defaultHistoryContent)
+			end
+		end
+		-- logloglog('-- after adding descendants statesToEnter is: '..statesToEnter:inspect())
+
+		local ancestor = self:getTransitionDomain(t)
+		for _,s in ipairs(self:getEffectiveTargetStates(t)) do
+			self:addAncestorStatesToEnter(s,ancestor,statesToEnter,statesForDefaultEntry,defaultHistoryContent)
+		end
 	end
+	logloglog('-- computeEntrySet result statesToEnter: '..statesToEnter:inspect())
+	logloglog('-- computeEntrySet result statesForDefaultEntry: '..statesForDefaultEntry:inspect())
+	closefunc()
+end
+
+function S:addDescendantStatesToEnter(state,statesToEnter,statesForDefaultEntry,defaultHistoryContent)
+	startfunc("addDescendantStatesToEnter( state:"..state:inspect()..", ... )")
+	if isHistoryState(state) then
+
+		if self._historyValue[state.id] then
+			for _,s in ipairs(self._historyValue[state.id]) do
+				self:addDescendantStatesToEnter(s,statesToEnter,statesForDefaultEntry,defaultHistoryContent)
+				self:addAncestorStatesToEnter(s,state.parent,statesToEnter,statesForDefaultEntry,defaultHistoryContent)
+			end
+		else
+			defaultHistoryContent[state.parent.id] = state.transitions[1]._exec
+			for _,t in ipairs(state.transitions) do
+				if t.targets then
+					for _,s in ipairs(t.targets) do
+						self:addDescendantStatesToEnter(s,statesToEnter,statesForDefaultEntry,defaultHistoryContent)
+						self:addAncestorStatesToEnter(s,state.parent,statesToEnter,statesForDefaultEntry,defaultHistoryContent)
+					end
+				end
+			end
+		end
+
+	else
+
+		statesToEnter:add(state)
+		logloglog("statesToEnter:add( "..state:inspect().." )")
+
+		if isCompoundState(state) then
+			statesForDefaultEntry:add(state)
+			for _,t in ipairs(state.initial.transitions) do
+				for _,s in ipairs(self:getEffectiveTargetStates(t)) do
+					self:addDescendantStatesToEnter(s,statesToEnter,statesForDefaultEntry,defaultHistoryContent)
+					self:addAncestorStatesToEnter(s,state,statesToEnter,statesForDefaultEntry,defaultHistoryContent)
+				end
+			end
+		elseif isParallelState(state) then
+			for _,child in ipairs(getChildStates(state)) do
+				if not statesToEnter:some(function(s) return isDescendant(s,child) end) then
+					self:addDescendantStatesToEnter(child,statesToEnter,statesForDefaultEntry,defaultHistoryContent)
+				end
+			end
+		end
+
+	end
+
+	closefunc()
+end
+
+function S:addAncestorStatesToEnter(state,ancestor,statesToEnter,statesForDefaultEntry,defaultHistoryContent)
+	startfunc("addAncestorStatesToEnter( state:"..state:inspect()..", ancestor:"..ancestor:inspect()..", ... )")
+	
+	for anc in state:ancestorsUntil(ancestor) do
+		statesToEnter:add(anc)
+		logloglog("statesToEnter:add( "..anc:inspect().." )")
+		if isParallelState(anc) then
+			for _,child in ipairs(getChildStates(anc)) do
+				if not statesToEnter:some(function(s) return isDescendant(s,child) end) then
+					self:addDescendantStatesToEnter(child,statesToEnter,statesForDefaultEntry,defaultHistoryContent) 
+				end
+			end
+		end
+	end
+
+	closefunc()
 end
 
 function S:isInFinalState(s)
-	if s.isCompound then
-		for _,s in ipairs(s.reals) do
-			if s._kind=='final' and self._config:member(s) then
-				return true
-			end
-		end
-	elseif s._kind=='parallel' then
-		for _,s in ipairs(s.reals) do
-			if not self:isInFinalState(s) then
-				return false
-			end
-		end
-		return true
+	if isCompoundState(s) then
+		return getChildStates(s):some(function(s) return isFinalState(s) and self._configuration:isMember(s)	end)
+	elseif isParallelState(s) then
+		return getChildStates(s):every(function(s) self:isInFinalState(s) end)
+	else
+		return false
 	end
+end
+
+function S:getTransitionDomain(t)
+	startfunc('getTransitionDomain( t:'..t:inspect()..' )' )
+	local result
+	local tstates = self:getEffectiveTargetStates(t)
+	if not tstates then
+		result = nil
+	elseif t.type=='internal' and isCompoundState(t.source) and tstates:every(function(s) return isDescendant(s,t.source) end) then
+		result = t.source
+	else
+		result = findLCCA(t.source,t.targets or emptyList)
+	end
+	closefunc('-- getTransitionDomain result: '..tostring(result and result.id))
+	return result
+end
+
+function S:getEffectiveTargetStates(transition)
+	startfunc('getEffectiveTargetStates( transition:'..transition:inspect()..' )')
+	local targets = OrderedSet()
+	if transition.targets then
+		for _,s in ipairs(transition.targets) do
+			if isHistoryState(s) then
+				if self._historyValue[s.id] then
+					targets:union(self._historyValue[s.id])
+				else
+					-- History states can only have one transition, so we hard-code that here.
+					targets:union(self:getEffectiveTargetStates(s.transitions[1]))
+				end
+			else
+				targets:add(s)
+			end
+		end
+	end
+	closefunc('-- getEffectiveTargetStates result: '..targets:inspect())
+	return targets
 end
 
 function S:expandScxmlSource()
@@ -397,6 +510,9 @@ function S:expandScxmlSource()
 	self:resolveReferences(self._stateById)
 end
 
+function S:returnDoneEvent(donedata)
+	-- TODO: implement
+end
 
 function S:donedata(state)
 	local c = state._donedatas[1]
@@ -423,12 +539,11 @@ function S:donedata(state)
 end
 
 function S:fireEvent(name,data,eventValues)
-	-- local s = require'serpent'
-	-- print("fireEvent(",name,data,s and s.line(eventValues,{nocode=true,comment=false}) or eventValues,")")
 	eventValues = eventValues or {}
 	eventValues.type = eventValues.type or 'platform'
 	local event = LXSC.Event(name,data,eventValues)
-	if self.onEventFired then self.onEventFired(event) end
+	logloglog(string.format("-- queued %s event '%s'",event.type,event.name))
+	if rawget(self,'onEventFired') then self.onEventFired(event) end
 	self[eventValues.type=='external' and "_externalQueue" or "_internalQueue"]:enqueue(event)
 	return event
 end

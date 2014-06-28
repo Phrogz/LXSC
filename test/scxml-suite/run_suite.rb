@@ -21,13 +21,15 @@ def run_tests
 	required = tests.reject{ |t| t['conformance']=='optional' }
 	auto,manual = required.partition{ |t| t['manual']=='false' }
 	Dir['*.scxml'].each{ |f| File.delete(f) }
-	auto.sort_by{ |test| test['id'] }.each do |test|
+	puts "There are #{auto.length} automatic tests and #{manual.length} manual tests."
+	auto.sort_by{ |test| test['id'] }.each.with_index do |test,i|
 		if mod = @mod.at_xpath("//assert[@id='#{test['id']}']")
 			if mod['status']=='failed'
 				puts "Skipping known-failed test #{test['id']} because #{mod.text}"
 				next
 			end
 		end
+		puts "Auto test ##{i}/#{auto.length}: #{test.at('start')['uri']}"
 		exit unless run_test(test.at('start')['uri'])
 	end
 end

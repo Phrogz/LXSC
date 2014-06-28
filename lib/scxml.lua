@@ -7,10 +7,10 @@ function LXSC:scxml()
 	t.name      = "(lxsc)"
 	t.binding   = "early"
 	t.datamodel = "lua"
-	t.id        = nil
+	-- t.id        = nil
 
 	t.running   = false
-	t._config   = LXSC.OrderedSet()
+	t._configuration = LXSC.OrderedSet()
 
 	return setmetatable(t,LXSC.SCXML.__meta)
 end
@@ -37,18 +37,18 @@ end
 
 function LXSC.SCXML:isActive(stateId)
 	if not self._stateById then self:expandScxmlSource() end
-	return self._config[self._stateById[stateId]]
+	return self._configuration[self._stateById[stateId]]
 end
 
 function LXSC.SCXML:activeStateIds()
 	local a = LXSC.OrderedSet()
-	for _,s in ipairs(self._config) do a:add(s.id) end
+	for _,s in ipairs(self._configuration) do a:add(rawget(s,'id') or rawget(s,'name')) end
 	return a
 end
 
 function LXSC.SCXML:activeAtomicIds()
 	local a = LXSC.OrderedSet()
-	for _,s in ipairs(self._config) do
+	for _,s in ipairs(self._configuration) do
 		if s.isAtomic then a:add(s.id) end
 	end
 	return a
@@ -72,7 +72,7 @@ end
 
 function LXSC.SCXML:availableEvents()
 	local all = {}
-	for _,s in ipairs(self._config) do
+	for _,s in ipairs(self._configuration) do
 		for _,t in ipairs(s._eventedTransitions) do
 			for _,e in ipairs(t.events) do
 				all[e.name] = true

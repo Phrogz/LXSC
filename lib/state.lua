@@ -1,6 +1,8 @@
 local LXSC = require 'lib/lxsc'
 LXSC.State={}; LXSC.State.__meta = {__index=LXSC.State}
 
+setmetatable(LXSC.State,{__index=function(s,k) for k,v in pairs(s) do print(k,v) end error("Attempt to access "..tostring(k).." on state") end})
+
 LXSC.State.stateKinds = {state=1,parallel=1,final=1,history=1,initial=1}
 LXSC.State.realKinds  = {state=1,parallel=1,final=1}
 LXSC.State.aggregates = {datamodel=1,donedata=1}
@@ -18,8 +20,8 @@ function LXSC:state(kind)
 		ancestors   = {},
 
 		states      = {},
-		reals       = {},
-		transitions = {},
+		reals       = LXSC.List(), -- <state>, <parallel>, and <final> children only
+		transitions = LXSC.List(),
 		_eventlessTransitions = {},
 		_eventedTransitions   = {},
 
@@ -95,14 +97,16 @@ function LXSC.State:createInitialTo(stateOrId)
 	local transition = LXSC:transition()
 	initial:addChild(transition)
 	transition:addTarget(stateOrId)
+	transition._target = type(stateOrId)=='string' and stateOrId or stateOrId.id
 	self.initial = initial
 end
 
 function LXSC.State:convertInitials()
-	if type(self.initial)=='string' then
+	local init = rawget(self,'initial')
+	if type(init)=='string' then
 		-- Convert initial="..." attribute to <initial> state
 		self:createInitialTo(self.initial)
-	elseif not self.initial then
+	elseif not init then
 		local initialElement
 		for _,s in ipairs(self.states) do
 			if s._kind=='initial' then initialElement=s; break end
@@ -141,6 +145,10 @@ end
 
 function LXSC.State:descendantOf(possibleAncestor)
 	return self.ancestors[possibleAncestor]
+end
+
+function LXSC.State:inspect()
+	return string.format("<%s id=%s>",tostring(rawget(self,'_kind')),tostring(rawget(self,'id')))
 end
 
 -- ********************************************************

@@ -32,7 +32,7 @@ function LXSC:parse(scxml)
 				error(string.format("I was working with a '%s' element but got a close notification for '%s'",current._kind,name))
 			end
 			if name=="transition" and nsURI==scxmlNS then
-				push( current.source[current.events and '_eventedTransitions' or '_eventlessTransitions'], current )
+				push( current.source[rawget(current,'events') and '_eventedTransitions' or '_eventlessTransitions'], current )
 			end
 			pop(stack)
 			current = stack[#stack] or current

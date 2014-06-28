@@ -1,6 +1,23 @@
 local LXSC = require 'lib/lxsc'
+LXSC.Event={
+	origintype="http://www.w3.org/TR/scxml/#SCXMLEventProcessor",
+	type      ="platform",
+	sendid    ="",
+	origin    ="",
+	invokeid  ="",	
+}
+local EventMeta; EventMeta = { __index=LXSC.Event, __tostring=function(e) return e:inspect() end }
+setmetatable(LXSC.Event,{__call=function(_,name,data,fields)
+	local e = {name=name,data=data,_tokens={}}
+	setmetatable(e,EventMeta)
+	for k,v in pairs(fields) do e[k] = v end
+	for token in string.gmatch(name,'[^.*]+') do table.insert(e._tokens,token) end
+	return e
+end})
 
-local function triggersDescriptor(self,descriptor)
+
+
+function LXSC.Event:triggersDescriptor(descriptor)
 	if self.name==descriptor or descriptor=="*" then
 		return true
 	else
@@ -14,15 +31,21 @@ local function triggersDescriptor(self,descriptor)
 	return false
 end
 
-local function triggersTransition(self,t)
-	return t:matchesEvent(self)
-end
+function LXSC.Event:triggersTransition(t) return t:matchesEvent(self) end
 
-local defaultEventMeta = {__index={origintype='http://www.w3.org/TR/scxml/#SCXMLEventProcessor',type="platform",sendid="",origin="",invokeid="",triggersDescriptor=triggersDescriptor,triggersTransition=triggersTransition}}
-LXSC.Event = function(name,data,fields)
-	local e = {name=name,data=data,_tokens={}}
-	setmetatable(e,defaultEventMeta)
-	for k,v in pairs(fields) do e[k] = v end
-	for token in string.gmatch(name,'[^.*]+') do table.insert(e._tokens,token) end
-	return e
+function LXSC.Event:inspect(detailed)
+	if detailed then
+		return string.format(
+			"<event '%s' type=%s sendid=%s origin=%s origintype=%s invokeid=%s data=%s>",
+			self.name,
+			tostring(self.type),
+			tostring(self.sendid),
+			tostring(self.origin),
+			tostring(self.origintype),
+			tostring(self.invokeid),
+			tostring(self.data)
+		)
+	else
+		return string.format("<event '%s' type=%s>",self.name,self.type)
+	end
 end

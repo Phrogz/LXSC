@@ -67,11 +67,11 @@ function LXSC.Exec:send(scxml)
 	for _,child in ipairs(self._kids) do
 		if child._kind=='param' then
 			if not data then data = {} end
-			if not scxml:executeContent(child,data) then return end
+			if not scxml:executeSingle(child,data) then return end
 		elseif child._kind=='content' then
 			if data then error("<send> may not have both <param> and <content> child elements.") end
 			data = {}
-			if not scxml:executeContent(child,data) then return end
+			if not scxml:executeSingle(child,data) then return end
 			data = data.content -- unwrap the content
 		end
 	end
@@ -142,7 +142,7 @@ LXSC.Exec['if'] = function (self,scxml)
 			if child._kind=='else' or child._kind=='elseif' then
 				break
 			else
-				if not scxml:executeContent(child) then return end
+				if not scxml:executeSingle(child) then return end
 			end
 		end
 	else
@@ -159,7 +159,7 @@ LXSC.Exec['if'] = function (self,scxml)
 					if result then executeFlag = true end
 				end
 			elseif executeFlag then
-				if not scxml:executeContent(child) then return end
+				if not scxml:executeSingle(child) then return end
 			end
 		end
 	end
@@ -177,7 +177,7 @@ function LXSC.Exec:foreach(scxml)
 			if not scxml:set(self.item,v) then return end
 			if self.index and not scxml:set(self.index,i) then return end
 			for _,child in ipairs(self._kids) do
-				if not scxml:executeContent(child) then return end
+				if not scxml:executeSingle(child) then return end
 			end
 		end
 		return true
@@ -206,7 +206,13 @@ end
 
 -- ******************************************************************
 
-function LXSC.SCXML:executeContent(item,...)
+function LXSC.SCXML:executeContent(parent)
+	for _,executable in ipairs(parent._kids) do
+		if not self:executeSingle(executable) then break end
+	end
+end
+
+function LXSC.SCXML:executeSingle(item,...)
 	local handler = LXSC.Exec[item._kind]
 	if handler then
 		return handler(item,self,...)

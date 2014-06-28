@@ -1,5 +1,5 @@
 local LXSC = require 'lib/lxsc'
-LXSC.OrderedSet = {}; LXSC.OrderedSet.__meta = {__index=LXSC.OrderedSet}
+LXSC.OrderedSet = {_kind='OrderedSet'}; LXSC.OrderedSet.__meta = {__index=LXSC.OrderedSet}
 
 setmetatable(LXSC.OrderedSet,{__call=function(o)
 	return setmetatable({},o.__meta)
@@ -22,8 +22,25 @@ function LXSC.OrderedSet:delete(e)
 	end
 end
 
-function LXSC.OrderedSet:member(e)
+function LXSC.OrderedSet:union(set2)
+	local i=#self
+	for _,e in ipairs(set2) do
+		if not self[e] then
+			i = i+1
+			self[i] = e
+			self[e] = i
+		end
+	end
+end
+
+function LXSC.OrderedSet:isMember(e)
 	return self[e]
+end
+
+function LXSC.OrderedSet:some(f)
+	for _,o in ipairs(self) do
+		if f(o) then return true end
+	end
 end
 
 function LXSC.OrderedSet:isEmpty()
@@ -38,13 +55,24 @@ function LXSC.OrderedSet:toList()
 	return LXSC.List(unpack(self))
 end
 
+function LXSC.OrderedSet:hasIntersection(set2)
+	for e,_ in pairs(self) do
+		if set2[e] then return true end
+	end
+	return false
+end
+
+function LXSC.OrderedSet:inspect()
+	local t = {}
+	for i,v in ipairs(self) do t[i] = v.inspect and v:inspect() or tostring(v) end
+	return t[1] and "{ "..table.concat(t,', ').." }" or '{}'
+end
+
 -- *******************************************************************
 
-LXSC.List = {}; LXSC.List.__meta = {__index=LXSC.List}
+LXSC.List = {_kind='List'}; LXSC.List.__meta = {__index=LXSC.List}
 setmetatable(LXSC.List,{__call=function(o,...)
-	local l = {...}
-	setmetatable(l,o.__meta)
-	return l
+	return setmetatable({...},o.__meta)
 end})
 
 function LXSC.List:head()
@@ -92,13 +120,13 @@ function LXSC.List:sort(f)
 	return self
 end
 
+LXSC.List.inspect = LXSC.OrderedSet.inspect
+
 -- *******************************************************************
 
-LXSC.Queue = {}; LXSC.Queue.__meta = {__index=LXSC.Queue}
+LXSC.Queue = {_kind='Queue'}; LXSC.Queue.__meta = {__index=LXSC.Queue}
 setmetatable(LXSC.Queue,{__call=function(o)
-	local q = {}
-	setmetatable(q,o.__meta)
-	return q
+	return setmetatable({},o.__meta)
 end})
 
 function LXSC.Queue:enqueue(e)
@@ -112,3 +140,5 @@ end
 function LXSC.Queue:isEmpty()
 	return not self[1]
 end
+
+LXSC.Queue.inspect = LXSC.OrderedSet.inspect

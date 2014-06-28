@@ -1,4 +1,5 @@
 <assertions>
+	<assert id="187" status="failed"><![CDATA[Uses <invoke>]]></assert>
 	<assert id="191" status="failed"><![CDATA[Uses <invoke>]]></assert>
 	<assert id="192" status="failed"><![CDATA[Uses <invoke>]]></assert>
 	<assert id="207" status="failed"><![CDATA[Uses <invoke>]]></assert>
