@@ -30,7 +30,7 @@ local emptyList = List()
 
 local depth=0
 local function logloglog(s)
-	--print(string.rep('\t',depth)..tostring(s))
+	--print(string.rep('   ',depth)..tostring(s))
 end
 local function startfunc(s) logloglog(s) depth=depth+1 end
 local function closefunc(s) if s then logloglog(s) end depth=depth-1 end
@@ -251,6 +251,7 @@ function S:exitStates(enabledTransitions)
 	for _,s in ipairs(statesToExit) do self._statesToInvoke:delete(s) end
 	statesToExit = statesToExit:toList():sort(exitOrder)
 
+	-- Record history for states being exited
 	for _,s in ipairs(statesToExit) do
 		for _,h in ipairs(s.states) do
 			if h._kind=='history' then
@@ -265,6 +266,7 @@ function S:exitStates(enabledTransitions)
 		end
 	end
 
+	-- Exit the states
 	for _,s in ipairs(statesToExit) do
 		if self.onBeforeExit then self.onBeforeExit(s.id,s._kind,s.isAtomic) end
 		for _,content in ipairs(s._onexits) do
