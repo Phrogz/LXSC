@@ -56,8 +56,10 @@ function LXSC.OrderedSet:toList()
 end
 
 function LXSC.OrderedSet:hasIntersection(set2)
-	for e,_ in pairs(self) do
-		if set2[e] then return true end
+	if #self<#set2 then
+		for _,e in ipairs(self) do if set2[e] then return true end end
+	else
+		for _,e in ipairs(set2) do if self[e] then return true end end
 	end
 	return false
 end
