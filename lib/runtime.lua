@@ -30,7 +30,7 @@ local emptyList = List()
 
 local depth=0
 local function logloglog(s)
-	--print(string.rep('   ',depth)..tostring(s))
+	-- print(string.rep('   ',depth)..tostring(s))
 end
 local function startfunc(s) logloglog(s) depth=depth+1 end
 local function closefunc(s) if s then logloglog(s) end depth=depth-1 end
@@ -525,9 +525,9 @@ function S:donedata(state)
 			local map = {}
 			for _,p in ipairs(state._donedatas) do
 				local val = p.location and self._data:get(p.location) or p.expr and self._data:eval(p.expr)
-				if val == LXSC.Datamodel.EVALERROR or val == LXSC.Datamodel.INVALIDLOCATION then
+				if val == LXSC.Datamodel.INVALIDLOCATION then
 					self:fireEvent("error.execution.invalid-param-value","There was an error determining the value for a <param> inside a <donedata>")
-				else
+				elseif val ~= LXSC.Datamodel.EVALERROR then
 					if p.name==nil or p.name=="" then
 						self:fireEvent("error.execution.invalid-param-name","Unsupported <param> name '"..tostring(p.name).."'")
 					else
