@@ -15,7 +15,7 @@ machine.onAfterEnter = function(id,kind) table.insert(messages,"…entered "..ki
 machine.onTransition = function(t)       table.insert(messages,"…running "..t:inspect(1)) end
 machine.onEventFired = function(e)       table.insert(messages,"…fireevt "..e:inspect(1)) end
 machine.onDataSet    = function(k,v)     table.insert(messages,"…setdata "..tostring(k).."="..tostring(v)) end
-machine:start()
+machine:start{data={tonumber=tonumber}}
 if #machine._delayedSend > 0 then
 	local lastEvent = machine._delayedSend[#machine._delayedSend]
 	machine:skipAhead(lastEvent.expires)
