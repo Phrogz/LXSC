@@ -14,10 +14,14 @@ end
 
 function LXSC.Exec:assign(scxml)
 	-- TODO: support child executable content in place of expr
-	local value = scxml:eval(self.expr)
-	if value~=LXSC.Datamodel.EVALERROR then
-		scxml:set( self.location, value )
-		return true
+	if self.location=="" then
+		scxml:fireEvent("error.execution.invalid-location","Unsupported <assign> location '"..tostring(self.location).."'")
+	else
+		local value = scxml:eval(self.expr)
+		if value~=LXSC.Datamodel.EVALERROR then
+			scxml:set( self.location, value )
+			return true
+		end
 	end
 end
 
