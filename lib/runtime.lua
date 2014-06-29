@@ -341,6 +341,7 @@ function S:enterStates(enabledTransitions)
 		end
 
 		if defaultHistoryContent[s.id] then
+			logloglog("-- executing defaultHistoryContent for "..s.id)
 			for _,executable in ipairs(defaultHistoryContent[s.id]) do
 				if not self:executeSingle(executable) then break end
 			end
@@ -405,6 +406,7 @@ function S:addDescendantStatesToEnter(state,statesToEnter,statesForDefaultEntry,
 			end
 		else
 			defaultHistoryContent[state.parent.id] = state.transitions[1]._exec
+			logloglog("-- defaultHistoryContent['"..state.parent.id.."'] = "..(#state.transitions[1]._exec).." executables")
 			for _,t in ipairs(state.transitions) do
 				if t.targets then
 					for _,s in ipairs(t.targets) do
