@@ -2,6 +2,8 @@
 package.path = "../../?.lua;" .. package.path
 require 'io'
 require 'os'
+require 'luacov'
+
 LXSC = require 'lxsc'
 local serpent = require("serpent")
 

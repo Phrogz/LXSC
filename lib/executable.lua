@@ -63,6 +63,10 @@ function LXSC.Exec:send(scxml)
 	if self.namelist then
 		data = {}
 		for name in string.gmatch(self.namelist,'[^%s]+') do data[name] = scxml:get(name) end
+		if not next(data) then
+			scxml:fireEvent("error.execution.invalid-send-namelist","<send> namelist must include one or more locations",{sendid=id})
+			return
+		end
 	end
 	for _,child in ipairs(self._kids) do
 		if child._kind=='param' then

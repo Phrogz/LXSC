@@ -21,6 +21,7 @@ def run_tests
 	required = tests.reject{ |t| t['conformance']=='optional' }
 	auto,manual = required.partition{ |t| t['manual']=='false' }
 	Dir['*.scxml'].each{ |f| File.delete(f) }
+	File.delete('luacov.stats.out') if File.exist?('luacov.stats.out')
 	puts "There are #{auto.length} automatic tests and #{manual.length} manual tests."
 	auto.sort_by{ |test| test['id'] }.each.with_index do |test,i|
 		if mod = @mod.at_xpath("//assert[@id='#{test['id']}']")
@@ -109,6 +110,7 @@ def convert_to_scxml!(doc)
 			['cond', "_event.name~=nil and _event.type~=nil and _event.sendid~=nil and _event.origin~=nil and _event.invokeid~=nil"]
 		},
 		datamodel:                ->(a){ ['datamodel', 'lua'                 ]},
+		delay:                    ->(a){ ['delay',      "#{100*a.to_i}ms"    ]},
 		delayExpr:                ->(a){ ['delayexpr',  "testvar#{a}"        ]},
 		eventExpr:                ->(a){ ['eventexpr',  "testvar#{a}"        ]},
 		eventDataFieldValue:      ->(a){ ['expr',       "_event.data.#{a}"   ]},
@@ -140,6 +142,7 @@ def convert_to_scxml!(doc)
 		systemVarLocation:        ->(a){ ['location',   a                    ]},
 		name:                     ->(a){ ['name',       "testvar#{a}"        ]},
 		namelist:                 ->(a){ ['namelist',   "testvar#{a}"        ]},
+		invalidNamelistLocation:  ->(a){ ['namelist',   ""                   ]},
 		sendIDExpr:               ->(a){ ['sendidexpr', "testvar#{a}"        ]},
 		srcExpr:                  ->(a){ ['srcexpr',    "testvar#{a}"        ]},
 		targetpass:               ->(a){ ['target',     'pass'               ]},
