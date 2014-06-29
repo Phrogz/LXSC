@@ -14,7 +14,7 @@ local function isScxmlState(s)    return s._kind=='scxml'    end
 local function isHistoryState(s)  return s._kind=='history'  end
 local function isParallelState(s) return s._kind=='parallel' end
 local function isCompoundState(s) return s.isCompound        end
-local function isAtomicState(s)   return s.isAtomic		       end
+local function isAtomicState(s)   return s.isAtomic          end
 local function getChildStates(s)  return s.reals             end
 local function findLCCA(first,rest) -- least common compound ancestor
 	for _,anc in ipairs(first.ancestors) do
@@ -129,7 +129,7 @@ function S:mainEventLoop()
 		end
 	end
 
-	-- We re-check if we're running here because we use step-based processing;
+	-- We re-check if we're running here because LXSC uses step-based processing;
 	-- we may have exited the 'running' loop if there were no more events to process.
 	if not self.running then self:exitInterpreter() end
 end
@@ -313,7 +313,7 @@ function S:enterStates(enabledTransitions)
 
 	local statesToEnter         = OrderedSet()
 	local statesForDefaultEntry = OrderedSet()
-  local defaultHistoryContent = {}           -- temporary table for default content in history states
+	local defaultHistoryContent = {}           -- temporary table for default content in history states
 	self:computeEntrySet(enabledTransitions,statesToEnter,statesForDefaultEntry,defaultHistoryContent)
 
 	for _,s in ipairs(statesToEnter:toList():sort(entryOrder)) do
