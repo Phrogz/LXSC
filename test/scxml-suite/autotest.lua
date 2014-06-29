@@ -13,7 +13,7 @@ local messages = {"Failed running "..arg[1]..":"}
 machine.onBeforeExit = function(id,kind) table.insert(messages,"…exiting "..kind.." '"..tostring(id).."'") end
 machine.onAfterEnter = function(id,kind) table.insert(messages,"…entered "..kind.." '"..tostring(id).."'") end
 machine.onTransition = function(t)       table.insert(messages,"…running "..t:inspect(1)) end
-machine.onEventFired = function(e)       table.insert(messages,"…firing  "..e:inspect(1)) end
+machine.onEventFired = function(e)       table.insert(messages,"…fireevt "..e:inspect(1)) end
 machine.onDataSet    = function(k,v)     table.insert(messages,"…setdata "..tostring(k).."="..tostring(v)) end
 machine:start()
 if #machine._delayedSend > 0 then
