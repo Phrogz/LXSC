@@ -118,7 +118,7 @@ function LXSC.Exec:param(scxml,context)
 end
 
 function LXSC.Exec:content(scxml,context)
-	if not context   then error("<content> only supported as child of <send>") end
+	if not context then error("<content> only supported as child of <send> or <donedata>") end
 	if self.expr and self._text then error("<content> element must have either 'expr' attribute or child content, but not both") end
 	if not (self.expr or self._text) then error("<content> element requires either 'expr' attribute or child content") end
 	local val = scxml:eval(self.expr or self._text)
