@@ -31,6 +31,7 @@ function LXSC:state(kind)
 		_donedatas  = {},
 		_invokes    = {}
 	}
+	if kind=='history' then t.type='shallow' end -- default value
 	t.selfAndAncestors={t}
 	return setmetatable(t,self.State.__meta)
 end
