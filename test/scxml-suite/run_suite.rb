@@ -159,7 +159,7 @@ def convert_to_scxml!(doc)
 		e.replace "<assign location='testvar#{e['id']}' expr='testvar#{e['id']}+1' />"
 	}
 	doc.xpath('//conf:array123').each{ |e| e.replace "{1,2,3}" }
-	doc.xpath('//conf:extendArray').each{ |e| e.replace "<assign location='testvar#{e['id']}' expr='(function() local t2={}; for i,v in ipairs(testvar#{e['id']}) do t2[i]=v end t2[#t2+1]=4 return t2 end)()' />" }
+	doc.xpath('//conf:extendArray').each{ |e| e.replace "<assign location='testvar#{e['id']}' expr='(function() local t2={}; for i=1,#testvar#{e['id']} do t2[i]=testvar#{e['id']}[i] end t2[#t2+1]=4 return t2 end)()' />" }
 	doc.xpath('//conf:sumVars').each{ |e|
 		e.replace "<assign location='testvar#{e['id1']}' expr='testvar#{e['id1']}+testvar#{e['id2']}' />"
 	}
@@ -180,6 +180,10 @@ def convert_to_scxml!(doc)
 		puts a
 		exit
 	end
+
+	# HACK to remove the now-unused conf: namespace from the root.
+	doc.remove_namespaces!
+	doc.root.add_namespace(nil,'http://www.w3.org/2005/07/scxml')
 end
 
 def get_file(uri)

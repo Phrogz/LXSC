@@ -1,40 +1,43 @@
 <assertions>
-	<assert id="187" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="191" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="192" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="207" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="215" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="216" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="220" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="223" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="224" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="225" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="226" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="228" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="229" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="230" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="232" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="233" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="234" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="235" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="235" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="236" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="237" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="239" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="240" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="241" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="242" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="243" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="244" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="245" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="247" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="250" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="252" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="253" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="276" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="530" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="554" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="338" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="347" status="failed"><![CDATA[Uses <invoke>]]></assert>
-	<assert id="422" status="failed"><![CDATA[Uses <invoke>]]></assert>
+	<assert id="187" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="191" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="192" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="207" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="215" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="216" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="220" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="223" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="224" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="225" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="226" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="228" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="229" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="230" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="232" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="233" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="234" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="235" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="235" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="236" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="237" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="239" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="240" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="241" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="242" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="243" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="244" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="245" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="247" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="250" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="252" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="253" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="276" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="338" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="347" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="422" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="496" status="failed"><![CDATA[No support for <send> to external targets]]></assert>
+	<assert id="500" status="failed"><![CDATA[No support for IO Processors]]></assert>
+	<assert id="521" status="failed"><![CDATA[No support for <send> to external targets]]></assert>
+	<assert id="530" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="554" status="failed"><![CDATA[No support for <invoke>]]></assert>
 <assertions>
