@@ -43,6 +43,13 @@ function LXSC.OrderedSet:some(f)
 	end
 end
 
+function LXSC.OrderedSet:every(f)
+	for _,v in ipairs(self) do
+		if not f(v) then return false end
+	end
+	return true
+end
+
 function LXSC.OrderedSet:isEmpty()
 	return not self[1]
 end
@@ -104,25 +111,15 @@ function LXSC.List:filter(f)
 	return LXSC.List(unpack(t))
 end
 
-function LXSC.List:some(f)
-	for _,v in ipairs(self) do
-		if f(v) then return true end
-	end
-end
-
-function LXSC.List:every(f)
-	for _,v in ipairs(self) do
-		if not f(v) then return false end
-	end
-	return true
-end
+LXSC.List.some    = LXSC.OrderedSet.some
+LXSC.List.every   = LXSC.OrderedSet.every
+LXSC.List.inspect = LXSC.OrderedSet.inspect
 
 function LXSC.List:sort(f)
 	table.sort(self,f)
 	return self
 end
 
-LXSC.List.inspect = LXSC.OrderedSet.inspect
 
 -- *******************************************************************
 
