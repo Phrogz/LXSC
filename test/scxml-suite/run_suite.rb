@@ -3,6 +3,8 @@
 BASE  = 'http://www.w3.org/Voice/2013/SCXML-irp/'
 CACHE = 'spec-cache'
 
+STOP_ON_FAIL = true
+
 require 'uri'
 require 'fileutils'
 require 'nokogiri' # gem install nokogiri
@@ -30,8 +32,17 @@ def run_tests
 				next
 			end
 		end
-		puts "Auto test ##{i}/#{auto.length}: #{test.at('start')['uri']}"
-		exit unless run_test(test.at('start')['uri'])
+
+		# Fetch dependent files, copy to working directory
+		test.xpath('dep').each{ |d| File.open(File.basename(d['uri']),'w'){ |f| f<<get_file(d['uri']) } }
+
+		puts "Auto test ##{i+1}/#{auto.length}: #{test.at('start')['uri']}"
+		unless run_test(test.at('start')['uri'])
+			exit if STOP_ON_FAIL
+		end
+
+		# Destroy local copies of dependent files
+		test.xpath('dep').each{ |d| File.delete(File.basename d['uri']) }
 	end
 end
 
@@ -40,7 +51,6 @@ def run_test(uri)
 	convert_to_scxml!(doc)
 	file = File.basename(uri).sub('txml','scxml')
 	File.open(file,'w:utf-8'){ |f| f.puts doc }
-	# puts "lua autotest.lua #{file}"
 	system("lua autotest.lua #{file}").tap do |successFlag|
 		if successFlag
 			File.delete(file) 
