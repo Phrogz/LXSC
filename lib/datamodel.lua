@@ -18,8 +18,25 @@ end
 function LXSC.Datamodel:initState(state)
 	if not self.statesInited[state] then
 		for _,data in ipairs(state._datamodels) do
-			-- TODO: support data.src
-			local value = self:eval(data.expr or tostring(data._text))
+			local value, err
+			if data.src then
+				local colon = data.src:find(':')
+				local scheme,hierarchy = data.src:sub(1,colon-1), data.src:sub(colon+1)
+				if scheme=='file' then
+					local f,msg = io.open(hierarchy,"r")
+					if not f then
+						self.scxml:fireEvent("error.execution.invalid-file",msg)
+					else
+						value = self:eval(f:read("*all"))
+						f:close()
+					end
+				else
+					self.scxml:fireEvent("error.execution.invalid-data-scheme","LXSC does not support <data src='"..scheme..":...'>")
+				end
+			else
+				value = self:eval(data.expr or tostring(data._text))
+			end
+
 			if value~=LXSC.Datamodel.EVALERROR then 
 				self:set( data.id, value )
 			else
