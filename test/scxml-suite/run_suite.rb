@@ -20,8 +20,10 @@ end
 
 def run_tests
 	tests = @manifest.xpath('//test')
-	required = tests.reject{ |t| t['conformance']=='optional' }
+	required = tests.reject{ |t| t['conformance']=='optional' }.sort_by{ |test| test['id'] }
 	auto,manual = required.partition{ |t| t['manual']=='false' }
+
+	Dir['*.scxml'].each{ |f| File.delete(f) }
 
 	manual.each{ |test|
 		if x=test.at('start')
@@ -30,10 +32,9 @@ def run_tests
 		end
 	}
 
-	Dir['*.scxml'].each{ |f| File.delete(f) }
 	File.delete('luacov.stats.out') if File.exist?('luacov.stats.out')
 	puts "There are #{auto.length} automatic tests and #{manual.length} manual tests."
-	auto.sort_by{ |test| test['id'] }.each.with_index do |test,i|
+	auto.each.with_index do |test,i|
 		if mod = @mod.at_xpath("//assert[@id='#{test['id']}']")
 			if mod['status']=='failed'
 				puts "Skipping known-failed test #{test['id']} because #{mod.text}"
@@ -55,7 +56,7 @@ def run_tests
 end
 
 def run_test(uri)
-	convert_uri(uri)
+	file = convert_uri(uri)
 	system("lua autotest.lua #{file}").tap do |successFlag|
 		if successFlag
 			File.delete(file) 
@@ -68,8 +69,9 @@ end
 def convert_uri(uri)
 	doc = Nokogiri.XML( get_file(uri), &:noblanks )
 	convert_to_scxml!(doc)
-	file = File.basename(uri).sub('txml','scxml')
-	File.open(file,'w:utf-8'){ |f| f.puts doc }
+	File.basename(uri).sub('txml','scxml').tap do |file|
+		File.open(file,'w:utf-8'){ |f| f.puts doc }
+	end
 end
 
 def convert_to_scxml!(doc)
@@ -144,6 +146,7 @@ def convert_to_scxml!(doc)
 		eventName:                ->(a){ ['expr',       "_event.name"        ]},
 		eventSendid:              ->(a){ ['expr',       "_event.sendid"      ]},
 		eventType:                ->(a){ ['expr',       "_event.type"        ]},
+		eventRaw:                 ->(a){ ['expr',       "_event:inspect(true)"]},
 		expr:                     ->(a){ ['expr',       a                    ]},
 		illegalArray:             ->(a){ ['expr',       "7"                  ]},
 		illegalExpr:              ->(a){ ['expr',       "!"                  ]},
@@ -155,6 +158,7 @@ def convert_to_scxml!(doc)
 		quoteExpr:                ->(a){ ['expr',       "'#{a}'"             ]},
 		systemVarExpr:            ->(a){ ['expr',       a                    ]},
 		scxmlEventIOLocation:     ->(a){ ['expr',       "FIXME"              ]},
+		varNonexistentStruct:     ->(a){ ['expr',       "testvar#{a}.nonono" ]},
 		id:                       ->(a){ ['id',         "testvar#{a}"        ]},
 		idlocation:               ->(a){ ['idlocation', "'testvar#{a}'"      ]},
 		index:                    ->(a){ ['index',      "testvar#{a}"        ]},
@@ -169,6 +173,7 @@ def convert_to_scxml!(doc)
 		invalidNamelist:          ->(a){ ['namelist',   ""                   ]},
 		sendIDExpr:               ->(a){ ['sendidexpr', "testvar#{a}"        ]},
 		srcExpr:                  ->(a){ ['srcexpr',    "testvar#{a}"        ]},
+		scriptBadSrc:             ->(a){ ['src',        "-badfile-"          ]},
 		targetpass:               ->(a){ ['target',     'pass'               ]},
 		targetfail:               ->(a){ ['target',     'fail'               ]},
 		illegalTarget:            ->(a){ ['target',     'xxxxxxxxx'          ]},

@@ -103,6 +103,27 @@ function LXSC.Datamodel:get(id)
 	end
 end
 
+function LXSC.Datamodel:serialize(pretty)
+	if pretty then
+		return LXSC.serializeLua(self.scope,{sort=self.__sorter,indent='  '})
+	else
+		return LXSC.serializeLua(self.scope)
+	end
+end
+
+function LXSC.Datamodel.__sorter(a,b)
+	local ak,av,bk,bv     = a[1],a[2],b[1],b[2]
+	local tak,tav,tbk,tbv = type(a[1]),type(a[2]),type(b[1]),type(b[2])
+	a,b = ak,bk
+	if tav=='function' then a='~~~'..ak end
+	if tak=='function' then a='~~~~' end
+	if tbv=='function' then b='~~~'..bk end
+	if tbk=='function' then b='~~~~' end
+	if tak=='string' and ak:find('_')==1 then a='~~'..ak end
+	if tbk=='string' and bk:find('_')==1 then b='~~'..bk end
+	if type(a)==type(b) then return a<b end
+end
+
  -- unique identifiers for comparision
 LXSC.Datamodel.EVALERROR = {}
 LXSC.Datamodel.INVALIDLOCATION = {}

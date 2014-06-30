@@ -35,17 +35,15 @@ function LXSC.Event:triggersTransition(t) return t:matchesEvent(self) end
 
 function LXSC.Event:inspect(detailed)
 	if detailed then
-		return string.format(
-			"<event '%s' type=%s sendid=%s origin=%s origintype=%s invokeid=%s data=%s>",
-			self.name,
-			tostring(self.type),
-			tostring(self.sendid),
-			tostring(self.origin),
-			tostring(self.origintype),
-			tostring(self.invokeid),
-			tostring(self.data)
-		)
+		return "<event>"..LXSC.serializeLua( self, {sort=self.__sorter, nokey={_tokens=1}} )
 	else
 		return string.format("<event '%s' type=%s>",self.name,self.type)
 	end
+end
+
+function LXSC.Event.__sorter(a,b)
+	local keyorder = {name='_____________',type='___',data='~~~~~~~~~~~~'}
+	a = keyorder[a[1]] or a[1]
+	b = keyorder[b[1]] or b[1]
+	return a<b
 end
