@@ -287,21 +287,20 @@ LXSC aims to be _almost_ 100% compliant with the [SCXML Interpretation Algorithm
 * **Manual Event Processing**: Where the W3C implementation calls for the interpreter to run in a separate thread with a blocking queue feeding in the events, LXSC is designed to be frame-based. You feed events into the machine and then manually call `my_lxsc:step()` to crank the machine in the same thread. This will cause the event queues to be fully processed and the machine to run until it is stable, and then return. Rinse/repeat the process of event population followed by calling `step()` each frame.
   * This single-threaded, on-demand approach affects a delayed `<send>` the most. While a `<send event="e" delay="1s"/>` command will not inject the event _at least_ one second has passed, it could be substantially longer than that **if** your script only calls `step()` every 30 seconds, or (worse) waits until some user interaction occurs to call `step()` again.
 * **Configuration Clearing**: The W3C algorithm calls for the state machine configuration to be cleared when the interpreter is exited. LXSC will instead leave the configuration (and data model) intact for you to inspect the final state of the machine.
+* **No `<invoke>` or IO Processors**: Currently LXSC does not implement `<invoke>`, `<send>` targeting another entity, or any IO Processors. These features _may_ be added in the future.
+  * _You can see the current result of the W3C test suite in the file `test/scxml-suite/scxml10-ir-results-lxsc.xml`._
 
 ## TODO (aka Known Limitations)
 
-* The `src="…"` attribute is unsupported for `<data>` or `<script>` elements.
-* The `_event` system variable supports `.name`, `.data`, and `origintype`, but none of the other properties (`.type`, `.sendid`, `.origin`, `.invokeid`).
-* `<assign>` elements do not support executable content instead of `expr="…"`
-* `<send>` selements do not support the `type`/`typeexpr`/`target`/`targetexpr` attributes.
+* `<assign>` elements do not support executable child content instead of `expr="…"`.
+* `<send>` selements do not support the `type`/`typeexpr`/`target`/`targetexpr` attributes other than in trivial (same-session) cases.
 * No support for inter-machine communication.
 * No support for `<invoke>`.
-* No support for `<param>` in `<donedata>`, nor has there been extensive testing of donedata.
 * Data model locations like `foo.bar` get and set a single key instead of nested tables.
 
 ## License & Contact
 
-LXSC is copyright ©2013 by Gavin Kistner and is licensed under the [MIT License][6]. See the LICENSE.txt file for more details.
+LXSC is copyright ©2013-2014 by Gavin Kistner and is licensed under the [MIT License][6]. See the LICENSE.txt file for more details.
 
 For bugs or feature requests please open [issues on GitHub][7]. For other communication you can [email the author directly](mailto:!@phrogz.net?subject=LXSC).
 
