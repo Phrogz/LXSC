@@ -12,7 +12,6 @@
 	<assert id="226" status="failed"><![CDATA[No support for <invoke>]]></assert>
 	<assert id="228" status="failed"><![CDATA[No support for <invoke>]]></assert>
 	<assert id="229" status="failed"><![CDATA[No support for <invoke>]]></assert>
-	<assert id="230" status="failed"><![CDATA[No support for <invoke>]]></assert>
 	<assert id="232" status="failed"><![CDATA[No support for <invoke>]]></assert>
 	<assert id="233" status="failed"><![CDATA[No support for <invoke>]]></assert>
 	<assert id="234" status="failed"><![CDATA[No support for <invoke>]]></assert>
@@ -28,7 +27,6 @@
 	<assert id="244" status="failed"><![CDATA[No support for <invoke>]]></assert>
 	<assert id="245" status="failed"><![CDATA[No support for <invoke>]]></assert>
 	<assert id="247" status="failed"><![CDATA[No support for <invoke>]]></assert>
-	<assert id="250" status="failed"><![CDATA[No support for <invoke>]]></assert>
 	<assert id="252" status="failed"><![CDATA[No support for <invoke>]]></assert>
 	<assert id="253" status="failed"><![CDATA[No support for <invoke>]]></assert>
 	<assert id="276" status="failed"><![CDATA[No support for <invoke>]]></assert>
@@ -40,4 +38,9 @@
 	<assert id="521" status="failed"><![CDATA[No support for <send> to external targets]]></assert>
 	<assert id="530" status="failed"><![CDATA[No support for <invoke>]]></assert>
 	<assert id="554" status="failed"><![CDATA[No support for <invoke>]]></assert>
+
+	<!-- manual -->
+	<assert id="230" status="failed"><![CDATA[No support for <invoke>]]></assert>
+	<assert id="250" status="failed"><![CDATA[No support for <invoke>]]></assert>
+
 <assertions>
