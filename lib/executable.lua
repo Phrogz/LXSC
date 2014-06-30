@@ -31,8 +31,8 @@ function LXSC.Exec:raise(scxml)
 end
 
 function LXSC.Exec:script(scxml)
-	scxml:run(self._text)
-	return true
+	local result = scxml:run(self._text)
+	return result ~= LXSC.Datamodel.EVALERROR
 end
 
 function LXSC.Exec:send(scxml)

@@ -43,7 +43,7 @@ function S:interpret(options)
 	-- if not self:validate() then self:failWithError() end
 	if not rawget(self,'_stateById') then self:expandScxmlSource() end
 	self._configuration:clear()
-	self._statesToInvoke = OrderedSet() -- TODO: implement <invoke>
+	self._statesToInvoke = OrderedSet()
 	self._internalQueue  = Queue()
 	self._externalQueue  = Queue()
 	self._historyValue   = {}
@@ -516,6 +516,11 @@ end
 
 function S:returnDoneEvent(donedata)
 	-- TODO: implement
+end
+
+function S:invoke(invoke)
+	-- TODO: implement <invoke>
+	error("Invoke not supported.")
 end
 
 function S:donedata(state)

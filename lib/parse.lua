@@ -34,6 +34,7 @@ function LXSC:parse(scxml)
 			if name=="transition" and nsURI==scxmlNS then
 				push( current.source[rawget(current,'events') and '_eventedTransitions' or '_eventlessTransitions'], current )
 			end
+			if rawget(current,'onFinishedParsing') then print(current.onFinishedParsing) current:onFinishedParsing() end
 			pop(stack)
 			current = stack[#stack] or current
 		end,
