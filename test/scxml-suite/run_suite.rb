@@ -22,6 +22,14 @@ def run_tests
 	tests = @manifest.xpath('//test')
 	required = tests.reject{ |t| t['conformance']=='optional' }
 	auto,manual = required.partition{ |t| t['manual']=='false' }
+
+	manual.each{ |test|
+		if x=test.at('start')
+			puts "Manual test: #{x['uri']}"
+			convert_uri(x['uri'])
+		end
+	}
+
 	Dir['*.scxml'].each{ |f| File.delete(f) }
 	File.delete('luacov.stats.out') if File.exist?('luacov.stats.out')
 	puts "There are #{auto.length} automatic tests and #{manual.length} manual tests."
@@ -47,10 +55,7 @@ def run_tests
 end
 
 def run_test(uri)
-	doc = Nokogiri.XML( get_file(uri), &:noblanks )
-	convert_to_scxml!(doc)
-	file = File.basename(uri).sub('txml','scxml')
-	File.open(file,'w:utf-8'){ |f| f.puts doc }
+	convert_uri(uri)
 	system("lua autotest.lua #{file}").tap do |successFlag|
 		if successFlag
 			File.delete(file) 
@@ -58,6 +63,13 @@ def run_test(uri)
 			`subl #{file}`
 		end
 	end
+end
+
+def convert_uri(uri)
+	doc = Nokogiri.XML( get_file(uri), &:noblanks )
+	convert_to_scxml!(doc)
+	file = File.basename(uri).sub('txml','scxml')
+	File.open(file,'w:utf-8'){ |f| f.puts doc }
 end
 
 def convert_to_scxml!(doc)
