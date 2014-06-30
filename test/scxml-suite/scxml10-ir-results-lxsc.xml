@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<system-report name="LXSC">
+  <testimonial/>
+  <assert id="144" res="pass"/>
+  <assert id="147" res="pass"/>
+  <assert id="148" res="pass"/>
+  <assert id="149" res="pass"/>
+  <assert id="150" res="pass"/>
+  <assert id="151" res="pass"/>
+  <assert id="152" res="pass"/>
+  <assert id="153" res="pass"/>
+  <assert id="155" res="pass"/>
+  <assert id="156" res="pass"/>
+  <assert id="158" res="pass"/>
+  <assert id="159" res="pass"/>
+  <assert id="172" res="pass"/>
+  <assert id="173" res="pass"/>
+  <assert id="174" res="pass"/>
+  <assert id="175" res="pass"/>
+  <assert id="176" res="pass"/>
+  <assert id="179" res="pass"/>
+  <assert id="183" res="pass"/>
+  <assert id="185" res="pass"/>
+  <assert id="186" res="pass"/>
+  <assert id="187" res="not-impl">No support for 'invoke'</assert>
+  <assert id="189" res="pass"/>
+  <assert id="190" res="pass"/>
+  <assert id="191" res="not-impl">No support for 'invoke'</assert>
+  <assert id="192" res="not-impl">No support for 'invoke'</assert>
+  <assert id="194" res="pass"/>
+  <assert id="198" res="pass"/>
+  <assert id="199" res="pass"/>
+  <assert id="200" res="pass"/>
+  <assert id="205" res="pass"/>
+  <assert id="207" res="not-impl">No support for 'invoke'</assert>
+  <assert id="208" res="pass"/>
+  <assert id="210" res="pass"/>
+  <assert id="215" res="not-impl">No support for 'invoke'</assert>
+  <assert id="216" res="not-impl">No support for 'invoke'</assert>
+  <assert id="220" res="not-impl">No support for 'invoke'</assert>
+  <assert id="223" res="not-impl">No support for 'invoke'</assert>
+  <assert id="224" res="not-impl">No support for 'invoke'</assert>
+  <assert id="225" res="not-impl">No support for 'invoke'</assert>
+  <assert id="226" res="not-impl">No support for 'invoke'</assert>
+  <assert id="228" res="not-impl">No support for 'invoke'</assert>
+  <assert id="229" res="not-impl">No support for 'invoke'</assert>
+  <assert id="232" res="not-impl">No support for 'invoke'</assert>
+  <assert id="233" res="not-impl">No support for 'invoke'</assert>
+  <assert id="234" res="not-impl">No support for 'invoke'</assert>
+  <assert id="235" res="not-impl">No support for 'invoke'</assert>
+  <assert id="236" res="not-impl">No support for 'invoke'</assert>
+  <assert id="237" res="not-impl">No support for 'invoke'</assert>
+  <assert id="239" res="not-impl">No support for 'invoke'</assert>
+  <assert id="240" res="not-impl">No support for 'invoke'</assert>
+  <assert id="241" res="not-impl">No support for 'invoke'</assert>
+  <assert id="242" res="not-impl">No support for 'invoke'</assert>
+  <assert id="243" res="not-impl">No support for 'invoke'</assert>
+  <assert id="244" res="not-impl">No support for 'invoke'</assert>
+  <assert id="245" res="not-impl">No support for 'invoke'</assert>
+  <assert id="247" res="not-impl">No support for 'invoke'</assert>
+  <assert id="252" res="not-impl">No support for 'invoke'</assert>
+  <assert id="253" res="not-impl">No support for 'invoke'</assert>
+  <assert id="276" res="not-impl">No support for 'invoke'</assert>
+  <assert id="277" res="pass"/>
+  <assert id="279" res="pass"/>
+  <assert id="280" res="pass"/>
+  <assert id="286" res="pass"/>
+  <assert id="287" res="pass"/>
+  <assert id="294" res="pass"/>
+  <assert id="298" res="pass"/>
+  <assert id="302" res="pass"/>
+  <assert id="303" res="pass"/>
+  <assert id="304" res="pass"/>
+  <assert id="309" res="pass"/>
+  <assert id="310" res="pass"/>
+  <assert id="311" res="pass"/>
+  <assert id="312" res="pass"/>
+  <assert id="318" res="pass"/>
+  <assert id="319" res="pass"/>
+  <assert id="321" res="pass"/>
+  <assert id="322" res="pass"/>
+  <assert id="323" res="pass"/>
+  <assert id="324" res="pass"/>
+  <assert id="325" res="pass"/>
+  <assert id="326" res="pass"/>
+  <assert id="329" res="pass"/>
+  <assert id="330" res="pass"/>
+  <assert id="331" res="pass"/>
+  <assert id="332" res="pass"/>
+  <assert id="333" res="pass"/>
+  <assert id="335" res="pass"/>
+  <assert id="336" res="pass"/>
+  <assert id="337" res="pass"/>
+  <assert id="338" res="not-impl">No support for 'invoke'</assert>
+  <assert id="339" res="pass"/>
+  <assert id="342" res="pass"/>
+  <assert id="343" res="pass"/>
+  <assert id="344" res="pass"/>
+  <assert id="346" res="pass"/>
+  <assert id="347" res="not-impl">No support for 'invoke'</assert>
+  <assert id="348" res="pass"/>
+  <assert id="349" res="pass"/>
+  <assert id="350" res="pass"/>
+  <assert id="351" res="pass"/>
+  <assert id="352" res="pass"/>
+  <assert id="354" res="pass"/>
+  <assert id="355" res="pass"/>
+  <assert id="364" res="pass"/>
+  <assert id="372" res="pass"/>
+  <assert id="375" res="pass"/>
+  <assert id="376" res="pass"/>
+  <assert id="377" res="pass"/>
+  <assert id="378" res="pass"/>
+  <assert id="387" res="pass"/>
+  <assert id="388" res="pass"/>
+  <assert id="396" res="pass"/>
+  <assert id="399" res="pass"/>
+  <assert id="401" res="pass"/>
+  <assert id="402" res="pass"/>
+  <assert id="403a" res="pass"/>
+  <assert id="403b" res="pass"/>
+  <assert id="403c" res="pass"/>
+  <assert id="404" res="pass"/>
+  <assert id="405" res="pass"/>
+  <assert id="406" res="pass"/>
+  <assert id="407" res="pass"/>
+  <assert id="409" res="pass"/>
+  <assert id="411" res="pass"/>
+  <assert id="412" res="pass"/>
+  <assert id="413" res="pass"/>
+  <assert id="416" res="pass"/>
+  <assert id="417" res="pass"/>
+  <assert id="419" res="pass"/>
+  <assert id="421" res="pass"/>
+  <assert id="422" res="not-impl">No support for 'invoke'</assert>
+  <assert id="423" res="pass"/>
+  <assert id="436" res="pass"/>
+  <assert id="487" res="pass"/>
+  <assert id="488" res="pass"/>
+  <assert id="495" res="pass"/>
+  <assert id="496" res="not-impl">No support for 'send' to external targets</assert>
+  <assert id="500" res="not-impl">No support for IO Processors</assert>
+  <assert id="501" res="pass"/>
+  <assert id="503" res="pass"/>
+  <assert id="504" res="pass"/>
+  <assert id="505" res="pass"/>
+  <assert id="506" res="pass"/>
+  <assert id="521" res="not-impl">No support for 'send' to external targets</assert>
+  <assert id="525" res="pass"/>
+  <assert id="527" res="pass"/>
+  <assert id="528" res="pass"/>
+  <assert id="529" res="pass"/>
+  <assert id="530" res="not-impl">No support for 'invoke'</assert>
+  <assert id="533" res="pass"/>
+  <assert id="550" res="pass"/>
+  <assert id="551" res="pass"/>
+  <assert id="552" res="pass"/>
+  <assert id="553" res="pass"/>
+  <assert id="554" res="not-impl">No support for 'invoke'</assert>
+  <assert id="570" res="pass"/>
+  <assert id="576" res="pass"/>
+  <assert id="579" res="pass"/>
+  <assert id="580" res="pass"/>
+  <assert id="230" res="not-impl">No support for 'invoke'</assert>
+  <assert id="250" res="not-impl">No support for 'invoke'</assert>
+  <assert id="301" res="pass"/>
+</system-report>

@@ -1,9 +1,8 @@
 #!/usr/bin/env ruby
 #encoding: utf-8
-BASE  = 'http://www.w3.org/Voice/2013/SCXML-irp/'
-CACHE = 'spec-cache'
-
-STOP_ON_FAIL = true
+BASE   = 'http://www.w3.org/Voice/2013/SCXML-irp/'
+CACHE  = 'spec-cache'
+REPORT = 'scxml10-ir-results-lxsc.xml'
 
 require 'uri'
 require 'fileutils'
@@ -13,60 +12,58 @@ def run!
 	Dir.chdir(File.dirname(__FILE__)) do
 		FileUtils.mkdir_p CACHE
 		@manifest = Nokogiri.XML( get_file('manifest.xml'), &:noblanks )
-		@mod = Nokogiri.XML(IO.read('manifest-mod.xml'))
+		@mod      = Nokogiri.XML(IO.read('manifest-mod.xml'))
+		@report   = Nokogiri.XML(IO.read(REPORT),&:noblanks)
 		run_tests
+		File.open(REPORT,'w'){ |f| f<<@report }
 	end
 end
 
 def run_tests
-	tests = @manifest.xpath('//test')
-	required = tests.reject{ |t| t['conformance']=='optional' }.sort_by{ |test| test['id'] }
-	auto,manual = required.partition{ |t| t['manual']=='false' }
-
 	Dir['*.scxml'].each{ |f| File.delete(f) }
+	Dir['*.txml' ].each{ |f| File.delete(f) }
+	FileUtils.rm_f('luacov.stats.out')
+	@report.xpath('//assert').remove
 
-	manual.each{ |test|
-		if x=test.at('start')
-			puts "Manual test: #{x['uri']}"
-			convert_uri(x['uri'])
-		end
-	}
+	tests = @manifest.xpath('//test')
+	required = tests.reject{ |t| t['conformance']=='optional' }
+	required.sort_by{ |test| [test['manual']=='false' ? 0 : 1,test['id']] }.each.with_index do |test,i|
+		id    = test['id']
+		auto  = test['manual']=='false'
+		start = test.at('start')
+		uri   = start['uri']
 
-	File.delete('luacov.stats.out') if File.exist?('luacov.stats.out')
-	puts "There are #{auto.length} automatic tests and #{manual.length} manual tests."
-	auto.each.with_index do |test,i|
-		if mod = @mod.at_xpath("//assert[@id='#{test['id']}']")
-			if mod['status']=='failed'
-				puts "Skipping known-failed test #{test['id']} because #{mod.text}"
-				next
-			end
-		end
+		print "Test ##{i+1}/#{required.length} #{uri} (#{auto ? :auto : :manual}): " 
 
+		scxml = prepare_scxml(uri)
 		# Fetch dependent files, copy to working directory
 		test.xpath('dep').each{ |d| File.open(File.basename(d['uri']),'w'){ |f| f<<get_file(d['uri']) } }
 
-		puts "Auto test ##{i+1}/#{auto.length}: #{test.at('start')['uri']}"
-		unless run_test(test.at('start')['uri'])
-			exit if STOP_ON_FAIL
-		end
-
-		# Destroy local copies of dependent files
-		test.xpath('dep').each{ |d| File.delete(File.basename d['uri']) }
-	end
-end
-
-def run_test(uri)
-	file = convert_uri(uri)
-	system("lua autotest.lua #{file}").tap do |successFlag|
-		if successFlag
-			File.delete(file) 
+		if mod=@mod.at("//assert[@id='#{id}']")
+			@report.root << mod
+			# Destroy local copies of dependent files
+			test.xpath('dep').each{ |d| FileUtils.rm_f(File.basename d['uri']) }
+			FileUtils.rm_f(scxml)
+			puts "skip #{mod['res']}"
+		elsif auto
+			if system("lua autotest.lua #{scxml}")
+				@report.root << "<assert id='#{id}' res='pass'/>"
+				# Destroy local copies of dependent files
+				test.xpath('dep').each{ |d| FileUtils.rm_f(File.basename d['uri']) }
+				FileUtils.rm_f(scxml)
+				puts "pass"
+			else
+				@report.root << "<assert id='#{id}' res='fail'/>"
+				`subl #{scxml}`
+				puts "fail"
+			end
 		else
-			`subl #{file}`
+			puts "UNKNOWN"
 		end
 	end
 end
 
-def convert_uri(uri)
+def prepare_scxml(uri)
 	doc = Nokogiri.XML( get_file(uri), &:noblanks )
 	convert_to_scxml!(doc)
 	File.basename(uri).sub('txml','scxml').tap do |file|
