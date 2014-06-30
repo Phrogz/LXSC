@@ -39,6 +39,5 @@
 	<assert id="500" status="failed"><![CDATA[No support for IO Processors]]></assert>
 	<assert id="521" status="failed"><![CDATA[No support for <send> to external targets]]></assert>
 	<assert id="530" status="failed"><![CDATA[No support for <invoke>]]></assert>
-	<assert id="552" status="failed"><![CDATA[No support for <data src="…">]]></assert>
 	<assert id="554" status="failed"><![CDATA[No support for <invoke>]]></assert>
 <assertions>
