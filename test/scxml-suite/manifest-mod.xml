@@ -40,7 +40,9 @@
 	<assert id="554" res="not-impl">No support for 'invoke'</assert>
 
 	<!-- manual -->
+	<assert id="178" res="fail">The LXSC data model cannot support multiple key/value pairs with the same key name.</assert>
 	<assert id="301" res="pass"/>
+	<assert id="307" res="pass">The late binding works, but an error is only raised in s1, since in s0 it is valid in the LXSC Lua data model to access a variable that has not yet been set.</assert>
 	<assert id="230" res="not-impl">No support for 'invoke'</assert>
 	<assert id="250" res="not-impl">No support for 'invoke'</assert>
 <assertions>

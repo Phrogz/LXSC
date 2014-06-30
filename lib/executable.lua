@@ -3,10 +3,10 @@ LXSC.Exec = {}
 
 function LXSC.Exec:log(scxml)
 	local message = {self.label}
-	if self.expr then
+	if self.expr and self.expr~="" then
 		local value = scxml:eval(self.expr)
 		if value==LXSC.Datamodel.EVALERROR then return end
-		table.insert(message,value)
+		table.insert(message,tostring(value))
 	end
 	print(table.concat(message,": "))
 	return true
