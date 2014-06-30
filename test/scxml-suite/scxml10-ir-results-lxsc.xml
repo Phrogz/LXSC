@@ -161,7 +161,12 @@
   <assert id="576" res="pass"/>
   <assert id="579" res="pass"/>
   <assert id="580" res="pass"/>
+  <assert id="178" res="fail">The LXSC data model cannot support multiple key/value pairs with the same key name.</assert>
   <assert id="230" res="not-impl">No support for 'invoke'</assert>
   <assert id="250" res="not-impl">No support for 'invoke'</assert>
   <assert id="301" res="pass"/>
+  <assert id="307" res="pass">The late binding works, but an error is only raised in s1, since in s0 it is valid in the LXSC Lua data model to access a variable that has not yet been set.</assert>
+  <assert id="313" res="pass">The document is not rejected, but does raise an internal error during execution.</assert>
+  <assert id="314" res="pass">The document is not rejected, but does raise an internal error during execution when s03 is entered.</assert>
+  <assert id="415" res="pass">The event is raised, but remains on the internal queue after the interpreter is stopped.</assert>
 </system-report>

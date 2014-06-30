@@ -19,7 +19,7 @@ if #machine._delayedSend > 0 then
 	machine:skipAhead(lastEvent.expires)
 	machine:step()
 end
-if not machine:activeStateIds().pass then
+if arg[2]=='--trace' or not machine:activeStateIds().pass then
 	local activeStateIds = {}
 	for _,stateId in ipairs(machine:activeStateIds()) do
 	  activeStateIds[#activeStateIds+1] = stateId
@@ -27,6 +27,8 @@ if not machine:activeStateIds().pass then
 	table.insert(messages,"...finished in state(s): "..table.concat(activeStateIds,", "))
 	table.insert(messages,"...state machine was "..(machine.running and "STILL" or "no longer").." running")
 	table.insert(messages,"...datamodel: "..machine._data:serialize(true))
+	table.insert(messages,"...internalQ: "..machine._internalQueue:inspect())
+	table.insert(messages,"...externalQ: "..machine._externalQueue:inspect())
 	table.insert(messages," ")
 	print(table.concat(messages,"\n"))
 	os.exit(1)

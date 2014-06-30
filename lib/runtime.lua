@@ -475,7 +475,7 @@ function S:getTransitionDomain(t)
 	startfunc('getTransitionDomain( t:'..t:inspect()..' )' )
 	local result
 	local tstates = self:getEffectiveTargetStates(t)
-	if not tstates then
+	if not tstates[1] then
 		result = nil
 	elseif t.type=='internal' and isCompoundState(t.source) and tstates:every(function(s) return isDescendant(s,t.source) end) then
 		result = t.source

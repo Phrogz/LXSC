@@ -43,8 +43,13 @@ def run_tests
 			@report.root << mod
 			# Destroy local copies of dependent files
 			test.xpath('dep').each{ |d| FileUtils.rm_f(File.basename d['uri']) }
-			FileUtils.rm_f(scxml)
-			puts "skip #{mod['res']}"
+			if auto
+				FileUtils.rm_f(scxml)
+				puts "skip #{mod['res']}"
+			else
+				puts "trace"
+				system("lua autotest.lua #{scxml} --trace")
+			end
 		elsif auto
 			if system("lua autotest.lua #{scxml}")
 				@report.root << "<assert id='#{id}' res='pass'/>"
@@ -58,7 +63,8 @@ def run_tests
 				puts "fail"
 			end
 		else
-			puts "UNKNOWN"
+			puts "trace"
+			system("lua autotest.lua #{scxml} --trace")
 		end
 	end
 end
