@@ -425,7 +425,7 @@ function S:addDescendantStatesToEnter(state,statesToEnter,statesForDefaultEntry,
 		if isCompoundState(state) then
 			statesForDefaultEntry:add(state)
 			for _,t in ipairs(state.initial.transitions) do
-				for _,s in ipairs(self:getEffectiveTargetStates(t)) do
+				for _,s in ipairs(t.targets) do
 					self:addDescendantStatesToEnter(s,statesToEnter,statesForDefaultEntry,defaultHistoryContent)
 					self:addAncestorStatesToEnter(s,state,statesToEnter,statesForDefaultEntry,defaultHistoryContent)
 				end
