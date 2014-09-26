@@ -24,7 +24,7 @@ LXSC stands for "Lua XML StateCharts", and is pronounced _"Lexie"_. The LXSC lib
 ### The Basics
 
 ```lua
-local LXSC = require"lxsc-min-10"
+local LXSC = require"lxsc-min-12"
 
 local scxml   = io.open('my.scxml'):read('*all')
 local machine = LXSC:parse(scxml)
@@ -78,7 +78,7 @@ The state-specific change callbacks are passed three parameters:
   * _The callbacks are not invoked for `history` or `initial` pseudo-states._
 * A boolean indicating whether the state is atomic or not.
 
-As implied by the names the `onBeforeExit` callback is invoked right **before** leaving a state, whilte the `onAfterEnter` callback is invoked right **after** entering a state.
+As implied by the names the `onBeforeExit` callback is invoked right **before** leaving a state, while the `onAfterEnter` callback is invoked right **after** entering a state.
 
 The `onEnteredAll` callback will be invoked once after the last state is entered for a particular _microstep_. 
 
@@ -116,13 +116,13 @@ The `onTransition` callback is invoked right before the executable content of a 
 machine.onEventFired = function(eventTable) ... end   
 ```
 
-The `onEventFired` callback is invoked whenever `fireEvent()` is called on the machine (either by your own code or by internal machine code). The event has not been processed, and there is not guarantee that the event is going to cause any effect later on. This is mostly a debugging callback allowing you to ensure that events you thought that you were injecting were, in fact, making it in.
+The `onEventFired` callback is invoked whenever `fireEvent()` is called on the machine (either by your own code or by internal machine code). The event has not been processed, and there is no guarantee that the event is going to cause any effect later on. This is mostly a debugging callback allowing you to ensure that events you thought that you were injecting were, in fact, making it in.
 
 The table supplied to this callback is a `LXSC.Event` object with the following keys:
 
 * `name` - the string name of the fired event, e.g. `"foo"` or `"foo.bar.jim.jam"`.
 * `data` - whatever data (if any) was supplied as the second parameter to `fireEvent()`.
-* `triggersDescriptor` - a function that can be used to determine if this event would trigger a particular event descriptor string.
+* `triggersDescriptor` - a function that can be used to determine if this event would trigger a particular transition's `event="…"` descriptor.
 
     ```lua
     machine.onEventFired = function(evt)
@@ -131,7 +131,6 @@ The table supplied to this callback is a `LXSC.Event` object with the following 
     machine:fireEvent("a")   --> a true nil
     machine:fireEvent("a.b") --> a true true
     ```
-
 * `triggersTransition` - similar to `triggersDescriptor()`, but it takes a transition table (as supplied to the `onTransition` callback) and uses the event descriptor(s) for that transition's `event="..."` attribute to evaluate if the event should cause the transition to be triggered.
   * _Note: this does not test any conditional code that may be present inthe transition's `cond="..."` attribute. This function may return true, and then the transition may subsequently not be triggered by this event if the conditions are not right._
 * `_tokens` - an array of the event name split by periods (an implementation detail used for optimized transition descriptor matching).
@@ -227,7 +226,7 @@ With no modifications, when LXSC encounters such an executable it fires an `erro
 Internal error events do not halt execution of the intepreter (unless the state machine reacts to that event in a violent manner, such as transitioning to a `<final>` state). However, if you want such elements to actually do something, you must extend LXSC to handle the executable type like so:
 
 ```lua
-local LXSC = require'lxsc-min-10'
+local LXSC = require'lxsc-min-12'
 function LXSC.Exec:explode(machine)
   print("The state machine wants to explode with an amount of",self.amount)
   return true
