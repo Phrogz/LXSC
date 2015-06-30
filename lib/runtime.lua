@@ -1,5 +1,5 @@
-local LXSC = require 'lib/lxsc';
-(function(S)
+local LXSC = require 'lib/lxsc'
+;(function(S)
 S.MAX_ITERATIONS = 1000
 local OrderedSet,Queue,List = LXSC.OrderedSet, LXSC.Queue, LXSC.List
 
@@ -169,7 +169,7 @@ function S:selectEventlessTransitions()
 	return enabledTransitions
 end
 -- (LXSC specific) we use this function since Lua cannot break out of a nested loop
-function S:addEventlessTransition(state,enabledTransitions) 
+function S:addEventlessTransition(state,enabledTransitions)
 	for _,s in ipairs(state.selfAndAncestors) do
 		for _,t in ipairs(s._eventlessTransitions) do
 			if t:conditionMatched(self._data) then
@@ -268,7 +268,7 @@ function S:exitStates(enabledTransitions)
 
 	-- Exit the states
 	for _,s in ipairs(statesToExit) do
-		if self.onBeforeExit then self.onBeforeExit(s.id,s._kind,s.isAtomic) end
+		if rawget(self,'onBeforeExit') then self.onBeforeExit(s.id,s._kind,s.isAtomic) end
 		for _,content in ipairs(s._onexits) do
 			self:executeContent(content)
 		end
@@ -294,13 +294,13 @@ function S:computeExitSet(transitions)
 		end
 	end
 	closefunc('-- computeExitSet result '..statesToExit:inspect())
-	return statesToExit   	
+	return statesToExit
 end
 
 function S:executeTransitionContent(enabledTransitions)
 	startfunc('executeTransitionContent( enabledTransitions:'..enabledTransitions:inspect()..' )')
 	for _,t in ipairs(enabledTransitions) do
-		if self.onTransition then self.onTransition(t) end
+		if rawget(self,'onTransition') then self.onTransition(t) end
 		for _,executable in ipairs(t._exec) do
 			if not self:executeSingle(executable) then break end
 		end
@@ -325,12 +325,12 @@ function S:enterStates(enabledTransitions)
 		if self.binding=="late" then
 			-- The LXSC datamodel ensures this happens only once per state
 			self._data:initState(s)
-		end 
+		end
 
 		for _,content in ipairs(s._onentrys) do
 			self:executeContent(content)
 		end
-		if self.onAfterEnter then self.onAfterEnter(s.id,s._kind,s.isAtomic) end
+		if rawget(self,'onAfterEnter') then self.onAfterEnter(s.id,s._kind,s.isAtomic) end
 
 		if statesForDefaultEntry:isMember(s) then
 			for _,t in ipairs(s.initial.transitions) do
@@ -354,7 +354,7 @@ function S:enterStates(enabledTransitions)
 			else
 				local grandparent = parent.parent
 				self:fireEvent( "done.state."..parent.id, self:donedata(s), {type='internal'} )
-				if isParallelState(grandparent) then					
+				if isParallelState(grandparent) then
 					local allAreInFinal = true
 					for _,child in ipairs(grandparent.reals) do
 						if not self:isInFinalState(child) then
@@ -445,14 +445,14 @@ end
 
 function S:addAncestorStatesToEnter(state,ancestor,statesToEnter,statesForDefaultEntry,defaultHistoryContent)
 	startfunc("addAncestorStatesToEnter( state:"..state:inspect()..", ancestor:"..ancestor:inspect()..", ... )")
-	
+
 	for anc in state:ancestorsUntil(ancestor) do
 		statesToEnter:add(anc)
 		logloglog("statesToEnter:add( "..anc:inspect().." )")
 		if isParallelState(anc) then
 			for _,child in ipairs(getChildStates(anc)) do
 				if not statesToEnter:some(function(s) return isDescendant(s,child) end) then
-					self:addDescendantStatesToEnter(child,statesToEnter,statesForDefaultEntry,defaultHistoryContent) 
+					self:addDescendantStatesToEnter(child,statesToEnter,statesForDefaultEntry,defaultHistoryContent)
 				end
 			end
 		end
