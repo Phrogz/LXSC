@@ -24,34 +24,38 @@ function compress()
 	os.execute(string.format("lstrip %s > %s",flatName,minName))
 end
 
+-- Merge all file content into a single string,
+-- removing requires.
 function getFlatContent()
 	local lines = {}
 	for line in io.lines(DIR..'lib/lxsc.lua') do table.insert(lines,line) end
-	table.remove(lines) -- Pop off the final "return" statement
+	table.remove(lines) -- Pop off the final "return" statement; we'll add it later.
 
 	for line in io.lines(DIR..'lxsc.lua') do
+		for i=1,10 do table.insert(lines,'') end
 		local target = string.match(line,[[^require%s?["']([^"']+)]])
 		if target then table.insert(lines,unwrapRequire(target..".lua")) end
 	end
+
+	for i=1,10 do table.insert(lines,'') end
 
 	table.insert(lines,"return LXSC")
 	return table.concat(lines,"\n")
 end
 
+-- Gather the lines from file,
+-- recursively expanding requires into the required file content.
 function unwrapRequire(file)
-	local skippedFirst = false
 	local lines = {}
 
 	for line in io.lines(DIR..file) do
-		if skippedFirst or file:find('slaxml') then
-			local preamble,target = string.match(line,[[^(.-)require ["']([^"']+)]])
+		local preamble,target = string.match(line,[[^(.-)require ["']([^"']+)]])
+		if target~='lib/lxsc' then -- Skip lib/lxsc requires; it's already at the top of the file.
 			if target then
 				line = unwrapRequire(target..".lua")
 				if preamble~="" then line = preamble.."(function()\n"..line.."\nend)()" end
 			end
 			table.insert(lines,line)
-		else
-			skippedFirst = true
 		end
 	end
 	return table.concat(lines,"\n")
