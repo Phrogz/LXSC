@@ -1,7 +1,7 @@
 local LXSC = require 'lib/lxsc'
 LXSC.State={}; LXSC.State.__meta = {__index=LXSC.State}
 
-setmetatable(LXSC.State,{__index=function(s,k) for k,v in pairs(s) do print(k,v) end error("Attempt to access "..tostring(k).." on state") end})
+setmetatable(LXSC.State,{__index=function(s,k) error("Attempt to access "..tostring(k).." on state") end})
 
 LXSC.State.stateKinds = {state=1,parallel=1,final=1,history=1,initial=1}
 LXSC.State.realKinds  = {state=1,parallel=1,final=1}
@@ -78,7 +78,8 @@ function LXSC.State:addChild(item)
 		item.state = self
 		table.insert(self._invokes,item)
 
-	else print("Warning: unhandled child of state: "..item._kind )
+	else
+		-- print("Warning: unhandled child of state: "..item._kind )
 	end
 end
 

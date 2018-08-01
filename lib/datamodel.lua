@@ -52,14 +52,13 @@ function LXSC.Datamodel:eval(expression)
 end
 
 function LXSC.Datamodel:run(code)
-	local func,message = self.cache[code]
+	local func,err = self.cache[code]
 	if not func then
-		func,message = loadstring(code)
+		func,err = load(code, nil, 't', self.scope)
 		if func then
 			self.cache[code] = func
-			setfenv(func,self.scope)
 		else
-			self.scxml:fireEvent("error.execution.syntax",message)
+			self.scxml:fireEvent("error.execution.syntax",err)
 			return LXSC.Datamodel.EVALERROR
 		end
 	end

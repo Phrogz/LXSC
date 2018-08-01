@@ -1,10 +1,10 @@
 #!/usr/bin/env lua
 package.path = "../?.lua;" .. package.path
 require 'io'
-require 'lunity'
-LXSC = require 'lxsc'
 
-module( 'TEST_LXSC', lunity )
+_ENV = require('lunity')('LXSC Tests')
+
+local LXSC = require 'lxsc'
 
 DIR = 'testcases'
 SHOULD_NOT_FINISH = {final2=true}
@@ -15,9 +15,9 @@ for filename in io.popen(string.format('ls "%s"',DIR)):lines() do
 	XML[testName] = io.open(DIR.."/"..filename):read("*all")
 end
 
-function test0_parsing()
+function test:parsing()
 	local m = LXSC:parse(XML['internal_transition'])
-	assertNil(m.id,"The scxml should not have an id")
+	-- assertNil(m.id,"The scxml should not have an id")
 	assertTrue(m.isCompound,'The root state should be compound')
 	assertEqual(m.states[1].id,'outer')
 	assertEqual(m.states[2].id,'fail')
@@ -37,7 +37,7 @@ function test0_parsing()
 	assertSameKeys(m:atomicStateIds(),{["a1"]=1,["a2"]=1,["b1"]=1,["b2"]=1,["pass"]=1})
 end
 
-function test1_dataAccess()
+function test:dataAccess()
 	local s = LXSC:parse[[<scxml xmlns='http://www.w3.org/2005/07/scxml' version='1.0'>
 		<script>boot(); boot()</script>
 		<datamodel><data id="n" expr="0"/></datamodel>
@@ -90,7 +90,7 @@ function test1_dataAccess()
 	assertEqual(values.foo,42)
 end
 
-function test2_eventlist()
+function test:eventlist()
 	local m = LXSC:parse[[
 		<scxml xmlns='http://www.w3.org/2005/07/scxml' version='1.0'>
 			<parallel>
@@ -114,7 +114,7 @@ function test2_eventlist()
 	assertSameKeys(available,expected)
 end
 
-function test3_customHandlers()
+function test:customHandlers()
 	local s = LXSC:parse[[
 		<scxml xmlns='http://www.w3.org/2005/07/scxml' version='1.0'
 			xmlns:a="foo" xmlns:b="bar">
@@ -130,7 +130,7 @@ function test3_customHandlers()
 	assertTrue(goSeen.bar)
 end
 
-function test4_customCallbacks()
+function test:customCallbacks()
 	local s = LXSC:parse[[
 		<scxml xmlns='http://www.w3.org/2005/07/scxml' version='1.0'>
 			<state>
@@ -193,7 +193,7 @@ function test4_customCallbacks()
 	assertEqual(changesSeen,1)
 end
 
-function test5_delayedSend()
+function test:delayedSend()
 	local s = LXSC:parse[[
 		<scxml xmlns='http://www.w3.org/2005/07/scxml' version='1.0'>
 			<state>
@@ -229,7 +229,7 @@ function test5_delayedSend()
 	assert(s:isActive('pass'))
 end
 
-function test6_eventMatching()
+function test:eventMatching()
 	local descriptors = {
 		["*"] = {
 			shouldMatch={"a","a.b","b.c","b.c.d","c.d.e","c.d.e.f","d.e.f","d.e.f.g","f","f.g","alpha","b.charlie","d.e.frank","frank","b","z.a"},
@@ -267,7 +267,7 @@ function test6_eventMatching()
 	end
 end
 
-function test7_eval()
+function test:eval()
 	local m = LXSC:parse[[
 		<scxml xmlns='http://www.w3.org/2005/07/scxml' version='1.0'>
 			<datamodel><data id="a" expr="1"/></datamodel>
@@ -302,7 +302,7 @@ function test7_eval()
 end
 
 for testName,xml in pairs(XML) do
-	_M["testcase-"..testName] = function()
+	test["testcase_"..testName] = function()
 		local machine = LXSC:parse(xml)
 		assertFalse(machine.running, testName.." should not be running before starting.")
 		assertTableEmpty(machine:activeStateIds(), testName.." should be empty before running.")
@@ -319,4 +319,4 @@ end
 
 
 
-runTests{ useANSI=false }
+test{ useANSI=false }

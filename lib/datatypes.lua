@@ -59,7 +59,7 @@ function LXSC.OrderedSet:clear()
 end
 
 function LXSC.OrderedSet:toList()
-	return LXSC.List(unpack(self))
+	return LXSC.List(table.unpack(self))
 end
 
 function LXSC.OrderedSet:hasIntersection(set2)
@@ -89,7 +89,7 @@ function LXSC.List:head()
 end
 
 function LXSC.List:tail()
-	local l = LXSC.List(unpack(self))
+	local l = LXSC.List(table.unpack(self))
 	table.remove(l,1)
 	return l
 end
@@ -108,7 +108,7 @@ function LXSC.List:filter(f)
 			t[i]=v; i=i+1
 		end
 	end
-	return LXSC.List(unpack(t))
+	return LXSC.List(table.unpack(t))
 end
 
 LXSC.List.some    = LXSC.OrderedSet.some
