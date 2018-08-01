@@ -1,5 +1,5 @@
 local LXSC = {
-	VERSION="0.12.1",
+	VERSION="0.13",
 	scxmlNS="http://www.w3.org/2005/07/scxml"
 }
 
@@ -26,7 +26,7 @@ end
 
 LXSC.State={}; LXSC.State.__meta = {__index=LXSC.State}
 
-setmetatable(LXSC.State,{__index=function(s,k) for k,v in pairs(s) do print(k,v) end error("Attempt to access "..tostring(k).." on state") end})
+setmetatable(LXSC.State,{__index=function(s,k) error("Attempt to access "..tostring(k).." on state") end})
 
 LXSC.State.stateKinds = {state=1,parallel=1,final=1,history=1,initial=1}
 LXSC.State.realKinds  = {state=1,parallel=1,final=1}
@@ -103,7 +103,8 @@ function LXSC.State:addChild(item)
 		item.state = self
 		table.insert(self._invokes,item)
 
-	else print("Warning: unhandled child of state: "..item._kind )
+	else
+		-- print("Warning: unhandled child of state: "..item._kind )
 	end
 end
 
@@ -236,7 +237,7 @@ function LXSC.SCXML:run(code)
 end
 
 function LXSC.SCXML:isActive(stateId)
-	if not self._stateById then self:expandScxmlSource() end
+	if not rawget(self,'_stateById') then self:expandScxmlSource() end
 	return self._configuration[self._stateById[stateId]]
 end
 
@@ -283,7 +284,7 @@ function LXSC.SCXML:availableEvents()
 end
 
 function LXSC.SCXML:allStateIds()
-	if not self._stateById then self:expandScxmlSource() end
+	if not rawget(self,'_stateById') then self:expandScxmlSource() end
 	local stateById = {}
 	for id,s in pairs(self._stateById) do
 		if s._kind~="initial" then stateById[id]=s end
@@ -292,7 +293,7 @@ function LXSC.SCXML:allStateIds()
 end
 
 function LXSC.SCXML:atomicStateIds()
-	if not self._stateById then self:expandScxmlSource() end
+	if not rawget(self,'_stateById') then self:expandScxmlSource() end
 	local stateById = {}
 	for id,s in pairs(self._stateById) do
 		if s.isAtomic and s._kind~="initial" then stateById[id]=s end
@@ -494,14 +495,13 @@ function LXSC.Datamodel:eval(expression)
 end
 
 function LXSC.Datamodel:run(code)
-	local func,message = self.cache[code]
+	local func,err = self.cache[code]
 	if not func then
-		func,message = loadstring(code)
+		func,err = load(code, nil, 't', self.scope)
 		if func then
 			self.cache[code] = func
-			setfenv(func,self.scope)
 		else
-			self.scxml:fireEvent("error.execution.syntax",message)
+			self.scxml:fireEvent("error.execution.syntax",err)
 			return LXSC.Datamodel.EVALERROR
 		end
 	end
@@ -1002,7 +1002,7 @@ function LXSC.OrderedSet:clear()
 end
 
 function LXSC.OrderedSet:toList()
-	return LXSC.List(unpack(self))
+	return LXSC.List(table.unpack(self))
 end
 
 function LXSC.OrderedSet:hasIntersection(set2)
@@ -1032,7 +1032,7 @@ function LXSC.List:head()
 end
 
 function LXSC.List:tail()
-	local l = LXSC.List(unpack(self))
+	local l = LXSC.List(table.unpack(self))
 	table.remove(l,1)
 	return l
 end
@@ -1051,7 +1051,7 @@ function LXSC.List:filter(f)
 			t[i]=v; i=i+1
 		end
 	end
-	return LXSC.List(unpack(t))
+	return LXSC.List(table.unpack(t))
 end
 
 LXSC.List.some    = LXSC.OrderedSet.some
