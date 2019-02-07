@@ -219,12 +219,14 @@ function test:delayedSend()
 			<final id="fail" /><final id="pass" />
 		</scxml>
 	]]
+	local elapsed = 0
+	function s:elapsed() return elapsed end
 	s:start()
 	assert(s:isActive('s2'))
 	s:step()
 	assert(s:isActive('s2'))
 	s:cancelDelayedSend('killme')
-	s:skipAhead(0.5)
+	elapsed = 0.5
 	s:step()
 	assert(s:isActive('pass'))
 end
@@ -307,6 +309,11 @@ for testName,xml in pairs(XML) do
 		assertFalse(machine.running, testName.." should not be running before starting.")
 		assertTableEmpty(machine:activeStateIds(), testName.." should be empty before running.")
 		machine:start()
+		local steps = 0
+		while steps<1000 and (#machine._internalQueue>0 or #machine._externalQueue>0) do
+			machine:step()
+			steps = steps + 1
+		end
 		assert(machine:activeStateIds().pass, testName.." should finish in the 'pass' state.")
 		assertEqual(#machine:activeAtomicIds(), 1, testName.." should only have a single atomic state active.")
 		if SHOULD_NOT_FINISH[testName] then

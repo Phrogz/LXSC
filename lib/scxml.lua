@@ -108,7 +108,5 @@ function LXSC.SCXML:addChild(item)
 	end
 end
 
-
-local clock = os.clock
-function LXSC.SCXML:skipAhead(seconds) self._delayedSend.extraTime = self._delayedSend.extraTime + seconds end
-function LXSC.SCXML:elapsed() return clock() + self._delayedSend.extraTime end
+-- Wrap os.clock() as SCXML:elapsed() so that clients can override with own implementation if desired
+LXSC.SCXML.elapsed = os.clock

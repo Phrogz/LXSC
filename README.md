@@ -14,6 +14,7 @@ LXSC stands for "Lua XML StateCharts", and is pronounced _"Lexie"_. The LXSC lib
      * [Event Fire Callback](#event-fire-callback)
   * [Peeking and Poking at the Data Model](#peeking-and-poking-at-the-data-model)
   * [Examining the State of the Machine](#examining-the-state-of-the-machine)
+  * [Customizing the Timer](#customizing-the-timer)
 * [Custom Executable Content](#custom-executable-content)
 * [SCXML Compliance](#scxml-compliance)
 * [TODO (aka Known Limitations)](#todo-aka-known-limitations)
@@ -80,7 +81,7 @@ The state-specific change callbacks are passed three parameters:
 
 As implied by the names the `onBeforeExit` callback is invoked right **before** leaving a state, while the `onAfterEnter` callback is invoked right **after** entering a state.
 
-The `onEnteredAll` callback will be invoked once after the last state is entered for a particular _microstep_. 
+The `onEnteredAll` callback will be invoked once after the last state is entered for a particular _microstep_.
 
 #### Data Model Callback
 
@@ -95,7 +96,7 @@ If supplied, this callback will be invoked any time the data model is changed.
 #### Transition Callback
 
 ```lua
-machine.onTransition = function(transitionTable) ... end   
+machine.onTransition = function(transitionTable) ... end
 ```
 
 The `onTransition` callback is invoked right before the executable content of a transition (if any) is run.
@@ -113,7 +114,7 @@ The `onTransition` callback is invoked right before the executable content of a 
 #### Event Fire Callback
 
 ```lua
-machine.onEventFired = function(eventTable) ... end   
+machine.onEventFired = function(eventTable) ... end
 ```
 
 The `onEventFired` callback is invoked whenever `fireEvent()` is called on the machine (either by your own code or by internal machine code). The event has not been processed, and there is no guarantee that the event is going to cause any effect later on. This is mostly a debugging callback allowing you to ensure that events you thought that you were injecting were, in fact, making it in.
@@ -206,10 +207,25 @@ end
 …or you can ask just for the events that may trigger a transition in the current configuration:
 
 ```lua
-    for eventDescriptor,_ in pairs(machine:availableEvents()) do
-      print("There's at least one active transition triggered by:",eventDescriptor)
-    end
+for eventDescriptor,_ in pairs(machine:availableEvents()) do
+  print("There's at least one active transition triggered by:",eventDescriptor)
+end
 ```
+
+### Customizing the Timer
+
+If your state machine uses delayed events (`<send event="e" delayexpr="'200ms'"/>`) LXSC defaults to using Lua's [`os.clock()`](https://www.lua.org/manual/5.3/manual.html#pdf-os.clock) to measure elapsed time. To use your own timer, override the `elapsed` method on either the SCXML object, or your own machine instance:
+
+```lua
+-- Overriding for every LXSC instance
+local LXSC = require'lxsc-min-14'
+LXSC.SCXML.elapsed = mytimer()
+
+-- Overriding for a specific machine
+local machine = LXSC:parse(myscxml)
+function machine:elapsed() return mytimer() end
+```
+
 
 ## Custom Executable Content
 
@@ -221,7 +237,7 @@ Anywhere that [executable content](http://www.w3.org/TR/scxml/#executable) is pe
 </state>
 ```
 
-With no modifications, when LXSC encounters such an executable it fires an `error.execution.unhandled` event internally with the `_event.data` set to the string `"unhandled executable type explode"`. 
+With no modifications, when LXSC encounters such an executable it fires an `error.execution.unhandled` event internally with the `_event.data` set to the string `"unhandled executable type explode"`.
 
 Internal error events do not halt execution of the intepreter (unless the state machine reacts to that event in a violent manner, such as transitioning to a `<final>` state). However, if you want such elements to actually do something, you must extend LXSC to handle the executable type like so:
 

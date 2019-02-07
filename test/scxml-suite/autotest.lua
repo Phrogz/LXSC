@@ -14,11 +14,15 @@ machine.onTransition = function(t)       table.insert(messages,"...running "..t:
 machine.onEventFired = function(e)       table.insert(messages,"...fireevt "..e:inspect(1)) end
 machine.onDataSet    = function(k,v)     table.insert(messages,"...setdata "..tostring(k).."="..tostring(v)) end
 machine:start{data={tonumber=tonumber}}
-if #machine._delayedSend > 0 then
-	local lastEvent = machine._delayedSend[#machine._delayedSend]
-	machine:skipAhead(lastEvent.expires)
-	machine:step()
+function machine:elapsed()
+	local lastEvent = self._delayedSend[#self._delayedSend]
+	return lastEvent and lastEvent.expires + 1 or 0
 end
+local steps = 0
+repeat
+	machine:step()
+	steps = steps + 1
+until steps>1000 or (#machine._internalQueue==0 and #machine._externalQueue==0)
 if arg[2]=='--trace' or not machine:activeStateIds().pass then
 	local activeStateIds = {}
 	for _,stateId in ipairs(machine:activeStateIds()) do
