@@ -33,7 +33,8 @@ function LXSC.Transition:attr(name,value)
 		self[name] = value
 
 	else
-		if self[name] then print(string.format("Warning: updating transition %s=%s with %s=%s",name,tostring(self[name]),name,tostring(value))) end
+		-- local was = rawget(self,name)
+		-- if was~=nil and was~=value then print(string.format("Warning: updating transition %s=%s with %s=%s",name,tostring(self[name]),name,tostring(value))) end
 		self[name] = value
 
 	end
