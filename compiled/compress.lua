@@ -1,7 +1,7 @@
 #!/usr/bin/env lua
 -- Merges all the files into one -flat file
--- Creates a compiled bytecode -bin version
 -- Creates a simplified -min version (if lstrip is available)
+-- Creates a compiled bytecode -bin version (NOPE)
 package.path = '../lib/?.lua;../?.lua;' .. package.path
 local LXSC = require 'lxsc'
 require 'io'
@@ -11,14 +11,14 @@ DIR = "../"
 
 function compress()
 	local flatName = "lxsc-flat-"..LXSC.VERSION..".lua"
-	local binName  = "lxsc-bin-"..LXSC.VERSION..".luac"
 	local minName  = "lxsc-min-"..LXSC.VERSION..".lua"
+	-- local binName  = "lxsc-bin-"..LXSC.VERSION..".luac"
 
 	local flat = io.open(flatName,"w")
 	flat:write(getFlatContent().."\n")
 	flat:close()
 
-	os.execute(string.format("luac -s -o %s %s",binName,flatName))
+	-- os.execute(string.format("luac -s -o %s %s",binName,flatName))
 
 	-- http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/#lstrip
 	os.execute(string.format("lstrip %s > %s",flatName,minName))

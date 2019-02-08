@@ -1674,11 +1674,11 @@ end)(LXSC.SCXML)
 
 local SLAXML = (function()
 --[=====================================================================[
-v0.6 Copyright © 2013-2014 Gavin Kistner <!@phrogz.net>; MIT Licensed
+v0.8 Copyright © 2013-2018 Gavin Kistner <!@phrogz.net>; MIT Licensed
 See http://github.com/Phrogz/SLAXML for details.
 --]=====================================================================]
 local SLAXML = {
-	VERSION = "0.6",
+	VERSION = "0.8",
 	_call = {
 		pi = function(target,content)
 			print(string.format("<?%s %s?>",target,content))
@@ -1694,17 +1694,19 @@ local SLAXML = {
 			                 print(">")
 		end,
 		attribute = function(name,value,nsURI,nsPrefix)
-			io.write('  ')
+			                 io.write('  ')
 			if nsPrefix then io.write(nsPrefix,":") end
 			                 io.write(name,'=',string.format('%q',value))
 			if nsURI    then io.write(" (ns='",nsURI,"')") end
-			io.write("\n")
+			                 io.write("\n")
 		end,
-		text = function(text)
-			print(string.format("  text: %q",text))
+		text = function(text,cdata)
+			print(string.format("  %s: %q",cdata and 'cdata' or 'text',text))
 		end,
 		closeElement = function(name,nsURI,nsPrefix)
-			print(string.format("</%s>",name))
+			                 io.write("</")
+			if nsPrefix then io.write(nsPrefix,":") end
+			                 print(name..">")
 		end,
 	}
 }
@@ -1717,7 +1719,7 @@ function SLAXML:parse(xml,options)
 	if not options then options = { stripWhitespace=false } end
 
 	-- Cache references for maximum speed
-	local find, sub, gsub, char, push, pop = string.find, string.sub, string.gsub, string.char, table.insert, table.remove
+	local find, sub, gsub, char, push, pop, concat = string.find, string.sub, string.gsub, string.char, table.insert, table.remove, table.concat
 	local first, last, match1, match2, match3, pos2, nsURI
 	local unpack = unpack or table.unpack
 	local pos = 1
@@ -1727,11 +1729,27 @@ function SLAXML:parse(xml,options)
 	local currentAttributes={}
 	local currentAttributeCt -- manually track length since the table is re-used
 	local nsStack = {}
-
-	local entityMap  = { ["lt"]="<", ["gt"]=">", ["amp"]="&", ["quot"]='"', ["apos"]="'" }
-	local entitySwap = function(orig,n,s) return entityMap[s] or n=="#" and char(s) or orig end
-	local function unescape(str) return gsub( str, '(&(#?)([%d%a]+);)', entitySwap ) end
 	local anyElement = false
+
+	local utf8markers = { {0x7FF,192}, {0xFFFF,224}, {0x1FFFFF,240} }
+	local function utf8(decimal) -- convert unicode code point to utf-8 encoded character string
+		if decimal<128 then return char(decimal) end
+		local charbytes = {}
+		for bytes,vals in ipairs(utf8markers) do
+			if decimal<=vals[1] then
+				for b=bytes+1,2,-1 do
+					local mod = decimal%64
+					decimal = (decimal-mod)/64
+					charbytes[b] = char(128+mod)
+				end
+				charbytes[1] = char(vals[2]+decimal)
+				return concat(charbytes)
+			end
+		end
+	end
+	local entityMap  = { ["lt"]="<", ["gt"]=">", ["amp"]="&", ["quot"]='"', ["apos"]="'" }
+	local entitySwap = function(orig,n,s) return entityMap[s] or n=="#" and utf8(tonumber('0'..s)) or orig end
+	local function unescape(str) return gsub( str, '(&(#?)([%d%a]+);)', entitySwap ) end
 
 	local function finishText()
 		if first>textStart and self._call.text then
@@ -1741,7 +1759,7 @@ function SLAXML:parse(xml,options)
 				text = gsub(text,'%s+$','')
 				if #text==0 then text=nil end
 			end
-			if text then self._call.text(unescape(text)) end
+			if text then self._call.text(unescape(text),false) end
 		end
 	end
 
@@ -1839,7 +1857,7 @@ function SLAXML:parse(xml,options)
 		first, last, match1 = find( xml, '^<!%[CDATA%[(.-)%]%]>', pos )
 		if first then
 			finishText()
-			if self._call.text then self._call.text(match1) end
+			if self._call.text then self._call.text(match1,true) end
 			pos = last+1
 			textStart = pos
 			return true
@@ -1892,7 +1910,7 @@ function SLAXML:parse(xml,options)
 
 	while pos<#xml do
 		if state=="text" then
-			if not (findPI() or findComment() or findCDATA() or findElementClose()) then		
+			if not (findPI() or findComment() or findCDATA() or findElementClose()) then
 				if startElement() then
 					state = "attributes"
 				else
